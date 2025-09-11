@@ -132,19 +132,4 @@ export const getImageUrl = (imagePath) => {
   return `${BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
 };
 
-// Helper function to save blogs to file
-export const saveBlogsToFile = async () => {
-  const blogs = await fetchAllBlogs();
-  const blogsJson = JSON.stringify(blogs, null, 2);
 
-  // Tạo Blob và download file
-  const blob = new Blob([blogsJson], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "ichinose_blogs.json";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
