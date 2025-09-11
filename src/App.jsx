@@ -6,12 +6,17 @@ import {
 } from "react-router-dom";
 import { ProLayout } from "@ant-design/pro-components";
 import { ConfigProvider, theme } from "antd";
+import { useEffect } from "react";
 import BlogList from "./components/BlogList";
 import BlogDetail from "./components/BlogDetail";
 import MemberProfile from "./components/MemberProfile";
 import "./App.css";
 
 function App() {
+  useEffect(() => {
+    document.title = "Nogizaka46 Blog Archive";
+  }, []);
+
   return (
     <ConfigProvider
       theme={{
