@@ -393,20 +393,46 @@ export default function BlogDetail() {
               </div>
             )}
 
-            <Space size={16} align="center" style={{ marginBottom: 12 }}>
+            <Space
+              size={window.innerWidth < 768 ? 12 : 16}
+              align="center"
+              style={{
+                marginBottom: window.innerWidth < 768 ? 8 : 12,
+                width: "100%",
+                justifyContent:
+                  window.innerWidth < 768 ? "center" : "flex-start",
+              }}
+            >
               <Avatar
                 src={
                   blog.memberImage ||
                   "https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
                 }
-                size={64}
+                size={window.innerWidth < 768 ? 56 : 64}
+                style={{
+                  border: "2px solid #fff",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                }}
               />
-              <div>
-                <Text strong style={{ fontSize: 16 }}>
+              <div
+                style={{
+                  textAlign: window.innerWidth < 768 ? "center" : "left",
+                }}
+              >
+                <Text
+                  strong
+                  style={{ fontSize: window.innerWidth < 768 ? 15 : 16 }}
+                >
                   {blog.author}
                 </Text>
-                <div style={{ color: "#666", marginTop: 2 }}>
-                  <CalendarOutlined style={{ marginRight: 8 }} />
+                <div
+                  style={{
+                    color: "#666",
+                    marginTop: window.innerWidth < 768 ? 1 : 2,
+                    fontSize: window.innerWidth < 768 ? 13 : 14,
+                  }}
+                >
+                  <CalendarOutlined style={{ marginRight: 6 }} />
                   <Text>{blog.date}</Text>
                 </div>
               </div>
@@ -428,14 +454,32 @@ export default function BlogDetail() {
           </Card>
 
           {/* Bottom nav */}
-          <Space style={{ marginTop: 16 }}>
-            <Button icon={<LeftOutlined />} onClick={onBack}>
+          <div
+            style={{
+              marginTop: window.innerWidth < 768 ? 12 : 16,
+              display: "flex",
+              flexDirection: window.innerWidth < 768 ? "column" : "row",
+              gap: window.innerWidth < 768 ? "8px" : "12px",
+            }}
+          >
+            <Button
+              icon={<LeftOutlined />}
+              onClick={onBack}
+              style={{
+                width: window.innerWidth < 768 ? "100%" : "auto",
+                height: window.innerWidth < 768 ? "36px" : "32px",
+              }}
+            >
               {t.back[language]}
             </Button>
             {blog.nextPost && (
               <Button
                 type="primary"
                 onClick={() => navigate(`/blog/${blog.nextPost.id}`)}
+                style={{
+                  width: window.innerWidth < 768 ? "100%" : "auto",
+                  height: window.innerWidth < 768 ? "36px" : "32px",
+                }}
               >
                 {t.nextPost[language]}
               </Button>
@@ -444,11 +488,15 @@ export default function BlogDetail() {
               <Button
                 icon={<LinkOutlined />}
                 onClick={() => window.open(blog.originalUrl, "_blank")}
+                style={{
+                  width: window.innerWidth < 768 ? "100%" : "auto",
+                  height: window.innerWidth < 768 ? "36px" : "32px",
+                }}
               >
                 {t.openSource[language]}
               </Button>
             )}
-          </Space>
+          </div>
         </ProCard>
 
         {/* Sidebar */}
@@ -539,27 +587,113 @@ export default function BlogDetail() {
         </ProCard>
       </ProCard>
 
-      <FloatButton.BackTop icon={<ArrowUpOutlined />} />
+      <FloatButton.BackTop
+        icon={<ArrowUpOutlined />}
+        style={{
+          width: window.innerWidth < 768 ? 40 : 44,
+          height: window.innerWidth < 768 ? 40 : 44,
+          right: window.innerWidth < 768 ? 16 : 24,
+          bottom: window.innerWidth < 768 ? 16 : 24,
+        }}
+      />
 
       {/* prose base */}
       <style>{`
-        .jp-prose h1 { font-weight: 700; margin: 0.9em 0 0.6em; }
-        .jp-prose h2 { font-weight: 700; margin: 0.9em 0 0.5em; }
-        .jp-prose h3 { font-weight: 700; margin: 0.9em 0 0.4em; }
-        .jp-prose p  { color: #374151; margin: 0.75em 0; text-align: justify; }
-        .jp-prose a  { color: #6b21a8; text-decoration: none; }
+        .jp-prose h1 { 
+          font-weight: 700; 
+          margin: ${
+            window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.6em"
+          }; 
+          letter-spacing: ${window.innerWidth < 768 ? "-0.02em" : "normal"};
+        }
+        .jp-prose h2 { 
+          font-weight: 700; 
+          margin: ${
+            window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.5em"
+          }; 
+          letter-spacing: ${window.innerWidth < 768 ? "-0.01em" : "normal"};
+        }
+        .jp-prose h3 { 
+          font-weight: 700; 
+          margin: ${
+            window.innerWidth < 768 ? "0.7em 0 0.3em" : "0.9em 0 0.4em"
+          };
+        }
+        .jp-prose p { 
+          color: #374151; 
+          margin: ${window.innerWidth < 768 ? "0.6em 0" : "0.75em 0"}; 
+          text-align: justify; 
+          line-height: ${window.innerWidth < 768 ? "1.6" : "inherit"};
+        }
+        .jp-prose a { 
+          color: #6b21a8; 
+          text-decoration: none;
+          padding: ${window.innerWidth < 768 ? "2px 0" : "0"}; 
+        }
         .jp-prose a:hover { text-decoration: underline; }
-        .jp-prose img { border-radius: 12px; display: block; margin: 16px auto; max-width: 100%; }
-        .jp-prose blockquote { border-left: 3px solid #e9d5ff; background: #faf5ff; padding: 8px 12px; border-radius: 8px; color: #4b5563; }
+        .jp-prose img { 
+          border-radius: ${window.innerWidth < 768 ? "8px" : "12px"}; 
+          display: block; 
+          margin: ${window.innerWidth < 768 ? "12px" : "16px"} auto; 
+          max-width: 100%; 
+          height: auto;
+          box-shadow: ${
+            window.innerWidth < 768
+              ? "0 2px 6px rgba(0,0,0,0.1)"
+              : "0 4px 12px rgba(0,0,0,0.1)"
+          };
+          border: 1px solid rgba(0,0,0,0.1);
+        }
+        .jp-prose img:active {
+          transform: ${window.innerWidth < 768 ? "scale(0.98)" : "none"};
+          transition: transform 0.2s ease;
+        }
+        .jp-prose blockquote { 
+          border-left: 3px solid #e9d5ff; 
+          background: #faf5ff; 
+          padding: ${window.innerWidth < 768 ? "6px 10px" : "8px 12px"}; 
+          border-radius: ${window.innerWidth < 768 ? "6px" : "8px"}; 
+          color: #4b5563;
+          font-size: ${window.innerWidth < 768 ? "0.95em" : "1em"};
+        }
         .jp-prose strong { color: #111827; }
-        .jp-prose ul, .jp-prose ol { padding-left: 1.2em; }
-        .jp-prose code { background: #f5f5f5; border-radius: 6px; padding: 0 6px; }
+        .jp-prose ul, .jp-prose ol { 
+          padding-left: ${window.innerWidth < 768 ? "1em" : "1.2em"}; 
+          margin: ${window.innerWidth < 768 ? "0.5em 0" : "0.75em 0"};
+        }
+        .jp-prose li { 
+          margin: ${window.innerWidth < 768 ? "0.3em 0" : "0.5em 0"};
+        }
+        .jp-prose code { 
+          background: #f5f5f5; 
+          border-radius: ${window.innerWidth < 768 ? "4px" : "6px"}; 
+          padding: ${window.innerWidth < 768 ? "0 4px" : "0 6px"};
+          font-size: ${window.innerWidth < 768 ? "0.9em" : "1em"};
+        }
       `}</style>
       {/* dynamic heading scale */}
       <style>{`
-        .jp-prose h1 { font-size: ${SIZE_PRESETS[fontSizeKey].h1}em; }
-        .jp-prose h2 { font-size: ${SIZE_PRESETS[fontSizeKey].h2}em; }
-        .jp-prose h3 { font-size: ${SIZE_PRESETS[fontSizeKey].h3}em; }
+        .jp-prose h1 { 
+          font-size: ${
+            window.innerWidth < 768
+              ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
+              : SIZE_PRESETS[fontSizeKey].h1
+          }em; 
+        }
+        .jp-prose h2 { 
+          font-size: ${
+            window.innerWidth < 768
+              ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
+              : SIZE_PRESETS[fontSizeKey].h2
+          }em; 
+        }
+        .jp-prose h3 { 
+          font-size: ${
+            window.innerWidth < 768
+              ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
+              : SIZE_PRESETS[fontSizeKey].h3
+          }em; 
+        }
       `}</style>
     </PageContainer>
   );
