@@ -1,12 +1,21 @@
-# React + Vite
+Nogizaka46 Blog Archived
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project aims to archive Nogizaka46 members’ blogs and provide automatic translation from Japanese → English & Vietnamese.
 
-Currently, two official plugins are available:
+🎯 Purpose
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Preserve Nogizaka46 blog content for fans.
 
-## Expanding the ESLint configuration
+Integrate multilingual translation for better accessibility.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Built with React + Vite for fast development and hot reload.
+
+⚙️ Tech Stack
+
+React + Vite: frontend framework & build tool.
+
+Ant Design Pro Components: modern UI.
+
+Axios + Cheerio: crawl & parse blogs.
+
+i18n: multilingual translation support.
