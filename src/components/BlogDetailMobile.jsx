@@ -29,6 +29,27 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+// Utility function for throttle
+function throttle(func, limit) {
+  let inThrottle;
+  let lastRan;
+  return function (...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      lastRan = Date.now();
+      inThrottle = true;
+    } else {
+      clearTimeout(inThrottle);
+      inThrottle = setTimeout(() => {
+        if (Date.now() - lastRan >= limit) {
+          func.apply(this, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
+    }
+  };
+}
+
 const { Title, Text } = Typography;
 
 const jpFont = {
@@ -133,31 +154,77 @@ export default function BlogDetailMobile({
     [language, translating, navigate, setLanguage]
   );
 
-  // Throttled scroll handler for better performance
+  // Optimized scroll handler with throttle and cached dimensions
   const onScroll = useCallback(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Use requestAnimationFrame for smooth updates
-    requestAnimationFrame(() => {
-      const content = wrap.querySelector(".jp-prose");
-      if (!content) return;
+    // Cache scroll dimensions
+    let lastTotal = wrap.scrollHeight - wrap.clientHeight;
+    let lastScrolled = wrap.scrollTop;
+    let lastPct = 0;
 
+    const updateProgress = () => {
       const total = wrap.scrollHeight - wrap.clientHeight;
       const scrolled = wrap.scrollTop;
-      const pct =
-        total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
-      setReadPct(pct);
+
+      // Only update if there's a significant change
+      if (
+        Math.abs(total - lastTotal) > 1 ||
+        Math.abs(scrolled - lastScrolled) > 1
+      ) {
+        const pct =
+          total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
+
+        // Avoid unnecessary updates
+        if (Math.abs(pct - lastPct) > 0.5) {
+          setReadPct(pct);
+          lastPct = pct;
+        }
+
+        lastTotal = total;
+        lastScrolled = scrolled;
+      }
+    };
+
+    // Throttle updates to max 10 times per second
+    requestAnimationFrame(() => {
+      throttle(updateProgress, 100)();
     });
   }, []);
 
+  // Handle image loading
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
+
+    // Mark images as loaded when they finish loading
+    const markImagesLoaded = () => {
+      const images = wrap.getElementsByTagName("img");
+      Array.from(images).forEach((img) => {
+        if (img.complete) {
+          img.setAttribute("data-loaded", "true");
+        } else {
+          img.onload = () => img.setAttribute("data-loaded", "true");
+        }
+      });
+    };
+
+    // Setup scroll handler
     wrap.addEventListener("scroll", onScroll, { passive: true });
-    // init
+
+    // Initialize
     onScroll();
-    return () => wrap.removeEventListener("scroll", onScroll);
+    markImagesLoaded();
+
+    // Cleanup
+    return () => {
+      wrap.removeEventListener("scroll", onScroll);
+      const images = wrap.getElementsByTagName("img");
+      Array.from(images).forEach((img) => {
+        img.onload = null;
+      });
+    };
   }, [onScroll, displayContent]);
 
   // Loading skeleton (ngon hơn Spin)
@@ -395,11 +462,12 @@ export default function BlogDetailMobile({
           <div
             style={{
               height: "100%",
-              width: `${readPct}%`,
+              width: "100%",
               background:
                 "linear-gradient(90deg, rgba(147,51,234,1) 0%, rgba(99,102,241,1) 100%)",
-              willChange: "width",
-              transform: "translateZ(0)",
+              transform: `translateX(${readPct - 100}%)`,
+              willChange: "transform",
+              transition: "transform 0.1s ease-out",
             }}
           />
         </div>
@@ -421,6 +489,16 @@ export default function BlogDetailMobile({
             height: auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
+            contain: paint;
+            content-visibility: auto;
+            will-change: transform;
+            transform: translateZ(0);
+            aspect-ratio: attr(width) / attr(height);
+          }
+          /* Preload space for images to prevent layout shifts */
+          .jp-prose img:not([data-loaded]) {
+            min-height: 200px;
+            background: rgba(0,0,0,0.05);
           }
           .jp-prose p {
             margin: 0.85em 0;
