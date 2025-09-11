@@ -1,20 +1,12 @@
-import {
-  Card,
-  Typography,
-  Space,
-  Tag,
-  Avatar,
-  Descriptions,
-  Badge,
-} from "antd";
+import { Typography, Avatar, Tag } from "antd";
 import {
   CalendarOutlined,
-  HeartOutlined,
-  StarOutlined,
   TeamOutlined,
-  UserOutlined,
-  FireOutlined,
+  StarOutlined,
+  GlobalOutlined,
+  HeartOutlined,
   CrownOutlined,
+  FireOutlined,
 } from "@ant-design/icons";
 import { ProCard } from "@ant-design/pro-components";
 
@@ -35,84 +27,47 @@ const memberInfo = {
   blood: "B型",
   constellation: "ふたご座",
   graduation: "NO",
-  groupcode: "6期生",
+  groupcode: "5期生",
 };
 
 const MemberProfile = () => {
   return (
-    <div className="space-y-4">
-      {/* Main Profile Card */}
-      <ProCard
-        className="overflow-hidden shadow-xl border-0 bg-white/90 backdrop-blur-sm"
-        bodyStyle={{ padding: 0 }}
-      >
-        {/* Gradient Header */}
-        <div className="relative bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 p-6 text-center">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10">
-            <Badge.Ribbon text="選抜" color="gold" className="font-bold">
-              <Avatar
-                size={90}
-                src={memberInfo.img}
-                icon={<UserOutlined />}
-                className="border-4 border-white shadow-2xl mb-4 ring-4 ring-white/20"
-              />
-            </Badge.Ribbon>
-            <Title
-              level={4}
-              className="text-white mb-1 font-bold tracking-wide"
-            >
+    <ProCard className="overflow-hidden bg-white shadow-sm">
+      {/* Profile Header - Minimal Japanese Style */}
+      <div className="relative">
+        {/* Decorative Background */}
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 opacity-50" />
+
+        {/* Main Content */}
+        <div className="relative pt-8 pb-6 text-center">
+          {/* Avatar with subtle border */}
+          <div className="inline-block p-1 bg-white rounded-full">
+            <Avatar
+              size={120}
+              src={memberInfo.img}
+              className="rounded-full border-2 border-gray-100"
+            />
+          </div>
+
+          {/* Name Section with Japanese Typography */}
+          <div className="mt-5 space-y-1">
+            <Title level={3} className="!mb-0 !text-gray-800 tracking-wide">
               {memberInfo.name}
             </Title>
-            <Text className="block text-white/90 text-sm font-medium mb-1">
+            <Text className="block text-base text-gray-500 tracking-wider capitalize">
               {memberInfo.english_name}
             </Text>
-            <Text className="block text-white/75 text-xs">
+            <Text className="block text-sm text-gray-400 tracking-widest">
               {memberInfo.kana}
             </Text>
           </div>
 
-          {/* Decorative elements */}
-          <div className="absolute top-2 right-2 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-2 left-2 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
-        </div>
-
-        {/* Profile Information */}
-        <div className="p-4 space-y-3">
-          <div className="flex items-center space-x-3 p-2 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 transition-all duration-200">
-            <CalendarOutlined className="text-purple-600 text-lg" />
-            <Text className="text-sm font-medium text-gray-700">
-              {memberInfo.birthday}
-            </Text>
-          </div>
-          <div className="flex items-center space-x-3 p-2 rounded-lg bg-gradient-to-r from-pink-50 to-red-50 hover:from-pink-100 hover:to-red-100 transition-all duration-200">
-            <HeartOutlined className="text-pink-600 text-lg" />
-            <Text className="text-sm font-medium text-gray-700">
-              {memberInfo.blood}
-            </Text>
-          </div>
-          <div className="flex items-center space-x-3 p-2 rounded-lg bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 transition-all duration-200">
-            <StarOutlined className="text-orange-600 text-lg" />
-            <Text className="text-sm font-medium text-gray-700">
-              {memberInfo.constellation}
-            </Text>
-          </div>
-          <div className="flex items-center space-x-3 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200">
-            <TeamOutlined className="text-blue-600 text-lg" />
-            <Text className="text-sm font-medium text-gray-700">
-              {memberInfo.groupcode}
-            </Text>
-          </div>
-        </div>
-
-        {/* Status Tags */}
-        <div className="px-4 pb-4 pt-2 border-t border-gray-100">
-          <div className="flex flex-wrap gap-2 justify-center">
+          {/* Status Tags with Japanese Aesthetic */}
+          <div className="flex gap-3 justify-center mt-4">
             {memberInfo.pick && (
               <Tag
                 icon={<CrownOutlined />}
-                color="purple"
-                className="rounded-full px-3 py-1 text-xs font-medium border-0 shadow-sm"
+                className="rounded-full px-4 py-1 border-0 bg-amber-50 text-amber-700"
               >
                 {memberInfo.pick}
               </Tag>
@@ -120,47 +75,89 @@ const MemberProfile = () => {
             {memberInfo.god && (
               <Tag
                 icon={<FireOutlined />}
-                color="gold"
-                className="rounded-full px-3 py-1 text-xs font-medium border-0 shadow-sm"
+                className="rounded-full px-4 py-1 border-0 bg-purple-50 text-purple-700"
               >
                 {memberInfo.god}
               </Tag>
             )}
-            {memberInfo.under && (
-              <Tag
-                color="blue"
-                className="rounded-full px-3 py-1 text-xs font-medium border-0 shadow-sm"
-              >
-                {memberInfo.under}
-              </Tag>
-            )}
           </div>
         </div>
-      </ProCard>
+      </div>
 
-      {/* Quick Stats Card */}
-      <ProCard
-        title={
-          <span className="text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            ブログ統計
-          </span>
-        }
-        size="small"
-        className="bg-white/90 backdrop-blur-sm border-0 shadow-lg"
-        bodyStyle={{ padding: "12px" }}
-      >
-        <div className="grid grid-cols-2 gap-3 text-center">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100">
-            <div className="text-lg font-bold text-purple-600">45</div>
-            <div className="text-xs text-gray-600">記事数</div>
+      {/* Profile Details - Japanese Minimal Style */}
+      <div className="px-6 py-4 bg-gray-50/50">
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 gap-3">
+          {/* Birthday */}
+          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-purple-50">
+                <CalendarOutlined className="text-purple-500" />
+              </div>
+              <Text className="text-gray-500">誕生日</Text>
+            </div>
+            <Text className="font-medium text-gray-700">
+              {memberInfo.birthday}
+            </Text>
           </div>
-          <div className="p-2 rounded-lg bg-gradient-to-br from-pink-50 to-pink-100">
-            <div className="text-lg font-bold text-pink-600">1.2K</div>
-            <div className="text-xs text-gray-600">いいね</div>
+
+          {/* Blood Type */}
+          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-pink-50">
+                <HeartOutlined className="text-pink-500" />
+              </div>
+              <Text className="text-gray-500">血液型</Text>
+            </div>
+            <Text className="font-medium text-gray-700">
+              {memberInfo.blood}
+            </Text>
           </div>
+
+          {/* Constellation */}
+          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50">
+                <StarOutlined className="text-amber-500" />
+              </div>
+              <Text className="text-gray-500">星座</Text>
+            </div>
+            <Text className="font-medium text-gray-700">
+              {memberInfo.constellation}
+            </Text>
+          </div>
+
+          {/* Generation */}
+          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50">
+                <TeamOutlined className="text-blue-500" />
+              </div>
+              <Text className="text-gray-500">期別</Text>
+            </div>
+            <Text className="font-medium text-gray-700">
+              {memberInfo.groupcode}
+            </Text>
+          </div>
+
+          {/* Official Profile Link */}
+          <a
+            href={memberInfo.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50">
+                <GlobalOutlined className="text-gray-500" />
+              </div>
+              <Text className="text-gray-500">公式プロフィール</Text>
+            </div>
+            <Text className="text-gray-400">→</Text>
+          </a>
         </div>
-      </ProCard>
-    </div>
+      </div>
+    </ProCard>
   );
 };
 

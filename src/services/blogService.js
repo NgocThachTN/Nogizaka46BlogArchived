@@ -44,25 +44,28 @@ const fetchBlogPage = async (page) => {
     const $ = cheerio.load(response.data);
     const blogs = [];
 
-    $("div.bl--list").each((_, element) => {
-      const link = $(element).find("a").attr("href");
+    $("a.bl--card").each((_, element) => {
+      const link = $(element).attr("href");
       const blogId = link.match(/detail\/(\d+)/)[1];
-      const title = $(element).find(".bl--title").text().trim();
-      const date = $(element).find(".bl--date").text().trim();
-      const img = $(element).find("img").attr("src") || "";
+      const title = $(element).find(".bl--card__ttl").text().trim();
+      const date = $(element).find(".bl--card__date").text().trim();
+
+      // Get image from data-src attribute
+      const imgElement = $(element).find(".m--bg.js-bg");
+      const img = imgElement.attr("data-src") || "";
 
       blogs.push({
         id: blogId,
         title,
         date,
-        link: `${BLOG_URL}/detail/${blogId}?cd=MEMBER`,
+        link: `${BASE_URL}${link}`,
         thumbnail: img,
         author: "一ノ瀬 美空",
       });
     });
 
-    // Kiểm tra có trang tiếp theo không
-    const hasNextPage = $(".bl--pg li:last-child a").length > 0;
+    // Kiểm tra có trang tiếp theo không - tìm nút ">" trong pagination
+    const hasNextPage = $(".pager li.next a").length > 0;
 
     return {
       blogs,

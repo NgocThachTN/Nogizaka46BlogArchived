@@ -1,23 +1,39 @@
 import { useNavigate } from "react-router-dom";
-import { Typography, Image, Spin, Empty, Button, Avatar, Tooltip, Tag } from "antd";
+import {
+  Typography,
+  Image,
+  Spin,
+  Empty,
+  Button,
+  Avatar,
+  Input,
+  Card,
+  Row,
+  Col,
+  Space,
+  Divider,
+} from "antd";
 import {
   CalendarOutlined,
   HeartOutlined,
   ReadOutlined,
   ClockCircleOutlined,
-  StarOutlined,
+  EyeOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
-import { ProList, ProCard, PageContainer } from "@ant-design/pro-components";
+import { PageContainer } from "@ant-design/pro-components";
 import { useState, useEffect } from "react";
 import { fetchAllBlogs, getImageUrl } from "../services/blogService";
 
-const { Text, Title, Paragraph } = Typography;
+const { Text, Title } = Typography;
 
 const BlogList = () => {
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
+  const [filteredBlogs, setFilteredBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     loadAllBlogs();
@@ -29,6 +45,7 @@ const BlogList = () => {
       setError(null);
       const allBlogs = await fetchAllBlogs();
       setBlogs(allBlogs);
+      setFilteredBlogs(allBlogs);
     } catch (error) {
       console.error("Error loading blogs:", error);
       setError("Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.");
@@ -37,193 +54,181 @@ const BlogList = () => {
     }
   };
 
+  // Filter blogs based on search text
+  useEffect(() => {
+    let filtered = blogs;
+
+    if (searchText) {
+      filtered = filtered.filter(
+        (blog) =>
+          blog.title.toLowerCase().includes(searchText.toLowerCase()) ||
+          blog.author.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    setFilteredBlogs(filtered);
+  }, [blogs, searchText]);
+
   const handleBlogClick = (id) => {
     navigate(`/blog/${id}`);
   };
 
   if (loading) {
     return (
-      <div
-        style={{
-          padding: "24px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "calc(100vh - 200px)",
-        }}
-      >
-        <Spin size="large" tip="Đang tải dữ liệu..." />
-      </div>
+      <PageContainer>
+        <div className="flex justify-center items-center min-h-96">
+          <Spin size="large" tip="読み込み中..." />
+        </div>
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <div
-        style={{
-          padding: "24px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "calc(100vh - 200px)",
-          gap: "16px",
-        }}
-      >
-        <Title level={4} type="danger">
-          {error}
-        </Title>
-        <Button type="primary" onClick={loadAllBlogs}>
-          Thử lại
-        </Button>
-      </div>
+      <PageContainer>
+        <div className="flex flex-col justify-center items-center min-h-96 space-y-4">
+          <Title level={4} type="danger">
+            {error}
+          </Title>
+          <Button type="primary" onClick={loadAllBlogs}>
+            再試行
+          </Button>
+        </div>
+      </PageContainer>
     );
   }
 
   return (
     <PageContainer
-      className="p-6 min-h-screen"
+      className="bg-gray-50 min-h-screen"
       pageHeaderRender={() => (
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="relative inline-block">
-            <Title className="text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent mb-2 drop-shadow-sm">
-              BLOG
+        <div className="text-center mb-8">
+          <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
+            <div className="flex justify-center items-center mb-4">
+              <Avatar
+                size={64}
+                src="https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
+                className="shadow-md"
+              />
+            </div>
+
+            <Title level={1} className="text-4xl font-bold text-gray-800 mb-2">
+              Blog
             </Title>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse"></div>
-          </div>
-          <Title
-            level={2}
-            className="text-gray-600 font-light tracking-wide mb-4"
-          >
-            一ノ瀬 美空 公式ブログ
-          </Title>
-          <div className="flex justify-center items-center space-x-4 text-sm text-gray-500 mb-6">
-            <Tag
-              icon={<StarOutlined />}
-              color="purple"
-              className="rounded-full px-3 py-1"
-            >
-              最新記事
-            </Tag>
-            <span className="flex items-center space-x-1">
-              <ClockCircleOutlined />
-              <span>毎日更新</span>
-            </span>
+
+            <Title level={3} className="text-gray-600 font-normal mb-6">
+              一ノ瀬 美空 公式ブログ
+            </Title>
+
+            {/* Simple Stats */}
           </div>
         </div>
       )}
     >
-      {blogs.length === 0 ? (
+      {filteredBlogs.length === 0 ? (
         <div className="flex justify-center">
           <Empty
-            description="まだブログ記事がありません"
-            className="bg-white/80 backdrop-blur-sm p-12 rounded-2xl shadow-lg border border-gray-100"
+            description={
+              searchText
+                ? "検索結果が見つかりません"
+                : "まだブログ記事がありません"
+            }
+            className="bg-white p-12 rounded-lg shadow-sm"
           />
         </div>
       ) : (
-        <ProList
-          grid={{ gutter: 16, xs: 1, sm: 2, lg: 3 }}
-          metas={{}}
-          dataSource={blogs}
-          renderItem={(blog, index) => (
-            <ProCard
-              key={blog.id}
-              hoverable
-              onClick={() => handleBlogClick(blog.id)}
-              className="group cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl bg-white/90 backdrop-blur-sm border-0 overflow-hidden"
-              style={{ animationDelay: `${index * 100}ms` }}
-              bodyStyle={{ padding: 0 }}
-            >
-              {/* Image Cover */}
-              <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100">
-                <Image
-                  alt={blog.title}
-                  src={
-                    blog.thumbnail
-                      ? getImageUrl(blog.thumbnail)
-                      : "https://via.placeholder.com/400x200/9c27b0/ffffff?text=No+Image"
-                  }
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  preview={false}
-                  fallback="https://via.placeholder.com/400x200/9c27b0/ffffff?text=No+Image"
-                  onError={(e) => {
-                    e.target.src =
-                      "https://via.placeholder.com/400x200/9c27b0/ffffff?text=No+Image";
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                {/* Date Badge */}
-                <div className="absolute top-3 right-3">
-                  <Tag className="bg-white/90 backdrop-blur-sm border-0 shadow-lg rounded-full px-3 py-1 text-xs font-medium">
-                    {blog.date}
-                  </Tag>
-                </div>
-              </div>
-              {/* Content */}
-              <div className="p-5 space-y-4">
-                {/* Author Info */}
-                <div className="flex items-center space-x-3">
-                  <Avatar
-                    src="https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
-                    size={36}
-                    className="ring-2 ring-purple-100"
-                    onError={(e) => {
-                      e.target.src =
-                        "https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg";
-                    }}
-                  />
-                  <div>
-                    <Text className="text-sm font-medium text-gray-700">
-                      一ノ瀬 美空
-                    </Text>
-                    <div className="flex items-center space-x-1 text-xs text-gray-500">
-                      <ClockCircleOutlined />
-                      <span>{blog.date}</span>
+        <Row gutter={[24, 24]}>
+          {filteredBlogs.map((blog) => (
+            <Col xs={24} sm={12} lg={8} key={blog.id}>
+              <Card
+                hoverable
+                onClick={() => handleBlogClick(blog.id)}
+                className="h-full shadow-sm hover:shadow-md transition-shadow duration-200"
+                cover={
+                  <div className="h-48 overflow-hidden bg-gray-100">
+                    <Image
+                      alt={blog.title}
+                      src={
+                        blog.thumbnail
+                          ? getImageUrl(blog.thumbnail)
+                          : "https://via.placeholder.com/400x200/f0f0f0/666666?text=No+Image"
+                      }
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      preview={false}
+                      fallback="https://via.placeholder.com/400x200/f0f0f0/666666?text=No+Image"
+                    />
+                  </div>
+                }
+              >
+                <div className="space-y-3">
+                  {/* Author Info */}
+                  <div className="flex items-center space-x-2">
+                    <Avatar
+                      src="https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
+                      size={32}
+                    />
+                    <div>
+                      <Text className="text-sm font-medium text-gray-700">
+                        一ノ瀬 美空
+                      </Text>
+                      <div className="flex items-center space-x-1 text-xs text-gray-500">
+                        <CalendarOutlined />
+                        <span>{blog.date}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Title */}
-                <Title
-                  level={5}
-                  className="m-0 text-gray-800 font-semibold leading-snug line-clamp-2 group-hover:text-purple-600 transition-colors duration-200"
-                >
-                  {blog.title}
-                </Title>
+                  {/* Title */}
+                  <Title
+                    level={5}
+                    className="mb-0 text-gray-800 font-semibold leading-tight hover:text-blue-600 transition-colors duration-200"
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      minHeight: "2.5rem",
+                    }}
+                  >
+                    {blog.title}
+                  </Title>
 
-                {/* Action Buttons */}
-                <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                  <div className="flex space-x-4">
-                    <Tooltip title="Read Blog">
+                  <Divider className="my-3" />
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-between items-center">
+                    <Space>
                       <Button
                         type="text"
-                        icon={<ReadOutlined />}
+                        icon={<EyeOutlined />}
                         size="small"
-                        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                      />
-                    </Tooltip>
-                    <Tooltip title="Like">
+                        className="text-gray-500 hover:text-blue-600"
+                      >
+                        閲覧
+                      </Button>
                       <Button
                         type="text"
                         icon={<HeartOutlined />}
                         size="small"
-                        className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
-                      />
-                    </Tooltip>
+                        className="text-gray-500 hover:text-red-500"
+                      >
+                        いいね
+                      </Button>
+                    </Space>
+                    <Button
+                      type="primary"
+                      size="small"
+                      icon={<ReadOutlined />}
+                      className="bg-blue-600 hover:bg-blue-700 border-blue-600"
+                    >
+                      読む
+                    </Button>
                   </div>
-                  <Button
-                    type="primary"
-                    size="small"
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 border-0 rounded-full px-4"
-                  >
-                    読む
-                  </Button>
                 </div>
-              </div>
-            </ProCard>
-          )}
-        />
+              </Card>
+            </Col>
+          ))}
+        </Row>
       )}
     </PageContainer>
   );
