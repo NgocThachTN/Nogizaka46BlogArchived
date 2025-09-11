@@ -13,6 +13,7 @@
     "@ant-design/icons": "^5.4.1",
     "@ant-design/pro-components": "^2.7.12",
     "@emotion/styled": "^11.11.0",
+    "@tailwindcss/postcss": "^4.1.13",
     "antd": "^5.22.4",
     "axios": "^1.6.7",
     "cheerio": "^1.1.0",
