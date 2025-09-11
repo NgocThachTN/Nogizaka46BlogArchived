@@ -1,10 +1,9 @@
-// BlogDetailPro.jsx — React JS + Ant Design Pro (No watermark + Calendar sidebar)
+// BlogDetailPro.jsx — React JS + Ant Design Pro + DeepSeek Translate
 import { useParams, useNavigate } from "react-router-dom";
 import {
   PageContainer,
   ProCard,
   StatisticCard,
-  ProDescriptions,
 } from "@ant-design/pro-components";
 import {
   Card,
@@ -16,43 +15,32 @@ import {
   Select,
   Tooltip,
   message,
-  Tag,
   Divider,
   FloatButton,
   Calendar,
   Badge,
+  Segmented,
 } from "antd";
 import {
   LeftOutlined,
   CalendarOutlined,
   ShareAltOutlined,
   EyeOutlined,
-  FontSizeOutlined,
   LinkOutlined,
   ArrowUpOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import { fetchBlogDetail } from "../services/blogService";
 
-// i18n
-const t = {
-  back: { ja: "一覧へ戻る", en: "Back to List", vi: "Quay lại Danh sách" },
-  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
-  notFound: { ja: "ブログが見つかりません", en: "Blog post not found", vi: "Không tìm thấy bài viết" },
-  share: { ja: "シェア", en: "Share", vi: "Chia sẻ" },
-  copied: { ja: "リンクをコピーしました", en: "Link copied", vi: "Đã sao chép liên kết" },
-  tags: { ja: "タグ", en: "Tags", vi: "Thẻ" },
-  author: { ja: "メンバー", en: "Member", vi: "Thành viên" },
-  published: { ja: "公開日", en: "Published", vi: "Ngày đăng" },
-  readingMode: { ja: "読書モード", en: "Reading Mode", vi: "Chế độ đọc" },
-  normalMode: { ja: "通常モード", en: "Normal Mode", vi: "Bình thường" },
-  nextPost: { ja: "次の記事", en: "Next Post", vi: "Bài tiếp theo" },
-  openSource: { ja: "元ページ", en: "Original", vi: "Trang gốc" },
-  toc: { ja: "目次", en: "Contents", vi: "Mục lục" },
-  readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
-};
+// ⚠️ IMPORT DeepSeek helpers bạn đã viết
+// đổi path cho đúng chỗ bạn lưu file dịch:
+import {
+  translateJapaneseToEnglish,
+  translateJapaneseToVietnamese,
+} from "../api/GeminiTranslate";
 
 const { Title, Text } = Typography;
 dayjs.locale("ja");
@@ -62,16 +50,58 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
-const FONT_SIZES = { sm: 16, md: 18, lg: 20 };
+// size preset — big for JP reading
+const SIZE_PRESETS = {
+  sm: { px: 16, lh: 1.85, h1: 1.9, h2: 1.6, h3: 1.35 },
+  md: { px: 20, lh: 2.0, h1: 2.0, h2: 1.7, h3: 1.45 },
+  lg: { px: 24, lh: 2.1, h1: 2.15, h2: 1.85, h3: 1.6 },
+  xl: { px: 28, lh: 2.2, h1: 2.35, h2: 2.0, h3: 1.7 },
+  xxl: { px: 32, lh: 2.3, h1: 2.55, h2: 2.15, h3: 1.85 },
+};
+
+const t = {
+  back: { ja: "一覧へ戻る", en: "Back to List", vi: "Quay lại Danh sách" },
+  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
+  notFound: {
+    ja: "ブログが見つかりません",
+    en: "Blog post not found",
+    vi: "Không tìm thấy bài viết",
+  },
+  share: { ja: "シェア", en: "Share", vi: "Chia sẻ" },
+  copied: {
+    ja: "リンクをコピーしました",
+    en: "Link copied",
+    vi: "Đã sao chép liên kết",
+  },
+  nextPost: { ja: "次の記事", en: "Next Post", vi: "Bài tiếp theo" },
+  openSource: { ja: "元ページ", en: "Original", vi: "Trang gốc" },
+  toc: { ja: "目次", en: "Contents", vi: "Mục lục" },
+  readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
+};
+
+const LS_KEY_SIZE = "blog:jpFontSize";
+const LS_KEY_TR_EN = "blog:tr:en";
+const LS_KEY_TR_VI = "blog:tr:vi";
+const LS_KEY_TTL_EN = "blog:trttl:en";
+const LS_KEY_TTL_VI = "blog:trttl:vi";
 
 export default function BlogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [language, setLanguage] = useState("ja");
   const [readingMode, setReadingMode] = useState(true);
-  const [fontSizeKey, setFontSizeKey] = useState("md");
+  const [fontSizeKey, setFontSizeKey] = useState(
+    () => localStorage.getItem(LS_KEY_SIZE) || "md"
+  );
+
+  // translated caches
+  const [trHtml, setTrHtml] = useState({ en: "", vi: "" });
+  const [trTitle, setTrTitle] = useState({ en: "", vi: "" });
+  const [translating, setTranslating] = useState(false);
+
   const contentRef = useRef(null);
 
   const onShare = async () => {
@@ -82,24 +112,38 @@ export default function BlogDetail() {
       message.info(window.location.href);
     }
   };
-
   const onBack = () => navigate("/blog");
 
+  // load blog
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         const data = await fetchBlogDetail(id);
+        console.log("Blog data loaded:", data); // Debug log
+        if (!data) {
+          message.error("Không thể tải nội dung blog. Vui lòng thử lại sau.");
+          return;
+        }
+        if (!data.content) {
+          message.warning("Blog không có nội dung.");
+        }
         setBlog(data);
       } catch (e) {
         console.error("Error loading blog:", e);
+        message.error("Lỗi khi tải blog: " + (e.message || "Không xác định"));
       } finally {
         setLoading(false);
       }
     })();
   }, [id]);
 
-  // Build TOC + plain text for read time
+  // persist size
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_SIZE, fontSizeKey);
+  }, [fontSizeKey]);
+
+  // table of contents & readtime
   const { toc, plainText } = useMemo(() => {
     if (!blog?.content) return { toc: [], plainText: "" };
     const temp = document.createElement("div");
@@ -112,18 +156,108 @@ export default function BlogDetail() {
     return { toc: list, plainText: temp.textContent || "" };
   }, [blog?.content]);
 
-  // ~600 JP chars/min
   const readMinutes = useMemo(() => {
     const n = plainText.length || 0;
     return Math.max(1, Math.ceil(n / 600));
   }, [plainText]);
 
-  // Parse blog date once
   const blogDay = useMemo(() => {
     if (!blog?.date) return null;
     const d = dayjs(blog.date);
     return d.isValid() ? d : null;
   }, [blog?.date]);
+
+  // Translate when language changes
+  useEffect(() => {
+    (async () => {
+      if (!blog?.content || language === "ja") return;
+
+      console.log("Starting translation for:", {
+        language,
+        contentLength: blog.content.length,
+        title: blog.title,
+      });
+
+      // try get from localStorage cache per post id
+      const keyHtml =
+        (language === "en" ? LS_KEY_TR_EN : LS_KEY_TR_VI) + `:${id}`;
+      const keyTtl =
+        (language === "en" ? LS_KEY_TTL_EN : LS_KEY_TTL_VI) + `:${id}`;
+      const cachedHtml = localStorage.getItem(keyHtml);
+      const cachedTtl = localStorage.getItem(keyTtl);
+
+      if (cachedHtml && cachedTtl) {
+        console.log("Using cached translation");
+        setTrHtml((s) => ({ ...s, [language]: cachedHtml }));
+        setTrTitle((s) => ({ ...s, [language]: cachedTtl }));
+        return;
+      }
+
+      try {
+        setTranslating(true);
+        console.log("Translating content...");
+
+        // Translate title first
+        const titleOut =
+          language === "en"
+            ? await translateJapaneseToEnglish(blog.title || "")
+            : await translateJapaneseToVietnamese(blog.title || "");
+
+        console.log("Title translated:", titleOut);
+
+        // Đăng ký callback để cập nhật nội dung theo từng phần
+        let translatedContent = "";
+        const updateProgress = (translatedChunk, isLast) => {
+          if (!translatedChunk) return;
+
+          // Làm sạch chunk trước khi thêm vào
+          const cleanedChunk = translatedChunk
+            .replace(/```html/g, "")
+            .replace(/```/g, "")
+            .trim();
+
+          translatedContent += cleanedChunk;
+          setTrHtml((prevState) => {
+            const newState = { ...prevState };
+            newState[language] = translatedContent; // Sử dụng toàn bộ nội dung đã dịch sạch
+
+            if (isLast) {
+              localStorage.setItem(keyHtml, translatedContent);
+              message.success("Dịch thành công!");
+            }
+
+            return newState;
+          });
+        };
+
+        // Then translate content
+        console.log("Starting content translation...");
+        await (language === "en"
+          ? translateJapaneseToEnglish(blog.content, updateProgress)
+          : translateJapaneseToVietnamese(blog.content, updateProgress));
+
+        console.log("Content translated, length:", translatedContent.length);
+
+        // Kiểm tra kết quả dịch tiêu đề
+        const safeTtl = (titleOut || "").trim();
+        if (!safeTtl) {
+          throw new Error("Không nhận được kết quả dịch tiêu đề");
+        }
+
+        // Lưu tiêu đề đã dịch
+        setTrTitle((s) => ({ ...s, [language]: safeTtl }));
+        localStorage.setItem(keyTtl, safeTtl);
+
+        message.success("Dịch thành công!");
+      } catch (err) {
+        console.error("Translation failed:", err);
+        message.error(err.message || "Lỗi dịch. Vui lòng thử lại sau.");
+        // Giữ nguyên nội dung đã dịch được (nếu có)
+      } finally {
+        setTranslating(false);
+      }
+    })();
+  }, [language, blog?.content, blog?.title, id]);
 
   if (loading) {
     return (
@@ -148,15 +282,39 @@ export default function BlogDetail() {
     );
   }
 
-  const fontPx = FONT_SIZES[fontSizeKey] || FONT_SIZES.md;
+  const sz = SIZE_PRESETS[fontSizeKey] || SIZE_PRESETS.md;
+
+  // Hàm để làm sạch kết quả hiển thị
+  const cleanDisplayText = (text) => {
+    if (!text) return "";
+    return text
+      .replace(/```html/g, "")
+      .replace(/```/g, "")
+      .trim();
+  };
+
+  // pick title/content by language
+  const displayTitle =
+    language === "ja"
+      ? blog.title
+      : cleanDisplayText(trTitle[language]) || blog.title;
+
+  const displayContent =
+    language === "ja" || !trHtml[language]
+      ? blog.content
+      : cleanDisplayText(trHtml[language]);
 
   return (
     <PageContainer
       header={{
         title: (
           <Space direction="vertical" size={2} style={jpFont}>
-            <Text type="secondary" style={{ letterSpacing: 2 }}>ブログ記事</Text>
-            <Title level={2} style={{ margin: 0, lineHeight: 1.25 }}>{blog.title}</Title>
+            <Text type="secondary" style={{ letterSpacing: 2 }}>
+              ブログ記事
+            </Text>
+            <Title level={2} style={{ margin: 0, lineHeight: 1.25 }}>
+              {displayTitle}
+            </Title>
           </Space>
         ),
         extra: [
@@ -171,24 +329,25 @@ export default function BlogDetail() {
               { value: "vi", label: "Tiếng Việt" },
             ]}
           />,
-          <Tooltip key="mode" title={readingMode ? t.normalMode[language] : t.readingMode[language]}>
+          <Tooltip key="mode" title={readingMode ? "通常モード" : "読書モード"}>
             <Button
               icon={<EyeOutlined />}
-              type={readingMode ? "primary" : "default"}
-              onClick={() => setReadingMode(v => !v)}
+              type={readingMode ? "default" : "primary"}
+              onClick={() => setReadingMode((v) => !v)}
             />
           </Tooltip>,
-          <Select
-            key="font"
-            value={fontSizeKey}
-            onChange={setFontSizeKey}
-            style={{ width: 140 }}
+          <Segmented
+            key="seg-size"
             options={[
-              { value: "sm", label: "字小さめ" },
-              { value: "md", label: "標準" },
-              { value: "lg", label: "字大きめ" },
+              { label: "小", value: "sm" },
+              { label: "標準", value: "md" },
+              { label: "大", value: "lg" },
+              { label: "特大", value: "xl" },
+              { label: "特特大", value: "xxl" },
             ]}
-            suffixIcon={<FontSizeOutlined />}
+            value={fontSizeKey}
+            onChange={(v) => setFontSizeKey(v)}
+            style={{ marginLeft: 8 }}
           />,
           <Button key="share" icon={<ShareAltOutlined />} onClick={onShare}>
             {t.share[language]}
@@ -198,13 +357,42 @@ export default function BlogDetail() {
           </Button>,
         ],
       }}
-      // ❌ No watermark anymore
       token={{ colorBgPageContainer: readingMode ? "#fafafa" : undefined }}
     >
       <ProCard ghost gutter={[16, 16]} wrap>
         {/* Main content */}
         <ProCard colSpan={{ xs: 24, md: 16, xl: 17 }} ghost>
-          <Card style={{ borderRadius: 16, ...jpFont }} bodyStyle={{ padding: readingMode ? 32 : 24 }}>
+          <Card
+            style={{ borderRadius: 16, ...jpFont }}
+            bodyStyle={{ padding: readingMode ? 32 : 24, position: "relative" }}
+          >
+            {/* small overlay spinner when translating */}
+            {translating && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "rgba(255,255,255,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 2,
+                  borderRadius: 16,
+                }}
+              >
+                <Space>
+                  <LoadingOutlined />
+                  <span>
+                    {language === "vi"
+                      ? "Đang dịch..."
+                      : language === "en"
+                      ? "Translating..."
+                      : "翻訳中..."}
+                  </span>
+                </Space>
+              </div>
+            )}
+
             <Space size={16} align="center" style={{ marginBottom: 12 }}>
               <Avatar
                 src={
@@ -214,7 +402,9 @@ export default function BlogDetail() {
                 size={64}
               />
               <div>
-                <Text strong style={{ fontSize: 16 }}>{blog.author}</Text>
+                <Text strong style={{ fontSize: 16 }}>
+                  {blog.author}
+                </Text>
                 <div style={{ color: "#666", marginTop: 2 }}>
                   <CalendarOutlined style={{ marginRight: 8 }} />
                   <Text>{blog.date}</Text>
@@ -224,47 +414,62 @@ export default function BlogDetail() {
 
             <Divider style={{ margin: "12px 0 20px" }} />
 
-            {/* Content */}
+            {/* Content (JP/Translated) */}
             <div
               ref={contentRef}
               className="jp-prose"
               style={{
-                fontSize: fontPx,
-                lineHeight: readingMode ? 1.95 : 1.8,
-                letterSpacing: 0.2,
+                fontSize: sz.px,
+                lineHeight: sz.lh,
+                letterSpacing: 0.3,
               }}
-              dangerouslySetInnerHTML={{ __html: blog.content }}
+              dangerouslySetInnerHTML={{ __html: displayContent }}
             />
           </Card>
 
           {/* Bottom nav */}
           <Space style={{ marginTop: 16 }}>
-            <Button icon={<LeftOutlined />} onClick={onBack}>{t.back[language]}</Button>
+            <Button icon={<LeftOutlined />} onClick={onBack}>
+              {t.back[language]}
+            </Button>
             {blog.nextPost && (
-              <Button type="primary" onClick={() => navigate(`/blog/${blog.nextPost.id}`)}>
+              <Button
+                type="primary"
+                onClick={() => navigate(`/blog/${blog.nextPost.id}`)}
+              >
                 {t.nextPost[language]}
               </Button>
             )}
             {blog.originalUrl && (
-              <Button icon={<LinkOutlined />} onClick={() => window.open(blog.originalUrl, "_blank")}>
+              <Button
+                icon={<LinkOutlined />}
+                onClick={() => window.open(blog.originalUrl, "_blank")}
+              >
                 {t.openSource[language]}
               </Button>
             )}
           </Space>
         </ProCard>
 
-        {/* Side column with Calendar */}
-        <ProCard colSpan={{ xs: 24, md: 8, xl: 7 }} ghost direction="column" gutter={[16, 16]}>
+        {/* Sidebar */}
+        <ProCard
+          colSpan={{ xs: 24, md: 8, xl: 7 }}
+          ghost
+          direction="column"
+          gutter={[16, 16]}
+        >
           <StatisticCard
             style={{ borderRadius: 16 }}
-            statistic={{ title: t.readTime[language], value: `${readMinutes} 分` }}
+            statistic={{
+              title: t.readTime[language],
+              value: `${readMinutes} 分`,
+            }}
           />
 
           <Card title="カレンダー" style={{ borderRadius: 16 }}>
             <Calendar
               fullscreen={false}
               value={blogDay || dayjs()}
-              // highlight the blog date cell
               dateFullCellRender={(value) => {
                 const isBlogDay = blogDay && value.isSame(blogDay, "date");
                 return (
@@ -275,15 +480,18 @@ export default function BlogDetail() {
                       textAlign: "center",
                       borderRadius: 8,
                       fontWeight: isBlogDay ? 700 : 500,
-                      background: isBlogDay ? "rgba(109, 40, 217, 0.12)" : undefined,
-                      border: isBlogDay ? "1px solid rgba(109,40,217,0.35)" : "1px solid transparent",
+                      background: isBlogDay
+                        ? "rgba(109, 40, 217, 0.12)"
+                        : undefined,
+                      border: isBlogDay
+                        ? "1px solid rgba(109,40,217,0.35)"
+                        : "1px solid transparent",
                     }}
                   >
                     {value.date()}
                   </div>
                 );
               }}
-              // little dot badge on the blog day
               cellRender={(current) => {
                 const isBlogDay = blogDay && current.isSame(blogDay, "date");
                 if (isBlogDay) {
@@ -300,16 +508,6 @@ export default function BlogDetail() {
             />
           </Card>
 
-          <Card title={t.tags[language]} style={{ borderRadius: 16 }}>
-            <Space wrap>
-              <Tag color="purple">ブログ</Tag>
-              {blog.tags?.map((tag, i) => (
-                <Tag key={i} bordered>{tag}</Tag>
-              ))}
-            </Space>
-          </Card>
-
-          {/* TOC */}
           {toc.length > 0 && (
             <Card title={t.toc[language]} style={{ borderRadius: 16 }}>
               <Space direction="vertical" style={{ width: "100%" }} size={6}>
@@ -319,12 +517,17 @@ export default function BlogDetail() {
                     type="text"
                     style={{
                       justifyContent: "flex-start",
-                      paddingLeft: h.level === "H1" ? 0 : h.level === "H2" ? 8 : 16,
+                      paddingLeft:
+                        h.level === "H1" ? 0 : h.level === "H2" ? 8 : 16,
                       ...jpFont,
                     }}
                     onClick={() => {
                       const el = document.getElementById(h.id);
-                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      if (el)
+                        el.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
                     }}
                   >
                     {h.text}
@@ -333,49 +536,30 @@ export default function BlogDetail() {
               </Space>
             </Card>
           )}
-
-          {/* Member mini card */}
-          <ProDescriptions title={t.author[language]} column={1} style={{ borderRadius: 16 }}>
-            <ProDescriptions.Item label="">
-              <Space>
-                <Avatar
-                  src={
-                    blog.memberImage ||
-                    "https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
-                  }
-                  size={48}
-                />
-                <div>
-                  <div style={{ fontWeight: 600 }}>{blog.author}</div>
-                  <div style={{ color: "#999", marginTop: 4 }}>
-                    {t.published[language]}: {blog.date}
-                  </div>
-                </div>
-              </Space>
-            </ProDescriptions.Item>
-          </ProDescriptions>
         </ProCard>
       </ProCard>
 
-      {/* Back to top */}
       <FloatButton.BackTop icon={<ArrowUpOutlined />} />
 
-      {/* Minimal JP prose styles */}
+      {/* prose base */}
       <style>{`
-        .jp-prose h1 { font-size: 1.8em; margin: 0.8em 0 0.5em; font-weight: 700; }
-        .jp-prose h2 { font-size: 1.5em; margin: 0.9em 0 0.5em; font-weight: 700; }
-        .jp-prose h3 { font-size: 1.25em; margin: 0.9em 0 0.4em; font-weight: 700; }
-        .jp-prose p { color: #374151; margin: 0.6em 0; text-align: justify; }
-        .jp-prose a { color: #6b21a8; text-decoration: none; }
+        .jp-prose h1 { font-weight: 700; margin: 0.9em 0 0.6em; }
+        .jp-prose h2 { font-weight: 700; margin: 0.9em 0 0.5em; }
+        .jp-prose h3 { font-weight: 700; margin: 0.9em 0 0.4em; }
+        .jp-prose p  { color: #374151; margin: 0.75em 0; text-align: justify; }
+        .jp-prose a  { color: #6b21a8; text-decoration: none; }
         .jp-prose a:hover { text-decoration: underline; }
         .jp-prose img { border-radius: 12px; display: block; margin: 16px auto; max-width: 100%; }
         .jp-prose blockquote { border-left: 3px solid #e9d5ff; background: #faf5ff; padding: 8px 12px; border-radius: 8px; color: #4b5563; }
         .jp-prose strong { color: #111827; }
-        .jp-prose ruby { font-size: 0.95em; }
-        .jp-prose rt { font-size: 0.65em; color: #6b7280; }
-        .jp-prose ul { padding-left: 1.2em; }
-        .jp-prose ol { padding-left: 1.2em; }
+        .jp-prose ul, .jp-prose ol { padding-left: 1.2em; }
         .jp-prose code { background: #f5f5f5; border-radius: 6px; padding: 0 6px; }
+      `}</style>
+      {/* dynamic heading scale */}
+      <style>{`
+        .jp-prose h1 { font-size: ${SIZE_PRESETS[fontSizeKey].h1}em; }
+        .jp-prose h2 { font-size: ${SIZE_PRESETS[fontSizeKey].h2}em; }
+        .jp-prose h3 { font-size: ${SIZE_PRESETS[fontSizeKey].h3}em; }
       `}</style>
     </PageContainer>
   );
