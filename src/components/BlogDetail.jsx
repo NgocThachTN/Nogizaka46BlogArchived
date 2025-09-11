@@ -7,7 +7,7 @@ import {
   ShareAltOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
-import { fetchBlogDetail, getImageUrl } from "../services/blogService";
+import { fetchBlogDetail } from "../services/blogService";
 
 const { Title, Text } = Typography;
 
