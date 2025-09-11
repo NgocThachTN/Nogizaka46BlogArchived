@@ -6,15 +6,24 @@ import {
 } from "react-router-dom";
 import { ProLayout } from "@ant-design/pro-components";
 import { ConfigProvider, theme } from "antd";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import BlogList from "./components/BlogList";
 import BlogDetail from "./components/BlogDetail";
 import MemberProfile from "./components/MemberProfile";
 import "./App.css";
 
 function App() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
   useEffect(() => {
     document.title = "Nogizaka46 Blog Archive";
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
@@ -58,9 +67,6 @@ function App() {
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">N46</span>
                 </div>
-                <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Nogizaka46 Blog
-                </span>
               </div>
             }
             logo={false}
@@ -68,33 +74,18 @@ function App() {
             collapsed={false}
             siderWidth={320}
             headerHeight={72}
-            menuRender={() => (
-              <div className="p-4 h-full overflow-y-auto">
-                <MemberProfile />
-              </div>
-            )}
-            headerRender={() => (
-              <div className="flex items-center justify-between w-full px-6 py-4 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold">N46</span>
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      Nogizaka46 Blog
-                    </h1>
-                    <p className="text-sm text-gray-600">
-                      一ノ瀬 美空 公式ブログ
-                    </p>
-                  </div>
+            menuRender={() => {
+              return !isMobile ? (
+                <div className="p-4 h-full overflow-y-auto">
+                  <MemberProfile />
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-700">
-                      アーカイブ
-                    </p>
-                    <p className="text-xs text-gray-500">Blog Archive</p>
-                  </div>
+              ) : null;
+            }}
+            collapsed={isMobile}
+            headerRender={() => (
+              <div className="flex items-center w-full px-6 py-4 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold">N46</span>
                 </div>
               </div>
             )}

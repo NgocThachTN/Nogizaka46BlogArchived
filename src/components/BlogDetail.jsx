@@ -34,6 +34,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import { fetchBlogDetail } from "../services/blogService";
+import BlogDetailMobile from "./BlogDetailMobile";
 
 // ⚠️ IMPORT DeepSeek helpers bạn đã viết
 // đổi path cho đúng chỗ bạn lưu file dịch:
@@ -101,8 +102,26 @@ export default function BlogDetail() {
   const [trHtml, setTrHtml] = useState({ en: "", vi: "" });
   const [trTitle, setTrTitle] = useState({ en: "", vi: "" });
   const [translating, setTranslating] = useState(false);
-
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const contentRef = useRef(null);
+
+  // Hàm để làm sạch kết quả hiển thị
+  const cleanDisplayText = (text) => {
+    if (!text) return "";
+    return text
+      .replace(/```html/g, "")
+      .replace(/```/g, "")
+      .trim();
+  };
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const onShare = async () => {
     try {
@@ -259,6 +278,33 @@ export default function BlogDetail() {
     })();
   }, [language, blog?.content, blog?.title, id]);
 
+  // Pick title/content by language
+  const displayTitle =
+    language === "ja"
+      ? blog?.title
+      : cleanDisplayText(trTitle[language]) || blog?.title;
+
+  const displayContent =
+    language === "ja" || !trHtml[language]
+      ? blog?.content
+      : cleanDisplayText(trHtml[language]);
+
+  // Render mobile view
+  if (isMobile) {
+    return (
+      <BlogDetailMobile
+        blog={blog}
+        loading={loading}
+        translating={translating}
+        language={language}
+        setLanguage={setLanguage}
+        displayTitle={displayTitle}
+        displayContent={displayContent}
+      />
+    );
+  }
+
+  // Desktop loading state
   if (loading) {
     return (
       <PageContainer header={{ title: t.loading[language] }}>
@@ -269,6 +315,7 @@ export default function BlogDetail() {
     );
   }
 
+  // Desktop not found state
   if (!blog) {
     return (
       <PageContainer header={{ title: t.notFound[language] }}>
@@ -283,26 +330,6 @@ export default function BlogDetail() {
   }
 
   const sz = SIZE_PRESETS[fontSizeKey] || SIZE_PRESETS.md;
-
-  // Hàm để làm sạch kết quả hiển thị
-  const cleanDisplayText = (text) => {
-    if (!text) return "";
-    return text
-      .replace(/```html/g, "")
-      .replace(/```/g, "")
-      .trim();
-  };
-
-  // pick title/content by language
-  const displayTitle =
-    language === "ja"
-      ? blog.title
-      : cleanDisplayText(trTitle[language]) || blog.title;
-
-  const displayContent =
-    language === "ja" || !trHtml[language]
-      ? blog.content
-      : cleanDisplayText(trHtml[language]);
 
   return (
     <PageContainer
