@@ -12,6 +12,7 @@ import {
   Col,
   Space,
   Divider,
+  Pagination,
 } from "antd";
 import {
   CalendarOutlined,
@@ -34,6 +35,8 @@ const BlogList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 9;
 
   useEffect(() => {
     loadAllBlogs();
@@ -67,6 +70,7 @@ const BlogList = () => {
     }
 
     setFilteredBlogs(filtered);
+    setCurrentPage(1); // Reset to first page when search changes
   }, [blogs, searchText]);
 
   const handleBlogClick = (id) => {
@@ -125,110 +129,132 @@ const BlogList = () => {
         </div>
       )}
     >
-      {filteredBlogs.length === 0 ? (
-        <div className="flex justify-center">
-          <Empty
-            description={
-              searchText
-                ? "検索結果が見つかりません"
-                : "まだブログ記事がありません"
-            }
-            className="bg-white p-12 rounded-lg shadow-sm"
-          />
-        </div>
-      ) : (
-        <Row gutter={[24, 24]}>
-          {filteredBlogs.map((blog) => (
-            <Col xs={24} sm={12} lg={8} key={blog.id}>
-              <Card
-                hoverable
-                onClick={() => handleBlogClick(blog.id)}
-                className="h-full shadow-sm hover:shadow-md transition-shadow duration-200"
-                cover={
-                  <div className="h-48 overflow-hidden bg-gray-100">
-                    <Image
-                      alt={blog.title}
-                      src={
-                        blog.thumbnail
-                          ? getImageUrl(blog.thumbnail)
-                          : "https://via.placeholder.com/400x200/f0f0f0/666666?text=No+Image"
-                      }
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      preview={false}
-                      fallback="https://via.placeholder.com/400x200/f0f0f0/666666?text=No+Image"
-                    />
-                  </div>
-                }
-              >
-                <div className="space-y-3">
-                  {/* Author Info */}
-                  <div className="flex items-center space-x-2">
-                    <Avatar
-                      src="https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
-                      size={32}
-                    />
-                    <div>
-                      <Text className="text-sm font-medium text-gray-700">
-                        一ノ瀬 美空
-                      </Text>
-                      <div className="flex items-center space-x-1 text-xs text-gray-500">
-                        <CalendarOutlined />
-                        <span>{blog.date}</span>
+      {/* Calculate current page data */}
+      {(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const currentPageData = filteredBlogs.slice(
+          startIndex,
+          startIndex + pageSize
+        );
+
+        return currentPageData.length === 0 ? (
+          <div className="flex justify-center">
+            <Empty
+              description={
+                searchText
+                  ? "検索結果が見つかりません"
+                  : "まだブログ記事がありません"
+              }
+              className="bg-white p-12 rounded-lg shadow-sm"
+            />
+          </div>
+        ) : (
+          <Row gutter={[24, 24]}>
+            {currentPageData.map((blog) => (
+              <Col xs={24} sm={12} lg={8} key={blog.id}>
+                <Card
+                  hoverable
+                  onClick={() => handleBlogClick(blog.id)}
+                  className="h-full shadow-sm hover:shadow-md transition-shadow duration-200"
+                  cover={
+                    <div className="h-48 overflow-hidden bg-gray-100">
+                      <Image
+                        alt={blog.title}
+                        src={
+                          blog.thumbnail
+                            ? getImageUrl(blog.thumbnail)
+                            : "https://via.placeholder.com/400x200/f0f0f0/666666?text=No+Image"
+                        }
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        preview={false}
+                        fallback="https://via.placeholder.com/400x200/f0f0f0/666666?text=No+Image"
+                      />
+                    </div>
+                  }
+                >
+                  <div className="space-y-3">
+                    {/* Author Info */}
+                    <div className="flex items-center space-x-2">
+                      <Avatar
+                        src="https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
+                        size={32}
+                      />
+                      <div>
+                        <Text className="text-sm font-medium text-gray-700">
+                          一ノ瀬 美空
+                        </Text>
+                        <div className="flex items-center space-x-1 text-xs text-gray-500">
+                          <CalendarOutlined />
+                          <span>{blog.date}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Title */}
-                  <Title
-                    level={5}
-                    className="mb-0 text-gray-800 font-semibold leading-tight hover:text-blue-600 transition-colors duration-200"
-                    style={{
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                      minHeight: "2.5rem",
-                    }}
-                  >
-                    {blog.title}
-                  </Title>
-
-                  <Divider className="my-3" />
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-between items-center">
-                    <Space>
-                      <Button
-                        type="text"
-                        icon={<EyeOutlined />}
-                        size="small"
-                        className="text-gray-500 hover:text-blue-600"
-                      >
-                        閲覧
-                      </Button>
-                      <Button
-                        type="text"
-                        icon={<HeartOutlined />}
-                        size="small"
-                        className="text-gray-500 hover:text-red-500"
-                      >
-                        いいね
-                      </Button>
-                    </Space>
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<ReadOutlined />}
-                      className="bg-blue-600 hover:bg-blue-700 border-blue-600"
+                    {/* Title */}
+                    <Title
+                      level={5}
+                      className="mb-0 text-gray-800 font-semibold leading-tight hover:text-blue-600 transition-colors duration-200"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        minHeight: "2.5rem",
+                      }}
                     >
-                      読む
-                    </Button>
+                      {blog.title}
+                    </Title>
+
+                    <Divider className="my-3" />
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-between items-center">
+                      <Space>
+                        <Button
+                          type="text"
+                          icon={<EyeOutlined />}
+                          size="small"
+                          className="text-gray-500 hover:text-blue-600"
+                        >
+                          閲覧
+                        </Button>
+                        <Button
+                          type="text"
+                          icon={<HeartOutlined />}
+                          size="small"
+                          className="text-gray-500 hover:text-red-500"
+                        >
+                          いいね
+                        </Button>
+                      </Space>
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<ReadOutlined />}
+                        className="bg-blue-600 hover:bg-blue-700 border-blue-600"
+                      >
+                        読む
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        );
+      })()}
+
+      {/* Pagination */}
+      {filteredBlogs.length > 0 && (
+        <div className="mt-8 flex justify-center">
+          <Pagination
+            current={currentPage}
+            total={filteredBlogs.length}
+            pageSize={pageSize}
+            onChange={(page) => setCurrentPage(page)}
+            showSizeChanger={false}
+          />
+        </div>
       )}
     </PageContainer>
   );
