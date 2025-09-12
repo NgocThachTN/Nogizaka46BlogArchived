@@ -146,24 +146,34 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // Handle content updates
+  // Handle content updates with smooth transitions
   useEffect(() => {
     if (displayContent && !translating) {
       // Reset read progress immediately
       setReadPct(0);
 
-      // Force scroll to top with a small delay to ensure DOM is updated
-      const scrollToTop = () => {
-        if (scrollWrapRef.current) {
-          // Force reflow to ensure DOM is updated
-          scrollWrapRef.current.offsetHeight;
-          // Instant scroll to top
-          scrollWrapRef.current.scrollTop = 0;
-        }
-      };
+      // Smoother scroll to top handling
+      if (scrollWrapRef.current) {
+        // Preserve existing images temporarily
+        const images = scrollWrapRef.current.getElementsByTagName('img');
+        Array.from(images).forEach(img => {
+          if (img.complete && img.getAttribute('data-loaded') === 'true') {
+            img.style.transition = 'none';
+            img.style.opacity = '1';
+          }
+        });
 
-      // Use setTimeout to ensure DOM is fully updated
-      setTimeout(scrollToTop, 0);
+        // Scroll to top smoothly
+        scrollWrapRef.current.style.scrollBehavior = 'instant';
+        scrollWrapRef.current.scrollTop = 0;
+        
+        // Reset scroll behavior after scroll
+        requestAnimationFrame(() => {
+          if (scrollWrapRef.current) {
+            scrollWrapRef.current.style.scrollBehavior = 'smooth';
+          }
+        });
+      }
     }
   }, [displayContent, translating]);
 
@@ -322,31 +332,48 @@ export default function BlogDetailMobile({
     }
   }, []);
 
-  // Handle image loading
+  // Enhanced image loading with state persistence
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Mark images as loaded when they finish loading
+    const imageLoadCache = new Map();
+    
+    // Enhanced image loading handler with state persistence
     const markImagesLoaded = () => {
       const images = wrap.getElementsByTagName("img");
       Array.from(images).forEach((img) => {
+        const src = img.getAttribute('src');
+        
+        // Check if image was previously loaded
+        if (src && imageLoadCache.has(src)) {
+          img.setAttribute("data-loaded", "true");
+          img.style.opacity = "1";
+          return;
+        }
+
         if (img.complete) {
           img.setAttribute("data-loaded", "true");
+          if (src) imageLoadCache.set(src, true);
         } else {
-          img.onload = () => img.setAttribute("data-loaded", "true");
+          img.style.opacity = "0";
+          img.onload = () => {
+            img.setAttribute("data-loaded", "true");
+            img.style.opacity = "1";
+            if (src) imageLoadCache.set(src, true);
+          };
         }
       });
     };
 
-    // Setup scroll handler
+    // Setup scroll handler with passive flag for better performance
     wrap.addEventListener("scroll", onScroll, { passive: true });
 
-    // Initialize
+    // Initialize handlers
     onScroll();
     markImagesLoaded();
 
-    // Cleanup
+    // Enhanced cleanup
     return () => {
       wrap.removeEventListener("scroll", onScroll);
       const images = wrap.getElementsByTagName("img");
@@ -768,14 +795,16 @@ export default function BlogDetailMobile({
           .jp-prose img:not([data-loaded]) {
             min-height: 200px;
             background: rgba(0,0,0,0.05);
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+            will-change: opacity;
           }
           
-          /* Smooth image loading */
+          /* Enhanced smooth image loading */
           .jp-prose img[data-loaded="true"] {
-            opacity: 1;
-            transition: opacity 0.3s ease;
+            opacity: 1 !important;
+            transition: opacity 0.3s ease-out;
+            will-change: opacity;
           }
           .jp-prose p {
             margin: 0.85em 0;
