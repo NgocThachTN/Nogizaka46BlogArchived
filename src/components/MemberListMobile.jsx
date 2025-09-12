@@ -14,6 +14,7 @@ import {
   Card,
   message,
   Affix,
+  Collapse,
 } from "antd";
 import {
   PageContainer,
@@ -24,6 +25,8 @@ import {
   SearchOutlined,
   FilterOutlined,
   StarOutlined,
+  DownOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 
 /** Typography */
@@ -36,7 +39,15 @@ const jpFont = {
 };
 
 /** Gen order */
-const GEN_ORDER = ["6期生", "5期生", "4期生", "3期生", "2期生", "1期生", "その他"];
+const GEN_ORDER = [
+  "6期生",
+  "5期生",
+  "4期生",
+  "3期生",
+  "2期生",
+  "1期生",
+  "その他",
+];
 
 /** Helpers */
 const getGen = (m) =>
@@ -68,6 +79,7 @@ export default function MemberListMobile() {
   const [genFilter, setGenFilter] = useState("ALL");
   const [keyword, setKeyword] = useState("");
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+  const [collapsedGens, setCollapsedGens] = useState(new Set());
 
   /** Debounce search */
   const searchRef = useRef(null);
@@ -117,7 +129,9 @@ export default function MemberListMobile() {
     return members.filter((m) => {
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
-      const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""}`.toLowerCase();
+      const hay = `${m.name} ${m.english_name || ""} ${
+        m.kana || ""
+      }`.toLowerCase();
       return hay.includes(kw);
     });
   }, [members, genFilter, keyword]);
@@ -139,6 +153,19 @@ export default function MemberListMobile() {
       .map((g) => ({ gen: g, items: map.get(g) }));
     return [...known, ...others];
   }, [filtered]);
+
+  /** Toggle gen collapse */
+  const toggleGenCollapse = (gen) => {
+    setCollapsedGens((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(gen)) {
+        newSet.delete(gen);
+      } else {
+        newSet.add(gen);
+      }
+      return newSet;
+    });
+  };
 
   /** Member card (minimal) */
   const MemberCard = ({ m }) => {
@@ -219,7 +246,11 @@ export default function MemberListMobile() {
               {m.english_name ? (
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", fontStyle: "italic" }}
+                  style={{
+                    fontSize: 12,
+                    display: "block",
+                    fontStyle: "italic",
+                  }}
                 >
                   {m.english_name}
                 </Text>
@@ -285,11 +316,7 @@ export default function MemberListMobile() {
             borderBottom: "1px solid #f2f2f5",
           }}
         >
-          <ProCard
-            ghost
-            bodyStyle={{ padding: 12 }}
-            style={{ ...jpFont }}
-          >
+          <ProCard ghost bodyStyle={{ padding: 12 }} style={{ ...jpFont }}>
             <Space
               style={{ width: "100%", justifyContent: "space-between" }}
               align="center"
@@ -336,51 +363,93 @@ export default function MemberListMobile() {
             <Empty description="該当するメンバーが見つかりません" />
           </Card>
         ) : (
-          grouped.map(({ gen, items }) => (
-            <div key={gen} style={{ marginBottom: 18 }}>
-              {/* Gen header */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 10,
-                  padding: "8px 12px",
-                  borderRadius: 12,
-                  background: "linear-gradient(180deg,#ffffff, #fafafc)",
+          <Collapse
+            ghost
+            size="large"
+            style={{ background: "transparent" }}
+            items={grouped.map(({ gen, items }) => {
+              const isCollapsed = collapsedGens.has(gen);
+              return {
+                key: gen,
+                label: (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      padding: "4px 0",
+                    }}
+                  >
+                    <Space>
+                      <StarOutlined
+                        style={{ color: "#7c3aed", fontSize: 16 }}
+                      />
+                      <span
+                        style={{
+                          ...jpFont,
+                          fontWeight: 700,
+                          fontSize: 16,
+                          color: "#18181b",
+                        }}
+                      >
+                        {gen}
+                      </span>
+                    </Space>
+                    <Space>
+                      <Tag
+                        style={{
+                          background: "#f5f3ff",
+                          border: "1px solid #e9d5ff",
+                          color: "#6d28d9",
+                          borderRadius: 12,
+                          fontWeight: 600,
+                          fontSize: 12,
+                          padding: "2px 8px",
+                        }}
+                      >
+                        {items.length}
+                      </Tag>
+                      {isCollapsed ? (
+                        <RightOutlined
+                          style={{ color: "#7c3aed", fontSize: 14 }}
+                        />
+                      ) : (
+                        <DownOutlined
+                          style={{ color: "#7c3aed", fontSize: 14 }}
+                        />
+                      )}
+                    </Space>
+                  </div>
+                ),
+                children: (
+                  <div style={{ padding: "8px 0" }}>
+                    {items.map((m) => (
+                      <MemberCard key={m.code} m={m} />
+                    ))}
+                  </div>
+                ),
+                style: {
+                  marginBottom: 12,
+                  borderRadius: 16,
                   border: "1px solid #f1f1f5",
-                }}
-              >
-                <StarOutlined style={{ marginRight: 8, color: "#7c3aed" }} />
-                <span
-                  style={{
-                    ...jpFont,
-                    fontWeight: 700,
-                    fontSize: 15,
-                    color: "#18181b",
-                  }}
-                >
-                  {gen}
-                </span>
-                <Tag
-                  style={{
-                    marginLeft: "auto",
-                    background: "#f5f3ff",
-                    border: "1px solid #e9d5ff",
-                    color: "#6d28d9",
-                    borderRadius: 10,
-                    fontWeight: 600,
-                  }}
-                >
-                  {items.length}
-                </Tag>
-              </div>
-
-              {/* Cards */}
-              {items.map((m) => (
-                <MemberCard key={m.code} m={m} />
-              ))}
-            </div>
-          ))
+                  background: "#fff",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                },
+              };
+            })}
+            expandIcon={() => null} // Hide default icon since we have custom one
+            onChange={(keys) => {
+              // Handle collapse state manually
+              const newCollapsed = new Set();
+              grouped.forEach(({ gen }) => {
+                if (!keys.includes(gen)) {
+                  newCollapsed.add(gen);
+                }
+              });
+              setCollapsedGens(newCollapsed);
+            }}
+          />
         )}
       </div>
 
@@ -415,6 +484,61 @@ export default function MemberListMobile() {
       <style>{`
         .ant-card { transition: transform .2s ease, box-shadow .2s ease; }
         .ant-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+        
+        /* Collapse styling */
+        .ant-collapse {
+          border: none !important;
+          background: transparent !important;
+        }
+        
+        .ant-collapse-item {
+          border: 1px solid #f1f1f5 !important;
+          border-radius: 16px !important;
+          margin-bottom: 12px !important;
+          background: #fff !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+          overflow: hidden !important;
+        }
+        
+        .ant-collapse-item-active {
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+        }
+        
+        .ant-collapse-header {
+          padding: 16px 20px !important;
+          background: linear-gradient(135deg, #ffffff, #fafafc) !important;
+          border: none !important;
+          border-radius: 16px !important;
+          cursor: pointer !important;
+          transition: all 0.3s ease !important;
+        }
+        
+        .ant-collapse-header:hover {
+          background: linear-gradient(135deg, #f8f9ff, #f0f2ff) !important;
+        }
+        
+        .ant-collapse-content {
+          border: none !important;
+          background: #fff !important;
+          border-radius: 0 0 16px 16px !important;
+        }
+        
+        .ant-collapse-content-box {
+          padding: 8px 20px 20px !important;
+        }
+        
+        .ant-collapse-arrow {
+          display: none !important;
+        }
+        
+        /* Smooth animations */
+        .ant-collapse-item .ant-collapse-content {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .ant-collapse-item .ant-collapse-header {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
       `}</style>
     </PageContainer>
   );
