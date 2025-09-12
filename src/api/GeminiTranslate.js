@@ -17,9 +17,10 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 1. MOST IMPORTANT: Use idol-style first/second-person (mature yet cute):
    - Use "em" for "I/me" throughout; avoid "tôi" unless formality is explicitly intended
    - Use "anh" for "you" (or "mọi người" for plural/general audience) when needed
-   - NEVER use "tớ" or "cậu" - only use "em/anh" or omit pronouns
+   - NEVER use "tớ", "cậu", "nè" - only use "em/anh" or omit pronouns
    - Prefer omitting pronouns when natural to keep Japanese brevity
-   - Use gentle particles like "ạ", "nhé", "nha" sparingly for natural idol charm
+   - Use gentle particles like "nhé", "nha" sparingly for natural idol charm
+   - NEVER use "ạ" or "nè" as they sound annoying
    - Add subtle cute tone markers that match idol personality
 
 2. Match Japanese idol style and rhythm:
@@ -30,7 +31,8 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 3. For emotional expressions:
    - Keep emotions natural and understated with idol-like charm
    - Use gentle interjections like "á", "ơ" sparingly for natural reactions
-   - Use appropriate particles like "ạ", "nhé", "nha" for idol-style warmth
+   - Use appropriate particles like "nhé", "nha" for idol-style warmth
+   - NEVER use "ạ" or "nè" as they sound annoying
 
 4. In daily life stories:
    - Follow the original structure closely; do not over-explain
@@ -40,6 +42,7 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 5. For friendly interactions:
    - Do not add emojis or cute expressions unless explicitly present in source
    - Use gentle forms for reminders and gratitude; include "nhé/nha" for idol warmth
+   - NEVER use "ạ" or "nè" as they sound annoying
    - Keep an overall mature yet charming idol tone
 
 Technical requirements:
@@ -55,7 +58,7 @@ Here's the text to translate:
 
 ${cleanedText}
 
-Remember: Focus on conveying the feelings and personal voice of the writer as a mature yet charming idol (20s-30s age range) while maintaining accuracy. Use ONLY "em/anh" xưng hô - NEVER use "tớ/cậu". Output must be in Vietnamese.`;
+Remember: Focus on conveying the feelings and personal voice of the writer as a mature yet charming idol (20s-30s age range) while maintaining accuracy. Use ONLY "em/anh" xưng hô - NEVER use "tớ/cậu", "ạ", or "nè". Follow Japanese idol style naturally. Output must be in Vietnamese.`;
   }
 
   // Default English prompt
