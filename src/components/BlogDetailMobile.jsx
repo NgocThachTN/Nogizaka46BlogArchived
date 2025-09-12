@@ -175,18 +175,18 @@ export default function BlogDetailMobile({
     if (blog?.id) {
       const cached = _mobileCache.blogContent.get(blog.id);
       if (cached?.displayContent && cached?.language === language) {
+        // Set cached content immediately
         setCachedDisplayContent(cached.displayContent);
         setCachedLanguage(cached.language);
-
-        // Khôi phục vị trí cuộn
-        const scrollY = _mobileCache.scrollPosition.get(blog.id);
-        if (typeof scrollY === "number" && scrollWrapRef.current) {
-          requestAnimationFrame(() => {
-            if (scrollWrapRef.current) {
-              scrollWrapRef.current.scrollTop = scrollY;
-            }
-          });
+        
+        // Reset scroll position for new content
+        if (scrollWrapRef.current) {
+          scrollWrapRef.current.scrollTop = 0;
         }
+      } else {
+        // Clear cached content if no cache or language mismatch
+        setCachedDisplayContent(null);
+        setCachedLanguage(language);
       }
     }
   }, [blog?.id, language]);
@@ -211,39 +211,61 @@ export default function BlogDetailMobile({
       // Reset read progress
       setReadPct(0);
 
-      // Smooth scroll to top
+      // Force scroll to top immediately for new content
       if (scrollWrapRef.current) {
+        // Disable smooth scrolling temporarily
+        scrollWrapRef.current.style.scrollBehavior = 'auto';
+        scrollWrapRef.current.scrollTop = 0;
+        
+        // Re-enable smooth scrolling after scroll
         requestAnimationFrame(() => {
           if (scrollWrapRef.current) {
-            scrollWrapRef.current.scrollTop = 0;
+            scrollWrapRef.current.style.scrollBehavior = 'smooth';
           }
         });
       }
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
 
-  // Lưu vị trí cuộn trước khi rời trang
+  // Lưu vị trí cuộn trước khi rời trang (chỉ khi không phải content mới)
   useEffect(() => {
     if (!blog?.id) return;
 
     const onStore = () => {
       if (scrollWrapRef.current) {
-        _mobileCache.scrollPosition.set(
-          blog.id,
-          scrollWrapRef.current.scrollTop
-        );
+        // Chỉ lưu scroll position nếu content đã ổn định
+        const cached = _mobileCache.blogContent.get(blog.id);
+        if (cached && cached.language === language) {
+          _mobileCache.scrollPosition.set(blog.id, scrollWrapRef.current.scrollTop);
+        }
       }
     };
+
+    // Debounce scroll position saving
+    let saveTimeout = null;
+    const debouncedSave = () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(onStore, 500);
+    };
+
+    const wrap = scrollWrapRef.current;
+    if (wrap) {
+      wrap.addEventListener("scroll", debouncedSave, { passive: true });
+    }
 
     window.addEventListener("pagehide", onStore);
     window.addEventListener("beforeunload", onStore);
 
     return () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      if (wrap) {
+        wrap.removeEventListener("scroll", debouncedSave);
+      }
       onStore();
       window.removeEventListener("pagehide", onStore);
       window.removeEventListener("beforeunload", onStore);
     };
-  }, [blog?.id]);
+  }, [blog?.id, language]);
 
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 24));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 14));
@@ -401,39 +423,57 @@ export default function BlogDetailMobile({
     }
   }, []);
 
-  // Enhanced image loading with global cache
+  // Enhanced image loading with global cache and debouncing
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
+    let imageLoadTimeout = null;
+
     // Enhanced image loading handler with global cache
     const markImagesLoaded = () => {
-      const images = wrap.getElementsByTagName("img");
-      Array.from(images).forEach((img) => {
-        const src = img.getAttribute("src");
-        if (!src) return;
+      // Clear previous timeout
+      if (imageLoadTimeout) {
+        clearTimeout(imageLoadTimeout);
+      }
 
-        // Check global cache first
-        const cached = _mobileCache.imageCache.get(src);
-        if (cached?.loaded) {
-          img.setAttribute("data-loaded", "true");
-          img.style.opacity = "1";
-          return;
-        }
+      // Debounce image loading to prevent jank
+      imageLoadTimeout = setTimeout(() => {
+        const images = wrap.getElementsByTagName("img");
+        Array.from(images).forEach((img) => {
+          const src = img.getAttribute("src");
+          if (!src) return;
 
-        if (img.complete) {
-          img.setAttribute("data-loaded", "true");
-          img.style.opacity = "1";
-          _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
-        } else {
+          // Check global cache first
+          const cached = _mobileCache.imageCache.get(src);
+          if (cached?.loaded) {
+            img.setAttribute("data-loaded", "true");
+            img.style.opacity = "1";
+            img.style.transition = "opacity 0.3s ease";
+            return;
+          }
+
+          // Set initial state
           img.style.opacity = "0";
-          img.onload = () => {
+          img.style.transition = "opacity 0.3s ease";
+
+          if (img.complete) {
             img.setAttribute("data-loaded", "true");
             img.style.opacity = "1";
             _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
-          };
-        }
-      });
+          } else {
+            img.onload = () => {
+              img.setAttribute("data-loaded", "true");
+              img.style.opacity = "1";
+              _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
+            };
+            img.onerror = () => {
+              img.style.opacity = "0.5";
+              img.setAttribute("data-loaded", "error");
+            };
+          }
+        });
+      }, 50); // 50ms debounce
     };
 
     // Setup scroll handler with passive flag for better performance
@@ -445,10 +485,14 @@ export default function BlogDetailMobile({
 
     // Enhanced cleanup
     return () => {
+      if (imageLoadTimeout) {
+        clearTimeout(imageLoadTimeout);
+      }
       wrap.removeEventListener("scroll", onScroll);
       const images = wrap.getElementsByTagName("img");
       Array.from(images).forEach((img) => {
         img.onload = null;
+        img.onerror = null;
       });
     };
   }, [onScroll, cachedDisplayContent]);
@@ -858,14 +902,20 @@ export default function BlogDetailMobile({
           .jp-prose img:not([data-loaded]) {
             min-height: 200px;
             background: rgba(0,0,0,0.05);
-            opacity: 0.7;
+            opacity: 0;
             transition: opacity 0.3s ease;
           }
           
           /* Smooth image loading */
           .jp-prose img[data-loaded="true"] {
-            opacity: 1;
+            opacity: 1 !important;
             transition: opacity 0.3s ease;
+          }
+          
+          /* Error state for images */
+          .jp-prose img[data-loaded="error"] {
+            opacity: 0.5;
+            background: rgba(255,0,0,0.1);
           }
           .jp-prose p {
             margin: 0.85em 0;
