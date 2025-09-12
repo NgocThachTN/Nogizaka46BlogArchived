@@ -474,16 +474,7 @@ export default function BlogDetail() {
   return (
     <PageContainer
       header={{
-        title: (
-          <Space direction="vertical" size={2} style={jpFont}>
-            <Text type="secondary" style={{ letterSpacing: 2 }}>
-              ブログ記事
-            </Text>
-            <Title level={2} style={{ margin: 0, lineHeight: 1.25 }}>
-              {displayTitle}
-            </Title>
-          </Space>
-        ),
+        title: "乃木坂46ブログ",
         extra: [
           <Button key="back" icon={<LeftOutlined />} onClick={onBack}>
             {t.back[language]}
@@ -586,51 +577,91 @@ export default function BlogDetail() {
               </div>
             )}
 
-            <Space
-              size={window.innerWidth < 768 ? 12 : 16}
-              align="center"
+            <div
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 marginBottom: window.innerWidth < 768 ? 8 : 12,
                 width: "100%",
-                justifyContent:
-                  window.innerWidth < 768 ? "center" : "flex-start",
               }}
             >
-              <Avatar
-                src={
-                  getImageUrl(memberInfo?.img) ||
-                  getImageUrl(blog?.memberImage) ||
-                  "https://via.placeholder.com/300x300?text=No+Image"
-                }
-                size={window.innerWidth < 768 ? 56 : 64}
+              {/* Author Info - Left Side */}
+              <Space
+                size={window.innerWidth < 768 ? 12 : 16}
+                align="center"
                 style={{
-                  border: "2px solid #fff",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                }}
-              />
-              <div
-                style={{
-                  textAlign: window.innerWidth < 768 ? "center" : "left",
+                  justifyContent:
+                    window.innerWidth < 768 ? "center" : "flex-start",
                 }}
               >
-                <Text
-                  strong
-                  style={{ fontSize: window.innerWidth < 768 ? 15 : 16 }}
-                >
-                  {memberInfo?.name || blog.author}
-                </Text>
+                <Avatar
+                  src={
+                    getImageUrl(memberInfo?.img) ||
+                    getImageUrl(blog?.memberImage) ||
+                    "https://via.placeholder.com/300x300?text=No+Image"
+                  }
+                  size={window.innerWidth < 768 ? 56 : 64}
+                  style={{
+                    border: "2px solid #fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  }}
+                />
                 <div
                   style={{
-                    color: "#666",
-                    marginTop: window.innerWidth < 768 ? 1 : 2,
-                    fontSize: window.innerWidth < 768 ? 13 : 14,
+                    textAlign: window.innerWidth < 768 ? "center" : "left",
                   }}
                 >
-                  <CalendarOutlined style={{ marginRight: 6 }} />
-                  <Text>{blog.date}</Text>
+                  <Text
+                    strong
+                    style={{ fontSize: window.innerWidth < 768 ? 15 : 16 }}
+                  >
+                    {memberInfo?.name || blog.author}
+                  </Text>
+                  <div
+                    style={{
+                      color: "#666",
+                      marginTop: window.innerWidth < 768 ? 1 : 2,
+                      fontSize: window.innerWidth < 768 ? 13 : 14,
+                    }}
+                  >
+                    <CalendarOutlined style={{ marginRight: 6 }} />
+                    <Text>{blog.date}</Text>
+                  </div>
                 </div>
+              </Space>
+
+              {/* Blog Title - Right Side */}
+              <div
+                style={{
+                  textAlign: "right",
+                  maxWidth: "50%",
+                  minWidth: 0,
+                }}
+              >
+                <Space direction="vertical" size={2} style={jpFont}>
+                  <Text
+                    type="secondary"
+                    style={{ letterSpacing: 2, fontSize: 12 }}
+                  >
+                    ブログ記事
+                  </Text>
+                  <Title
+                    level={3}
+                    style={{
+                      margin: 0,
+                      lineHeight: 1.25,
+                      fontSize: window.innerWidth < 768 ? 16 : 18,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {displayTitle}
+                  </Title>
+                </Space>
               </div>
-            </Space>
+            </div>
 
             <Divider style={{ margin: "12px 0 20px" }} />
 
