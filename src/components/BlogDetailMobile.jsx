@@ -593,17 +593,17 @@ export default function BlogDetailMobile({
       throttledUpdateRef.current();
     }
 
-    // Update author bar visibility
+    // Update author bar visibility (mobile logic)
     const currentScrollY = wrap.scrollTop;
     const scrollDifference = currentScrollY - lastScrollY.current;
 
     if (Math.abs(scrollDifference) > scrollThreshold) {
       if (scrollDifference > 0) {
-        // Scroll down - ẩn header
-        setIsHeaderVisible(false);
-      } else if (scrollDifference < 0) {
-        // Scroll up - hiện header
+        // Scroll down (kéo xuống) - hiện header
         setIsHeaderVisible(true);
+      } else if (scrollDifference < 0) {
+        // Scroll up (kéo lên) - ẩn header
+        setIsHeaderVisible(false);
       }
       lastScrollY.current = currentScrollY;
     }
