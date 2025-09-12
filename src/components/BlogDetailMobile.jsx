@@ -281,26 +281,13 @@ export default function BlogDetailMobile({
       }
     };
 
-    // Debounce scroll position saving
-    let saveTimeout = null;
-    const debouncedSave = () => {
-      if (saveTimeout) clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(onStore, 500);
-    };
+    // Debounce scroll position saving - removed unused variable
 
-    const wrap = scrollWrapRef.current;
-    if (wrap) {
-      wrap.addEventListener("scroll", debouncedSave, { passive: true });
-    }
-
+    // Store scroll position on page unload
     window.addEventListener("pagehide", onStore);
     window.addEventListener("beforeunload", onStore);
 
     return () => {
-      if (saveTimeout) clearTimeout(saveTimeout);
-      if (wrap) {
-        wrap.removeEventListener("scroll", debouncedSave);
-      }
       onStore();
       window.removeEventListener("pagehide", onStore);
       window.removeEventListener("beforeunload", onStore);
@@ -635,14 +622,28 @@ export default function BlogDetailMobile({
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling]);
+  }, [isScrolling, isHeaderVisible]);
 
   // Setup scroll handlers for Android
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Combined scroll handler for both progress and header
+    // Debounce scroll position saving
+    let saveTimeout = null;
+    const debouncedSave = () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        if (wrap && blog?.id) {
+          const cached = _mobileCache.blogContent.get(blog.id);
+          if (cached && cached.language === language) {
+            _mobileCache.scrollPosition.set(blog.id, wrap.scrollTop);
+          }
+        }
+      }, 500);
+    };
+
+    // Combined scroll handler for progress, header, and position saving
     const combinedScrollHandler = () => {
       // Update progress
       if (throttledUpdateRef.current) {
@@ -651,6 +652,9 @@ export default function BlogDetailMobile({
 
       // Update header visibility
       handleScroll();
+
+      // Save scroll position
+      debouncedSave();
     };
 
     // Setup scroll handler
@@ -664,13 +668,14 @@ export default function BlogDetailMobile({
 
     // Cleanup
     return () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
       wrap.removeEventListener("scroll", combinedScrollHandler);
       wrap.removeEventListener("wheel", combinedScrollHandler);
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll]);
+  }, [handleScroll, blog?.id, language]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
