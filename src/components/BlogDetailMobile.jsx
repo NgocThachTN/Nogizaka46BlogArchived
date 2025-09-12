@@ -81,6 +81,18 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
+  // Handle content updates
+  useEffect(() => {
+    if (displayContent && !translating) {
+      // Scroll back to top when content changes
+      if (scrollWrapRef.current) {
+        scrollWrapRef.current.scrollTop = 0;
+      }
+      // Reset read progress
+      setReadPct(0);
+    }
+  }, [displayContent, translating]);
+
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 24));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 14));
 
@@ -302,8 +314,20 @@ export default function BlogDetailMobile({
         paddingInlinePageContainerContent: 0,
         paddingBlockPageContainerContent: 0,
         paddingInlinePageContainer: 0,
+        pageContainer: {
+          paddingBlock: 0,
+          paddingInline: 0,
+        },
       }}
-      style={{ padding: 0, margin: 0, background: "#fff" }}
+      style={{
+        padding: 0,
+        margin: 0,
+        background: "#fff",
+        minHeight: "100dvh",
+        width: "100vw",
+        maxWidth: "100%",
+        overflow: "hidden",
+      }}
     >
       {TopBar}
 
@@ -316,47 +340,97 @@ export default function BlogDetailMobile({
           background: "#fff",
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "contain",
+          width: "100%",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <ProCard
           ghost
-          style={{ background: "#fff", padding: 0, ...jpFont }}
-          bodyStyle={{ padding: "12px 12px 80px", margin: 0 }}
+          style={{
+            background: "#fff",
+            padding: 0,
+            flex: 1,
+            width: "100%",
+            maxWidth: "100%",
+            ...jpFont,
+          }}
+          bodyStyle={{
+            padding: "0 0 80px",
+            margin: 0,
+            width: "100%",
+          }}
         >
-          {/* Translation status is now shown in the header */}
-
-          {/* Title block */}
-          <Card
-            bordered={false}
-            style={{ margin: 0, padding: 0, background: "transparent" }}
-            bodyStyle={{ padding: 0 }}
-          >
-            <Title
-              level={4}
+          {/* Translation status and loading state */}
+          {translating && (
+            <Card
+              bordered={false}
               style={{
-                margin: 0,
-                lineHeight: 1.25,
-                letterSpacing: 0.2,
-                color: "#111827",
+                marginBottom: 16,
+                background: "#faf5ff",
+                border: "1px solid #e9d5ff",
               }}
             >
-              {blog.title}
-            </Title>
-            <Text type="secondary" style={{ display: "block", marginTop: 6 }}>
-              {blog.author} ・ {blog.date}
-            </Text>
-          </Card>
+              <Space>
+                <LoadingOutlined style={{ color: "#9333ea" }} />
+                <Text>
+                  {language === "vi"
+                    ? "Đang dịch nội dung..."
+                    : language === "en"
+                    ? "Translating content..."
+                    : "翻訳中..."}
+                </Text>
+              </Space>
+            </Card>
+          )}
 
-          {/* Nội dung */}
-          <div
-            className="jp-prose"
-            style={{
-              fontSize,
-              lineHeight: 1.9,
-              transition: "font-size 0.2s ease",
-            }}
-            dangerouslySetInnerHTML={{ __html: displayContent || "" }}
-          />
+          {/* Title block */}
+          <div style={{ padding: "0 12px" }}>
+            <Card
+              bordered={false}
+              style={{
+                margin: 0,
+                padding: 0,
+                background: "transparent",
+                width: "100%",
+              }}
+              bodyStyle={{ padding: 0 }}
+            >
+              <Title
+                level={4}
+                style={{
+                  margin: 0,
+                  lineHeight: 1.25,
+                  letterSpacing: 0.2,
+                  color: "#111827",
+                }}
+              >
+                {blog.title}
+              </Title>
+              <Text type="secondary" style={{ display: "block", marginTop: 6 }}>
+                {blog.author} ・ {blog.date}
+              </Text>
+            </Card>
+
+            {/* Nội dung */}
+            <div
+              className="jp-prose"
+              style={{
+                fontSize,
+                lineHeight: 1.9,
+                transition: "font-size 0.2s ease",
+                width: "100%",
+                maxWidth: "100%",
+                overflowWrap: "break-word",
+                wordWrap: "break-word",
+                hyphens: "auto",
+              }}
+              dangerouslySetInnerHTML={{
+                __html: displayContent || blog?.content || "",
+              }}
+            />
+          </div>
         </ProCard>
       </div>
 
@@ -475,12 +549,52 @@ export default function BlogDetailMobile({
 
       {/* Full-bleed overrides */}
       <style>{`
-          html, body, #root { height: 100%; background: #fff; }
-          body { margin: 0; padding: 0; }
-          .ant-pro-page-container { padding-inline: 0 !important; }
-          .ant-pro-page-container-children-container,
-          .ant-pro-grid-content { margin: 0 !important; padding: 0 !important; }
-          .ant-card { background: #fff; }
+          html, body, #root { 
+            height: 100%; 
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+          }
+          body { 
+            margin: 0; 
+            padding: 0;
+            overscroll-behavior: none;
+          }
+          #root {
+            display: flex;
+            flex-direction: column;
+          }
+          .ant-pro-page-container { 
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .ant-pro-page-container-children-container {
+            flex: 1 !important;
+            margin: 0 !important; 
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+          }
+          .ant-pro-grid-content { 
+            margin: 0 !important; 
+            padding: 0 !important;
+            width: 100% !important;
+          }
+          .ant-card { 
+            background: #fff;
+            width: 100% !important;
+          }
   
           .jp-prose img {
             border-radius: 12px;
