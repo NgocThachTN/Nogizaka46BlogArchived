@@ -16,11 +16,13 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 
 - Use "em" for I/me, "anh or mọi người" for you (idol speaking to fans)
 - NEVER use "ạ", "á", "nè", "nhé", "nha" in any case 
-- Keep tone natural, mature yet charming (20s-30s female idol style)
+- Keep tone natural, mature with subtle cuteness (20s-30s female idol style)
 - Write naturally without Vietnamese particles or interjections
 - Preserve HTML tags exactly, only translate text between tags
 - Keep sentences concise and natural like Japanese style
-- Use natural, conversational expressions
+- Use natural, conversational expressions with subtle idol charm
+- Do NOT add any emojis or symbols
+- Keep original content structure exactly
 
 Text: ${cleanedText}
 
