@@ -774,7 +774,7 @@ export default function BlogDetailMobile({
               -webkit-user-drag: none;
               image-rendering: auto;
               image-rendering: -webkit-optimize-contrast;
-              opacity: 0;
+              opacity: 1;
               transition: opacity 0.4s, box-shadow 0.2s;
             }
             .jp-prose img[data-loaded] {
