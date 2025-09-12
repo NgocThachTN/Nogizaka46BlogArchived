@@ -139,7 +139,7 @@ const BlogList = () => {
               <Avatar
                 size={64}
                 src={
-                  memberInfo?.img ||
+                  memberInfo.img ||
                   "https://via.placeholder.com/300x300?text=No+Image"
                 }
                 className="shadow-md"
