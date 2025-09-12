@@ -461,6 +461,9 @@ export default function BlogDetailMobile({
             transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
             transition: "transform 0.3s ease-in-out",
             willChange: "transform",
+            // Hide completely when not visible
+            visibility: isHeaderVisible ? "visible" : "hidden",
+            opacity: isHeaderVisible ? 1 : 0,
           }}
         >
           {blog && (
@@ -843,7 +846,8 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: "96px", // Add padding to account for fixed navigation bar (48px) + author bar (48px)
+          paddingTop: isHeaderVisible ? "96px" : "48px", // Dynamic padding: 96px when author bar visible, 48px when hidden
+          transition: "padding-top 0.3s ease-in-out", // Smooth transition for padding
         }}
       >
         <ProCard
