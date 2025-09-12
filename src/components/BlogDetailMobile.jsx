@@ -575,8 +575,8 @@ export default function BlogDetailMobile({
         lastScrolledRef.current = scrolled;
       }
 
-      // Handle header visibility based on scroll direction
-      const currentScrollY = scrolled;
+      // Handle header visibility based on scroll direction - use window scroll for mobile
+      const currentScrollY = window.scrollY || window.pageYOffset || 0;
       const scrollDifference = currentScrollY - lastScrollY.current;
 
       // Only update if there's significant scroll movement
@@ -607,7 +607,7 @@ export default function BlogDetailMobile({
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Setup scroll handler
+    // Setup scroll handler for container
     wrap.addEventListener("scroll", onScroll, { passive: true });
 
     // Initialize
@@ -618,6 +618,21 @@ export default function BlogDetailMobile({
       wrap.removeEventListener("scroll", onScroll);
     };
   }, [onScroll]);
+
+  // Separate effect for window scroll (mobile compatibility)
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (throttledUpdateRef.current) {
+        throttledUpdateRef.current();
+      }
+    };
+
+    window.addEventListener("scroll", handleWindowScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleWindowScroll);
+    };
+  }, []);
 
   // Separate effect for image visibility - chỉ chạy khi content thay đổi
   useEffect(() => {
