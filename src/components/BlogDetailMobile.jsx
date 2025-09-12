@@ -16,7 +16,7 @@ import {
   TranslationOutlined,
   ArrowUpOutlined,
   LeftOutlined,
-  MenuOutlined,
+  HomeOutlined,
   InfoCircleOutlined,
   CalendarOutlined,
   FontSizeOutlined,
@@ -186,7 +186,11 @@ export default function BlogDetailMobile({
             style={{ width: "100%", justifyContent: "space-between" }}
           >
             <Space>
-              <Button type="text" icon={<LeftOutlined />} onClick={goBack} />
+              <Button
+                type="text"
+                icon={<HomeOutlined />}
+                onClick={() => navigate("/members")}
+              />
               {prevId ? (
                 <Button
                   type="default"
@@ -257,11 +261,6 @@ export default function BlogDetailMobile({
                 icon={<FontSizeOutlined />}
                 onClick={() => setDrawerVisible(true)}
               />
-              <Button
-                type="text"
-                icon={<MenuOutlined />}
-                onClick={() => setDrawerVisible(true)}
-              />
             </Space>
           </Space>
         </div>
@@ -270,7 +269,6 @@ export default function BlogDetailMobile({
     [
       language,
       translating,
-      goBack,
       prevId,
       setLanguage,
       nextId,
@@ -278,6 +276,7 @@ export default function BlogDetailMobile({
       pendingNavId,
       navLock,
       navTopBtnStyle,
+      navigate,
     ]
   );
 

@@ -21,6 +21,7 @@ import {
   SearchOutlined,
   LinkOutlined,
 } from "@ant-design/icons";
+import MemberListMobile from "./MemberListMobile";
 
 const { Title, Text } = Typography;
 
@@ -71,6 +72,14 @@ const MemberList = () => {
   const [loading, setLoading] = useState(true);
   const [genFilter, setGenFilter] = useState("ALL");
   const [keyword, setKeyword] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -144,6 +153,11 @@ const MemberList = () => {
       .map((g) => ({ gen: g, items: map.get(g) }));
     return [...known, ...others];
   }, [filtered]);
+
+  // Mobile view
+  if (isMobile) {
+    return <MemberListMobile />;
+  }
 
   return (
     <PageContainer
