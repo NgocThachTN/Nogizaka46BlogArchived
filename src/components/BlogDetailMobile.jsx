@@ -624,13 +624,13 @@ export default function BlogDetailMobile({
       });
 
       if (scrollDifference > 0) {
-        // Scroll down (kéo xuống) - ẩn header
-        console.log("Hiding header - scrolling down");
-        setIsHeaderVisible(false);
-      } else {
-        // Scroll up (kéo lên) - hiện header
-        console.log("Showing header - scrolling up");
+        // Scroll down (kéo xuống) - hiện header
+        console.log("Showing header - scrolling down");
         setIsHeaderVisible(true);
+      } else {
+        // Scroll up (kéo lên) - ẩn header
+        console.log("Hiding header - scrolling up");
+        setIsHeaderVisible(false);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
