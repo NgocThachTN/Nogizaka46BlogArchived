@@ -126,7 +126,7 @@ export default function BlogDetailMobile({
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [fontSize, setFontSize] = useState(
-    () => Number(localStorage.getItem(LS_FONT)) || 16
+    () => Number(localStorage.getItem(LS_FONT)) || 18
   );
 
   // Styled nav buttons (Ant Design Pro vibe)
@@ -326,8 +326,8 @@ export default function BlogDetailMobile({
     };
   }, [blog?.id, language]);
 
-  const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 24));
-  const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 14));
+  const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 30));
+  const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
 
   // Optimized HTML with lazy images - sử dụng cached content
   const optimizedHtml = useMemo(() => {
@@ -936,16 +936,16 @@ export default function BlogDetailMobile({
             margin: 0.85em 0;
             text-align: justify;
             line-height: 1.9;
-            font-size: 16px;
+            font-size: 20px;
             color: #1f2937;
           }
-          .jp-prose h1 { font-size: 1.45em; margin: 0.9em 0 0.45em; font-weight: 700; color: #111827; }
-          .jp-prose h2 { font-size: 1.28em; margin: 0.85em 0 0.4em; font-weight: 700; color: #111827; }
-          .jp-prose h3 { font-size: 1.12em; margin: 0.8em 0 0.3em; font-weight: 600; color: #111827; }
+          .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: #111827; }
+          .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: #111827; }
+          .jp-prose h3 { font-size: 1.25em; margin: 0.8em 0 0.3em; font-weight: 600; color: #111827; }
           .jp-prose blockquote {
             border-left: 4px solid #e9d5ff; background: #faf5ff;
             padding: 12px 16px; border-radius: 8px; margin: 1em 0;
-            font-size: 0.95em; color: #4b5563;
+            font-size: 1.05em; color: #4b5563;
           }
           .jp-prose a { color: #9333ea; text-decoration: none; }
           .jp-prose a:hover { text-decoration: underline; }
