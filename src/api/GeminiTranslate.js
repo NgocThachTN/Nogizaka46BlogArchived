@@ -16,7 +16,7 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 
 - Use "em" for I/me, "anh" for you (or omit pronouns)
 - NEVER use "tớ/cậu", "ạ", "nè" 
-- Keep tone mature yet charming (20s-30s idol)
+- Keep tone mature yet charming (20s-30s japanse idol style)
 - Use "nhé/nha" sparingly for warmth
 - Preserve HTML tags exactly, only translate text between tags
 - Keep sentences concise and natural
