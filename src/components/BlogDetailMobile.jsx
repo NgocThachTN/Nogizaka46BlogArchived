@@ -615,13 +615,22 @@ export default function BlogDetailMobile({
 
     const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-    if (Math.abs(scrollDifference) > 10) {
+    if (Math.abs(scrollDifference) > 5) {
+      console.log("Scroll detected:", {
+        currentScrollY,
+        lastScrollY: lastScrollY.current,
+        scrollDifference,
+        isHeaderVisible,
+      });
+
       if (scrollDifference > 0) {
-        // Scroll down - hiện header
-        setIsHeaderVisible(true);
-      } else {
-        // Scroll up - ẩn header
+        // Scroll down (kéo xuống) - ẩn header
+        console.log("Hiding header - scrolling down");
         setIsHeaderVisible(false);
+      } else {
+        // Scroll up (kéo lên) - hiện header
+        console.log("Showing header - scrolling up");
+        setIsHeaderVisible(true);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
