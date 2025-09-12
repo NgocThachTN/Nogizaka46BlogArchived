@@ -12,14 +12,14 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
   const cleanedText = cleanTextForTranslation(text);
 
   if (toLang.toLowerCase() === "vietnamese") {
-    return `Translate from ${fromLang} to Vietnamese with idol blog style:
+    return `Translate from ${fromLang} to Vietnamese with Japanese idol blog style:
 
 - Use "em" for I/me, "anh" for you (or omit pronouns)
-- NEVER use "tớ/cậu", "ạ", "nè" 
-- Keep tone mature yet charming (20s-30s japanse idol style)
-- Use "nhé/nha" sparingly for warmth
+- NEVER use Vietnamese casual style: "tớ/cậu", "ạ", "á", "nè", "nhé", "nha"
+- Keep tone mature yet charming (20s-30s Japanese idol style)
+- Avoid Vietnamese particles and interjections
 - Preserve HTML tags exactly, only translate text between tags
-- Keep sentences concise and natural
+- Keep sentences concise and natural like Japanese style
 
 Text: ${cleanedText}
 
