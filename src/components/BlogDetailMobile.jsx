@@ -436,11 +436,12 @@ export default function BlogDetailMobile({
     ]
   );
 
-  // Author Bar (scroll-hideable)
+  // Author Bar (scroll-hideable) - Compact with Ant Design Pro
   const AuthorBar = useMemo(
     () => (
       <Affix offsetTop={48}>
-        <div
+        <ProCard
+          size="small"
           style={{
             ...jpFont,
             background: isHeaderVisible
@@ -464,23 +465,26 @@ export default function BlogDetailMobile({
             // Hide completely when not visible
             visibility: isHeaderVisible ? "visible" : "hidden",
             opacity: isHeaderVisible ? 1 : 0,
+            margin: 0,
+            borderRadius: 0,
+            boxShadow: "none",
+          }}
+          bodyStyle={{
+            padding: "6px 12px",
+            margin: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: "13px",
           }}
         >
           {blog && (
-            <div
-              style={{
-                padding: "8px 12px",
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                fontSize: "14px",
-              }}
-            >
+            <>
               {/* Author Info - Left Side */}
               <Space
                 align="center"
-                style={{ flex: "0 0 auto", maxWidth: "45%" }}
+                style={{ flex: "0 0 auto", maxWidth: "50%" }}
+                size="small"
               >
                 <Avatar
                   src={
@@ -488,24 +492,28 @@ export default function BlogDetailMobile({
                     getImageUrl(blog?.memberImage) ||
                     "https://via.placeholder.com/300x300?text=No+Image"
                   }
-                  size={40}
+                  size={32}
                   style={{
-                    border: "2px solid #fff",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    border: "1px solid #fff",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
                   }}
                 />
                 <div>
-                  <Text strong style={{ color: "#111827", fontSize: "15px" }}>
+                  <Text strong style={{ color: "#111827", fontSize: "13px" }}>
                     {memberInfo?.name || blog.author}
                   </Text>
                   <div
                     style={{
                       color: "#666",
                       marginTop: 1,
-                      fontSize: "12px",
+                      fontSize: "11px",
+                      display: "flex",
+                      alignItems: "center",
                     }}
                   >
-                    <CalendarOutlined style={{ marginRight: 6 }} />
+                    <CalendarOutlined
+                      style={{ marginRight: 4, fontSize: "10px" }}
+                    />
                     <Text>{blog.date}</Text>
                   </div>
                 </div>
@@ -516,8 +524,8 @@ export default function BlogDetailMobile({
                 style={{
                   flex: 1,
                   textAlign: "right",
-                  paddingLeft: 12,
-                  paddingRight: 8,
+                  paddingLeft: 8,
+                  paddingRight: 4,
                   minWidth: 0, // Allow text to shrink
                 }}
               >
@@ -525,7 +533,7 @@ export default function BlogDetailMobile({
                   strong
                   style={{
                     color: "#111827",
-                    fontSize: "13px",
+                    fontSize: "12px",
                     lineHeight: 1.2,
                     display: "block",
                     overflow: "hidden",
@@ -543,11 +551,16 @@ export default function BlogDetailMobile({
                 size="small"
                 icon={<InfoCircleOutlined />}
                 onClick={() => setDrawerVisible(true)}
-                style={{ color: "#666", flexShrink: 0 }}
+                style={{
+                  color: "#666",
+                  flexShrink: 0,
+                  padding: "4px 6px",
+                  height: "auto",
+                }}
               />
-            </div>
+            </>
           )}
-        </div>
+        </ProCard>
       </Affix>
     ),
     [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
@@ -635,7 +648,7 @@ export default function BlogDetailMobile({
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling]);
+  }, [isScrolling, isHeaderVisible]);
 
   // Setup scroll handlers for Android
   useEffect(() => {
@@ -796,7 +809,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: isHeaderVisible ? "96px" : "48px",
+          paddingTop: isHeaderVisible ? "88px" : "48px",
           // Simplified transition
           transition: "padding-top 0.3s ease",
         }}
