@@ -152,17 +152,10 @@ export default function BlogDetailMobile({
       // Reset read progress immediately
       setReadPct(0);
 
-      // Delay scroll to allow images to start loading
-      const scrollToTop = () => {
-        if (scrollWrapRef.current) {
-          scrollWrapRef.current.scrollTop = 0;
-        }
-      };
-
-      // Use requestAnimationFrame to ensure smooth transition
-      requestAnimationFrame(() => {
-        requestAnimationFrame(scrollToTop);
-      });
+      // Instant scroll to top to prevent image jank
+      if (scrollWrapRef.current) {
+        scrollWrapRef.current.scrollTop = 0;
+      }
     }
   }, [displayContent, translating]);
 
@@ -462,14 +455,6 @@ export default function BlogDetailMobile({
           position: "relative",
           display: "flex",
           flexDirection: "column",
-          /* Optimize for mobile scrolling */
-          scrollBehavior: "auto",
-          /* Hardware acceleration */
-          transform: "translateZ(0)",
-          willChange: "scroll-position",
-          /* Prevent scroll jank */
-          backfaceVisibility: "hidden",
-          perspective: "1000px",
         }}
       >
         <ProCard
@@ -768,28 +753,30 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Optimize for mobile touch */
+            /* Simple mobile touch optimization */
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             /* Prevent selection and drag */
             -webkit-user-select: none;
             user-select: none;
             -webkit-user-drag: none;
-            /* Smooth image loading and rendering */
+            /* Smooth rendering */
             image-rendering: auto;
-            image-rendering: -webkit-optimize-contrast;
-            /* Prevent layout shifts during loading */
-            aspect-ratio: attr(width) / attr(height);
-            /* Hardware acceleration for smooth scrolling */
+            /* Simple hardware acceleration */
             transform: translateZ(0);
-            will-change: transform;
-            /* Prevent image jank during scroll */
-            contain: layout style paint;
           }
           /* Preload space for images to prevent layout shifts */
           .jp-prose img:not([data-loaded]) {
             min-height: 200px;
             background: rgba(0,0,0,0.05);
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+          }
+          
+          /* Smooth image loading */
+          .jp-prose img[data-loaded="true"] {
+            opacity: 1;
+            transition: opacity 0.3s ease;
           }
           .jp-prose p {
             margin: 0.85em 0;
