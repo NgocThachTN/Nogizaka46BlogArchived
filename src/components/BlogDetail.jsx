@@ -240,29 +240,27 @@ export default function BlogDetail() {
 
         console.log("Title translated:", titleOut);
 
-        // Đăng ký callback để cập nhật nội dung theo từng phần
+        // Đăng ký callback — chỉ cập nhật state sau khi hoàn tất để tránh hiển thị preface
         let translatedContent = "";
         const updateProgress = (translatedChunk, isLast) => {
           if (!translatedChunk) return;
 
-          // Làm sạch chunk trước khi thêm vào
           const cleanedChunk = translatedChunk
             .replace(/```html/g, "")
             .replace(/```/g, "")
             .trim();
 
           translatedContent += cleanedChunk;
-          setTrHtml((prevState) => {
-            const newState = { ...prevState };
-            newState[language] = translatedContent; // Sử dụng toàn bộ nội dung đã dịch sạch
 
-            if (isLast) {
-              localStorage.setItem(keyHtml, translatedContent);
-              message.success("Dịch thành công!");
-            }
-
-            return newState;
-          });
+          if (isLast) {
+            setTrHtml((prevState) => {
+              const newState = { ...prevState };
+              newState[language] = translatedContent;
+              return newState;
+            });
+            localStorage.setItem(keyHtml, translatedContent);
+            message.success("Dịch thành công!");
+          }
         };
 
         // Then translate content
@@ -301,7 +299,7 @@ export default function BlogDetail() {
       : cleanDisplayText(trTitle[language]) || blog?.title;
 
   const displayContent =
-    language === "ja" || !trHtml[language]
+    language === "ja" || translating || !trHtml[language]
       ? blog?.content
       : cleanDisplayText(trHtml[language]);
 
