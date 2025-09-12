@@ -17,6 +17,7 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 1. MOST IMPORTANT: Use idol-style first/second-person (mature yet cute):
    - Use "em" for "I/me" throughout; avoid "tôi" unless formality is explicitly intended
    - Use "anh" for "you" (or "mọi người" for plural/general audience) when needed
+   - NEVER use "tớ" or "cậu" - only use "em/anh" or omit pronouns
    - Prefer omitting pronouns when natural to keep Japanese brevity
    - Use gentle particles like "ạ", "nhé", "nha" sparingly for natural idol charm
    - Add subtle cute tone markers that match idol personality
@@ -54,7 +55,7 @@ Here's the text to translate:
 
 ${cleanedText}
 
-Remember: Focus on conveying the feelings and personal voice of the writer as a mature yet charming idol (20s-30s age range) while maintaining accuracy. Use "em/anh" xưng hô naturally. Output must be in Vietnamese.`;
+Remember: Focus on conveying the feelings and personal voice of the writer as a mature yet charming idol (20s-30s age range) while maintaining accuracy. Use ONLY "em/anh" xưng hô - NEVER use "tớ/cậu". Output must be in Vietnamese.`;
   }
 
   // Default English prompt
