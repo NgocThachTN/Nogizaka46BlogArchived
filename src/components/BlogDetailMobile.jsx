@@ -149,9 +149,13 @@ export default function BlogDetailMobile({
   // Handle content updates
   useEffect(() => {
     if (displayContent && !translating) {
-      // Scroll back to top when content changes
+      // Smooth scroll back to top when content changes
       if (scrollWrapRef.current) {
-        scrollWrapRef.current.scrollTop = 0;
+        // Use smooth scrolling to prevent jank
+        scrollWrapRef.current.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
       }
       // Reset read progress
       setReadPct(0);
@@ -447,13 +451,18 @@ export default function BlogDetailMobile({
           overflow: "auto",
           background: "#fff",
           WebkitOverflowScrolling: "touch",
-          overscrollBehavior: "contain",
+          overscrollBehavior: "smooth",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
           position: "relative",
           display: "flex",
           flexDirection: "column",
+          /* Smooth scrolling optimization */
+          scrollBehavior: "smooth",
+          /* Prevent scroll jank on mobile */
+          transform: "translateZ(0)",
+          willChange: "scroll-position",
         }}
       >
         <ProCard
@@ -677,6 +686,26 @@ export default function BlogDetailMobile({
             scrollbar-width: none;  /* Firefox */
           }
 
+          /* Smooth touch interaction for mobile */
+          * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+
+          /* Allow text selection in content areas */
+          .jp-prose, .jp-prose * {
+            -webkit-user-select: text;
+            -khtml-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+          }
+
           html, body, #root { 
             height: 100%; 
             min-height: 100vh;
@@ -731,16 +760,19 @@ export default function BlogDetailMobile({
             height: auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
-            contain: paint;
             display: block;
-            /* Prevent image drag/select causing scroll jank on mobile */
-            -webkit-user-drag: none;
-            user-select: none;
-            /* Allow vertical panning without interpreting as image gesture */
-            touch-action: pan-y;
-            /* Avoid extra layer promotions that can cause repaint thrash */
-            backface-visibility: hidden;
+            /* Smooth touch interaction on mobile */
+            touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            /* Prevent image selection but allow smooth scrolling */
+            -webkit-user-select: none;
+            user-select: none;
+            /* Smooth image rendering */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            /* Prevent image drag but allow smooth touch */
+            -webkit-user-drag: none;
+            pointer-events: auto;
           }
           /* Preload space for images to prevent layout shifts */
           .jp-prose img:not([data-loaded]) {
