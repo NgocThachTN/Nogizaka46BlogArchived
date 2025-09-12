@@ -583,14 +583,33 @@ export default function BlogDetailMobile({
     }, 100);
   }, [scrollThreshold]);
 
-  // Optimized scroll handler using the stable throttled function
+  // Combined scroll handler for both progress and author bar visibility
   const onScroll = useCallback(() => {
+    const wrap = scrollWrapRef.current;
+    if (!wrap) return;
+
+    // Update read progress
     if (throttledUpdateRef.current) {
       throttledUpdateRef.current();
     }
-  }, []);
 
-  // Simple image loading - chỉ đảm bảo ảnh hiển thị
+    // Update author bar visibility
+    const currentScrollY = wrap.scrollTop;
+    const scrollDifference = currentScrollY - lastScrollY.current;
+
+    if (Math.abs(scrollDifference) > scrollThreshold) {
+      if (scrollDifference > 0) {
+        // Scroll down - ẩn header
+        setIsHeaderVisible(false);
+      } else if (scrollDifference < 0) {
+        // Scroll up - hiện header
+        setIsHeaderVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    }
+  }, [scrollThreshold]);
+
+  // Single scroll handler setup
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
@@ -606,33 +625,6 @@ export default function BlogDetailMobile({
       wrap.removeEventListener("scroll", onScroll);
     };
   }, [onScroll]);
-
-  // Simplified scroll handler - only for header visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY =
-        window.pageYOffset || document.documentElement.scrollTop || 0;
-      const scrollDifference = currentScrollY - lastScrollY.current;
-
-      if (Math.abs(scrollDifference) > scrollThreshold) {
-        if (scrollDifference > 0) {
-          // Scroll down - ẩn header
-          setIsHeaderVisible(false);
-        } else if (scrollDifference < 0) {
-          // Scroll up - hiện header
-          setIsHeaderVisible(true);
-        }
-        lastScrollY.current = currentScrollY;
-      }
-    };
-
-    // Only use window scroll for simplicity
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [scrollThreshold]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
