@@ -224,6 +224,16 @@ export default function BlogDetailMobile({
           }
         });
       }
+
+      // Clear image processing flags when content changes
+      setTimeout(() => {
+        if (scrollWrapRef.current) {
+          const images = scrollWrapRef.current.getElementsByTagName("img");
+          Array.from(images).forEach((img) => {
+            img.removeAttribute("data-processed");
+          });
+        }
+      }, 100);
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
 
@@ -426,60 +436,54 @@ export default function BlogDetailMobile({
     }
   }, []);
 
-  // Enhanced image loading with global cache and debouncing
+  // Enhanced image loading with stable state management
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    let imageLoadTimeout = null;
-
-    // Enhanced image loading handler with global cache
+    // Simple image loading handler without debouncing
     const markImagesLoaded = () => {
-      // Clear previous timeout
-      if (imageLoadTimeout) {
-        clearTimeout(imageLoadTimeout);
-      }
+      const images = wrap.getElementsByTagName("img");
+      Array.from(images).forEach((img) => {
+        const src = img.getAttribute("src");
+        if (!src) return;
 
-      // Debounce image loading to prevent jank
-      imageLoadTimeout = setTimeout(() => {
-        const images = wrap.getElementsByTagName("img");
-        Array.from(images).forEach((img) => {
-          const src = img.getAttribute("src");
-          if (!src) return;
+        // Skip if already processed
+        if (img.getAttribute("data-processed") === "true") return;
 
-          // Check global cache first
-          const cached = _mobileCache.imageCache.get(src);
-          if (cached?.loaded) {
+        // Mark as processed
+        img.setAttribute("data-processed", "true");
+
+        // Check global cache first
+        const cached = _mobileCache.imageCache.get(src);
+        if (cached?.loaded) {
+          img.setAttribute("data-loaded", "true");
+          img.style.opacity = "1";
+          return;
+        }
+
+        // Set initial state
+        img.style.opacity = "0";
+
+        if (img.complete) {
+          img.setAttribute("data-loaded", "true");
+          img.style.opacity = "1";
+          _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
+        } else {
+          img.onload = () => {
             img.setAttribute("data-loaded", "true");
             img.style.opacity = "1";
-            img.style.transition = "opacity 0.3s ease";
-            return;
-          }
-
-          // Set initial state
-          img.style.opacity = "0";
-          img.style.transition = "opacity 0.3s ease";
-
-          if (img.complete) {
-            img.setAttribute("data-loaded", "true");
-            img.style.opacity = "1";
-            _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
-          } else {
-            img.onload = () => {
-              img.setAttribute("data-loaded", "true");
-              img.style.opacity = "1";
-              _mobileCache.imageCache.set(src, {
-                loaded: true,
-                ts: Date.now(),
-              });
-            };
-            img.onerror = () => {
-              img.style.opacity = "0.5";
-              img.setAttribute("data-loaded", "error");
-            };
-          }
-        });
-      }, 50); // 50ms debounce
+            _mobileCache.imageCache.set(src, {
+              loaded: true,
+              ts: Date.now(),
+            });
+          };
+          img.onerror = () => {
+            img.style.opacity = "0.5";
+            img.setAttribute("data-loaded", "error");
+          };
+        }
+      });
     };
 
     // Setup scroll handler with passive flag for better performance
@@ -491,9 +495,6 @@ export default function BlogDetailMobile({
 
     // Enhanced cleanup
     return () => {
-      if (imageLoadTimeout) {
-        clearTimeout(imageLoadTimeout);
-      }
       wrap.removeEventListener("scroll", onScroll);
       const images = wrap.getElementsByTagName("img");
       Array.from(images).forEach((img) => {
@@ -922,6 +923,12 @@ export default function BlogDetailMobile({
           .jp-prose img[data-loaded="error"] {
             opacity: 0.5;
             background: rgba(255,0,0,0.1);
+          }
+          
+          /* Ensure images are visible by default */
+          .jp-prose img {
+            opacity: 1;
+            transition: opacity 0.3s ease;
           }
           .jp-prose p {
             margin: 0.85em 0;
