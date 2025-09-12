@@ -82,13 +82,13 @@ function App() {
                 </div>
               ) : null;
             }}
-            headerRender={() => (
-              <div className="flex items-center w-full px-6 py-4 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold">N46</span>
-                </div>
-              </div>
-            )}
+            // headerRender={() => (
+            //   <div className="flex items-center w-full px-6 py-4 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
+            //     <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+            //       {/* <span className="text-white font-bold">N46</span> */}
+            //     </div>
+            //   </div>
+            // )}
             style={{
               minHeight: "100vh",
             }}

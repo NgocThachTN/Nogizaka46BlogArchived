@@ -29,15 +29,19 @@ import {
   LinkOutlined,
   ArrowUpOutlined,
   LoadingOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import {
   fetchBlogDetail,
+  fetchAllBlogs,
   fetchMemberInfo,
   fetchMemberInfoByName,
   getImageUrl,
+  getCachedBlogDetail,
+  prefetchBlogDetail,
 } from "../services/blogService";
 import BlogDetailMobile from "./BlogDetailMobile";
 
@@ -72,12 +76,14 @@ const t = {
     vi: "Không tìm thấy bài viết",
   },
   share: { ja: "シェア", en: "Share", vi: "Chia sẻ" },
+  prevPost: { ja: "前の記事", en: "Previous", vi: "Bài trước" },
   copied: {
     ja: "リンクをコピーしました",
     en: "Link copied",
     vi: "Đã sao chép liên kết",
   },
   nextPost: { ja: "次の記事", en: "Next Post", vi: "Bài tiếp theo" },
+  latestPost: { ja: "最新", en: "Newest", vi: "Mới nhất" },
   openSource: { ja: "元ページ", en: "Original", vi: "Trang gốc" },
   toc: { ja: "目次", en: "Contents", vi: "Mục lục" },
   readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
@@ -108,6 +114,11 @@ export default function BlogDetail() {
   const [translating, setTranslating] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const contentRef = useRef(null);
+  const [navIds, setNavIds] = useState({
+    prevId: null,
+    nextId: null,
+    latestId: null,
+  });
 
   // Hàm để làm sạch kết quả hiển thị
   const cleanDisplayText = (text) => {
@@ -135,13 +146,27 @@ export default function BlogDetail() {
       message.info(window.location.href);
     }
   };
-  const onBack = () => navigate("/blog");
+  const onBack = () => {
+    if (navIds.prevId) {
+      navigate(`/blog/${navIds.prevId}`);
+    } else {
+      const backTo = blog?.memberCode
+        ? `/blogs/${blog.memberCode}`
+        : "/members";
+      navigate(backTo);
+    }
+  };
 
-  // load blog
+  // load blog (cache-first then revalidate)
   useEffect(() => {
     (async () => {
       try {
-        setLoading(true);
+        const cached = getCachedBlogDetail(id);
+        if (cached) {
+          setBlog(cached);
+          setLoading(false);
+        }
+        if (!cached) setLoading(true);
         const data = await fetchBlogDetail(id);
         console.log("Blog data loaded:", data); // Debug log
         if (!data) {
@@ -177,6 +202,41 @@ export default function BlogDetail() {
   useEffect(() => {
     localStorage.setItem(LS_KEY_SIZE, fontSizeKey);
   }, [fontSizeKey]);
+
+  // Compute prev/next ids for the same member timeline
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!blog?.id) return;
+        // Determine member code: prefer from blog, fallback by author name
+        let code = blog?.memberCode;
+        if (!code && blog?.author) {
+          const m = await fetchMemberInfoByName(blog.author);
+          code = m?.code;
+        }
+        if (!code) return;
+        const list = await fetchAllBlogs(code);
+        if (!Array.isArray(list) || list.length === 0) return;
+        const index = list.findIndex((b) => String(b.id) === String(blog.id));
+        if (index === -1) return;
+        // list is newest -> oldest
+        const nextNewer = index > 0 ? list[index - 1]?.id : null;
+        const prevOlder = index < list.length - 1 ? list[index + 1]?.id : null;
+        const latestId = list[0]?.id || null;
+        setNavIds({
+          prevId: prevOlder || null,
+          nextId: nextNewer || null,
+          latestId,
+        });
+
+        // Prefetch neighbors to speed up next taps
+        if (prevOlder) prefetchBlogDetail(prevOlder);
+        if (nextNewer) prefetchBlogDetail(nextNewer);
+      } catch (e) {
+        console.error("Failed to compute prev/next", e);
+      }
+    })();
+  }, [blog?.memberCode, blog?.author, blog?.id]);
 
   // table of contents & readtime
   const { toc, plainText } = useMemo(() => {
@@ -232,11 +292,13 @@ export default function BlogDetail() {
         setTranslating(true);
         console.log("Translating content...");
 
-        // Translate title first
-        const titleOut =
-          language === "en"
-            ? await translateJapaneseToEnglish(blog.title || "")
-            : await translateJapaneseToVietnamese(blog.title || "");
+        // Translate title first with proper language check
+        let titleOut = "";
+        if (language === "en") {
+          titleOut = await translateJapaneseToEnglish(blog.title || "");
+        } else if (language === "vi") {
+          titleOut = await translateJapaneseToVietnamese(blog.title || "");
+        }
 
         console.log("Title translated:", titleOut);
 
@@ -263,11 +325,15 @@ export default function BlogDetail() {
           }
         };
 
-        // Then translate content
-        console.log("Starting content translation...");
-        await (language === "en"
-          ? translateJapaneseToEnglish(blog.content, updateProgress)
-          : translateJapaneseToVietnamese(blog.content, updateProgress));
+        // Then translate content with proper language check
+        console.log("Starting content translation for language:", language);
+        if (language === "en") {
+          console.log("Translating to English...");
+          await translateJapaneseToEnglish(blog.content, updateProgress);
+        } else if (language === "vi") {
+          console.log("Translating to Vietnamese...");
+          await translateJapaneseToVietnamese(blog.content, updateProgress);
+        }
 
         console.log("Content translated, length:", translatedContent.length);
 
@@ -314,6 +380,8 @@ export default function BlogDetail() {
         setLanguage={setLanguage}
         displayTitle={displayTitle}
         displayContent={displayContent}
+        prevId={navIds.prevId}
+        nextId={navIds.nextId}
       />
     );
   }
@@ -359,6 +427,24 @@ export default function BlogDetail() {
           </Space>
         ),
         extra: [
+          <Button
+            key="prev-post"
+            icon={<LeftOutlined />}
+            onClick={() => navIds.prevId && navigate(`/blog/${navIds.prevId}`)}
+            disabled={!navIds.prevId}
+          >
+            {t.prevPost[language]}
+          </Button>,
+          navIds.nextId ? (
+            <Button
+              key="next-post"
+              type="primary"
+              icon={<RightOutlined />}
+              onClick={() => navigate(`/blog/${navIds.nextId}`)}
+            >
+              {t.nextPost[language]}
+            </Button>
+          ) : null,
           <Select
             key="lang"
             value={language}
@@ -396,6 +482,15 @@ export default function BlogDetail() {
           <Button key="back" icon={<LeftOutlined />} onClick={onBack}>
             {t.back[language]}
           </Button>,
+          navIds.nextId && (
+            <Button
+              key="next"
+              type="primary"
+              onClick={() => navigate(`/blog/${navIds.nextId}`)}
+            >
+              {t.nextPost[language]}
+            </Button>
+          ),
         ],
       }}
       token={{ colorBgPageContainer: readingMode ? "#fafafa" : undefined }}
@@ -514,10 +609,10 @@ export default function BlogDetail() {
             >
               {t.back[language]}
             </Button>
-            {blog.nextPost && (
+            {navIds.nextId && (
               <Button
                 type="primary"
-                onClick={() => navigate(`/blog/${blog.nextPost.id}`)}
+                onClick={() => navigate(`/blog/${navIds.nextId}`)}
                 style={{
                   width: window.innerWidth < 768 ? "100%" : "auto",
                   height: window.innerWidth < 768 ? "36px" : "32px",

@@ -16,6 +16,7 @@ import {
   TranslationOutlined,
   ArrowUpOutlined,
   LeftOutlined,
+  RightOutlined,
   MenuOutlined,
   InfoCircleOutlined,
   CalendarOutlined,
@@ -59,6 +60,19 @@ const jpFont = {
 
 const LS_FONT = "mblog:fontSize";
 
+// Inject performance attributes into HTML for mobile rendering
+function optimizeHtmlForMobile(html) {
+  if (!html) return html;
+  return html.replace(/<img\b([^>]*?)>/gi, (match, attrs) => {
+    let newAttrs = attrs || "";
+    if (!/\bloading=/.test(newAttrs)) newAttrs += ' loading="lazy"';
+    if (!/\bdecoding=/.test(newAttrs)) newAttrs += ' decoding="async"';
+    if (!/\breferrerpolicy=/.test(newAttrs))
+      newAttrs += ' referrerpolicy="no-referrer"';
+    return `<img${newAttrs}>`;
+  });
+}
+
 export default function BlogDetailMobile({
   blog,
   loading,
@@ -66,8 +80,20 @@ export default function BlogDetailMobile({
   language,
   setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
   displayContent, // HTML (JP/EN/VI) render ra
+  prevId,
+  nextId,
 }) {
   const navigate = useNavigate();
+  const goBack = useCallback(() => {
+    if (prevId) {
+      navigate(`/blog/${prevId}`);
+    } else {
+      const backTo = blog?.memberCode
+        ? `/blogs/${blog.memberCode}`
+        : "/members";
+      navigate(backTo);
+    }
+  }, [navigate, blog?.memberCode, prevId]);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 16
@@ -76,6 +102,10 @@ export default function BlogDetailMobile({
   // progress đọc (%)
   const [readPct, setReadPct] = useState(0);
   const scrollWrapRef = useRef(null);
+  const lastTotalRef = useRef(0);
+  const lastScrolledRef = useRef(0);
+  const lastPctRef = useRef(0);
+  const throttledUpdateRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -96,6 +126,11 @@ export default function BlogDetailMobile({
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 24));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 14));
 
+  // Optimized HTML with lazy images
+  const optimizedHtml = useMemo(() => {
+    return optimizeHtmlForMobile(displayContent || blog?.content || "");
+  }, [displayContent, blog?.content]);
+
   // Sticky TopBar
   const TopBar = useMemo(
     () => (
@@ -106,18 +141,25 @@ export default function BlogDetailMobile({
             background: "#fff",
             borderBottom: "1px solid rgba(0,0,0,0.06)",
             padding: 8,
-            zIndex: 10,
+            // Ensure the TopBar stays above any scrolling content/overlays
+            zIndex: 1001,
+            position: "relative",
           }}
         >
           <Space
             align="center"
             style={{ width: "100%", justifyContent: "space-between" }}
           >
-            <Button
-              type="text"
-              icon={<LeftOutlined />}
-              onClick={() => navigate("/blog")}
-            />
+            <Space>
+              <Button type="text" icon={<LeftOutlined />} onClick={goBack} />
+              {nextId ? (
+                <Button
+                  type="text"
+                  icon={<RightOutlined />}
+                  onClick={() => navigate(`/blog/${nextId}`)}
+                />
+              ) : null}
+            </Space>
             <Space>
               {/* trạng thái dịch */}
               {translating ? (
@@ -127,10 +169,10 @@ export default function BlogDetailMobile({
                   style={{ marginRight: 6 }}
                 >
                   {language === "vi"
-                    ? "Đang dịch"
+                    ? "Đang dịch..."
                     : language === "en"
-                    ? "Translating"
-                    : "翻訳中"}
+                    ? "Translating..."
+                    : "翻訳中..."}
                 </Tag>
               ) : (
                 <Tag color="default" style={{ marginRight: 6 }}>
@@ -163,46 +205,40 @@ export default function BlogDetailMobile({
         </div>
       </Affix>
     ),
-    [language, translating, navigate, setLanguage]
+    [language, translating, goBack, setLanguage, nextId, navigate]
   );
 
-  // Optimized scroll handler with throttle and cached dimensions
-  const onScroll = useCallback(() => {
-    const wrap = scrollWrapRef.current;
-    if (!wrap) return;
-
-    // Cache scroll dimensions
-    let lastTotal = wrap.scrollHeight - wrap.clientHeight;
-    let lastScrolled = wrap.scrollTop;
-    let lastPct = 0;
-
-    const updateProgress = () => {
+  // Create a single throttled updater for scroll progress
+  useEffect(() => {
+    throttledUpdateRef.current = throttle(() => {
+      const wrap = scrollWrapRef.current;
+      if (!wrap) return;
       const total = wrap.scrollHeight - wrap.clientHeight;
       const scrolled = wrap.scrollTop;
+      const lastTotal = lastTotalRef.current;
+      const lastScrolled = lastScrolledRef.current;
 
-      // Only update if there's a significant change
       if (
         Math.abs(total - lastTotal) > 1 ||
         Math.abs(scrolled - lastScrolled) > 1
       ) {
         const pct =
           total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
-
-        // Avoid unnecessary updates
-        if (Math.abs(pct - lastPct) > 0.5) {
+        if (Math.abs(pct - lastPctRef.current) > 0.5) {
           setReadPct(pct);
-          lastPct = pct;
+          lastPctRef.current = pct;
         }
-
-        lastTotal = total;
-        lastScrolled = scrolled;
+        lastTotalRef.current = total;
+        lastScrolledRef.current = scrolled;
       }
-    };
+    }, 100);
+  }, []);
 
-    // Throttle updates to max 10 times per second
-    requestAnimationFrame(() => {
-      throttle(updateProgress, 100)();
-    });
+  // Optimized scroll handler using the stable throttled function
+  const onScroll = useCallback(() => {
+    if (throttledUpdateRef.current) {
+      throttledUpdateRef.current();
+    }
   }, []);
 
   // Handle image loading
@@ -364,29 +400,6 @@ export default function BlogDetailMobile({
             width: "100%",
           }}
         >
-          {/* Translation status and loading state */}
-          {translating && (
-            <Card
-              bordered={false}
-              style={{
-                marginBottom: 16,
-                background: "#faf5ff",
-                border: "1px solid #e9d5ff",
-              }}
-            >
-              <Space>
-                <LoadingOutlined style={{ color: "#9333ea" }} />
-                <Text>
-                  {language === "vi"
-                    ? "Đang dịch nội dung..."
-                    : language === "en"
-                    ? "Translating content..."
-                    : "翻訳中..."}
-                </Text>
-              </Space>
-            </Card>
-          )}
-
           {/* Title block */}
           <div style={{ padding: "0 12px" }}>
             <Card
@@ -429,7 +442,7 @@ export default function BlogDetailMobile({
                 hyphens: "auto",
               }}
               dangerouslySetInnerHTML={{
-                __html: displayContent || blog?.content || "",
+                __html: optimizedHtml,
               }}
             />
           </div>
@@ -506,12 +519,22 @@ export default function BlogDetailMobile({
       </Drawer>
 
       {/* Floating buttons */}
-      <FloatButton.Group shape="square" style={{ right: 12, bottom: 12 }}>
+      <FloatButton.Group
+        shape="square"
+        style={{ right: 12, bottom: 12, zIndex: 1001 }}
+      >
         <FloatButton
           icon={<LeftOutlined />}
-          onClick={() => navigate("/blog")}
+          onClick={goBack}
           tooltip="Quay lại"
         />
+        {nextId ? (
+          <FloatButton
+            icon={<RightOutlined />}
+            onClick={() => navigate(`/blog/${nextId}`)}
+            tooltip="Bài tiếp theo"
+          />
+        ) : null}
         <FloatButton
           icon={<TranslationOutlined />}
           tooltip="Dịch JP/EN/VI"

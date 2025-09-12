@@ -1,4 +1,4 @@
-// BlogList.jsx — Ant Design Pro • Compact Hero • Cached & Fast Back
+// BlogList.jsx — Ant Design Pro • Mobile-First Fast Render
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Typography,
@@ -27,7 +27,15 @@ import {
   ProCard,
   StatisticCard,
 } from "@ant-design/pro-components";
-import { useState, useEffect, useMemo, useRef, useLayoutEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useDeferredValue,
+  useTransition,
+} from "react";
 import {
   fetchAllBlogs,
   getImageUrl,
@@ -36,13 +44,12 @@ import {
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
-const PAGE_SIZE = 9;
 
 /** ---------- Simple in-memory cache ---------- **/
 const _cache = {
   blogsByMember: new Map(), // key: memberCode -> { list, ts }
-  memberByCode: new Map(),  // key: memberCode -> { info, ts }
-  scrollY: new Map(),       // key: memberCode -> number
+  memberByCode: new Map(), // key: memberCode -> { info, ts }
+  scrollY: new Map(), // key: memberCode -> number
 };
 const STALE_MS = 1000 * 60 * 3; // 3 phút coi là “fresh”
 
@@ -51,17 +58,27 @@ export default function BlogList() {
   const { memberCode } = useParams();
   const screens = useBreakpoint();
 
+  // PAGE_SIZE dynamic: mobile nhỏ hơn để render ít card/ lần
+  const PAGE_SIZE = useMemo(() => (screens.xs ? 6 : 9), [screens.xs]);
+
   const [blogs, setBlogs] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Tìm kiếm mượt: defer + debounce
   const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
+
   const [page, setPage] = useState(1);
   const [memberInfo, setMemberInfo] = useState(null);
 
   const abortRef = useRef(null);
 
-  // ---- Render instantly from cache (if có) ----
+  // Chuyển state nặng sang background để không block thread (mượt trên mobile)
+  const [isPending, startTransition] = useTransition();
+
+  // ---- Render instantly from cache (nếu có) ----
   useLayoutEffect(() => {
     const b = _cache.blogsByMember.get(memberCode);
     const m = _cache.memberByCode.get(memberCode);
@@ -78,7 +95,6 @@ export default function BlogList() {
     if (typeof y === "number") {
       requestAnimationFrame(() => window.scrollTo(0, y));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberCode]);
 
   // ---- Load + revalidate (nếu cache cũ) ----
@@ -88,7 +104,10 @@ export default function BlogList() {
 
     const load = async (revalidateOnly = false) => {
       try {
-        if (!revalidateOnly && !(_cache.blogsByMember.get(memberCode)?.list?.length)) {
+        if (
+          !revalidateOnly &&
+          !_cache.blogsByMember.get(memberCode)?.list?.length
+        ) {
           setLoading(true);
         }
         setError(null);
@@ -99,13 +118,12 @@ export default function BlogList() {
         const isFreshB = cachedB && now - cachedB.ts < STALE_MS;
         const isFreshM = cachedM && now - cachedM.ts < STALE_MS;
 
-        // Nếu fresh hết thì thôi
         if (isFreshB && isFreshM) {
           setLoading(false);
           return;
         }
 
-        // song song
+        // Fetch song song
         const [all, member] = await Promise.all([
           isFreshB
             ? Promise.resolve(cachedB.list)
@@ -115,10 +133,20 @@ export default function BlogList() {
             : fetchMemberInfo(memberCode, { signal: controller.signal }),
         ]);
 
-        // Cập nhật state + cache
         if (!controller.signal.aborted) {
-          setBlogs(all);
-          setFiltered((prev) => (q ? all.filter(f => (f.title + f.author).toLowerCase().includes(q.toLowerCase())) : all));
+          // cập nhật state nặng trong transition => ít giật lag hơn
+          startTransition(() => {
+            setBlogs(all);
+            setFiltered(
+              deferredQ
+                ? all.filter((f) =>
+                    (f.title + f.author)
+                      .toLowerCase()
+                      .includes(deferredQ.toLowerCase())
+                  )
+                : all
+            );
+          });
           setMemberInfo(member);
 
           _cache.blogsByMember.set(memberCode, { list: all, ts: Date.now() });
@@ -134,12 +162,11 @@ export default function BlogList() {
       }
     };
 
-    // Nếu có cache rồi -> revalidate nền, ngược lại fetch bình thường
     const hasCache = !!_cache.blogsByMember.get(memberCode)?.list?.length;
     load(hasCache);
 
     return () => controller.abort();
-  }, [memberCode, q]);
+  }, [memberCode, deferredQ]);
 
   // Lưu vị trí cuộn trước khi rời trang
   useEffect(() => {
@@ -153,25 +180,32 @@ export default function BlogList() {
     };
   }, [memberCode]);
 
-  // Tìm kiếm cục bộ
+  // Debounce nhập liệu (200ms) để hạn chế filter liên tục
   useEffect(() => {
-    const kw = q.trim().toLowerCase();
-    let list = blogs;
-    if (kw) {
-      list = blogs.filter(
-        (b) =>
-          b.title.toLowerCase().includes(kw) ||
-          b.author.toLowerCase().includes(kw)
-      );
-    }
-    setFiltered(list);
-    setPage(1);
+    const h = setTimeout(() => {
+      const kw = q.trim().toLowerCase();
+      startTransition(() => {
+        if (!kw) {
+          setFiltered(blogs);
+        } else {
+          setFiltered(
+            blogs.filter(
+              (b) =>
+                b.title.toLowerCase().includes(kw) ||
+                b.author.toLowerCase().includes(kw)
+            )
+          );
+        }
+        setPage(1);
+      });
+    }, 200);
+    return () => clearTimeout(h);
   }, [q, blogs]);
 
   const current = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+  }, [filtered, page, PAGE_SIZE]);
 
   const newestDate = useMemo(
     () => (blogs[0]?.date ? blogs[0].date : "-"),
@@ -179,10 +213,11 @@ export default function BlogList() {
   );
 
   const onOpen = (id) => {
-    // lưu scroll ngay trước khi đi chi tiết
     _cache.scrollY.set(memberCode, window.scrollY);
     navigate(`/blog/${id}`);
   };
+
+  // ====== RENDER ======
 
   if (loading && !blogs.length) {
     return (
@@ -233,31 +268,35 @@ export default function BlogList() {
       }}
     >
       <ProCard ghost direction="column" gutter={[12, 12]}>
-        {/* COMPACT HERO */}
+        {/* COMPACT HERO (nhẹ trên mobile) */}
         <ProCard
           bordered
           style={{
             borderRadius: 16,
-            background: "linear-gradient(180deg, #ffffff 0%, #faf7ff 100%)",
+            background: screens.xs
+              ? "#fff" // đơn giản cho mobile
+              : "linear-gradient(180deg, #ffffff 0%, #faf7ff 100%)",
             marginTop: 0,
           }}
-          bodyStyle={{ padding: screens.xs ? 14 : 18 }}
+          bodyStyle={{ padding: screens.xs ? 12 : 18 }}
         >
           <Space
             direction={screens.xs ? "vertical" : "horizontal"}
             align="center"
             style={{ width: "100%", justifyContent: "center" }}
-            size={screens.xs ? 10 : 16}
+            size={screens.xs ? 8 : 16}
           >
             <Avatar
-              size={screens.xs ? 56 : 64}
+              size={screens.xs ? 52 : 64}
               src={
                 memberInfo?.img ||
                 "https://via.placeholder.com/300x300?text=No+Image"
               }
-              style={{ boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }}
+              style={
+                screens.xs ? {} : { boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }
+              }
             />
-            <Space direction="vertical" align="center" size={4}>
+            <Space direction="vertical" align="center" size={2}>
               <Title level={3} style={{ margin: 0, lineHeight: 1 }}>
                 Blog
               </Title>
@@ -266,24 +305,33 @@ export default function BlogList() {
               </Text>
             </Space>
 
-            <Space size={8} wrap style={{ marginLeft: screens.xs ? 0 : "auto" }}>
-              <StatisticCard
-                style={{ borderRadius: 12, minWidth: 120 }}
-                bodyStyle={{ padding: 10 }}
-                statistic={{ title: "投稿数", value: filtered.length }}
-              />
-              <StatisticCard
-                style={{ borderRadius: 12, minWidth: 160 }}
-                bodyStyle={{ padding: 10 }}
-                statistic={{ title: "最新", value: newestDate }}
-              />
-            </Space>
+            {!screens.xs && (
+              <Space size={8} wrap style={{ marginLeft: "auto" }}>
+                <StatisticCard
+                  style={{ borderRadius: 12, minWidth: 120 }}
+                  bodyStyle={{ padding: 10 }}
+                  statistic={{ title: "投稿数", value: filtered.length }}
+                />
+                <StatisticCard
+                  style={{ borderRadius: 12, minWidth: 160 }}
+                  bodyStyle={{ padding: 10 }}
+                  statistic={{ title: "最新", value: newestDate }}
+                />
+              </Space>
+            )}
           </Space>
         </ProCard>
 
         {/* FILTER ROW */}
-        <ProCard bordered style={{ borderRadius: 14 }} bodyStyle={{ padding: 12 }}>
-          <Space style={{ width: "100%", justifyContent: "space-between" }} wrap>
+        <ProCard
+          bordered
+          style={{ borderRadius: 14 }}
+          bodyStyle={{ padding: 12 }}
+        >
+          <Space
+            style={{ width: "100%", justifyContent: "space-between" }}
+            wrap
+          >
             <Input
               allowClear
               size={screens.xs ? "middle" : "large"}
@@ -301,7 +349,7 @@ export default function BlogList() {
                 alignItems: "center",
               }}
             >
-              合計 {filtered.length} 件
+              合計 {filtered.length} 件 {isPending ? "…" : ""}
             </Tag>
           </Space>
         </ProCard>
@@ -319,18 +367,25 @@ export default function BlogList() {
             }}
           >
             <Empty
-              description={q ? "検索結果が見つかりません" : "まだブログ記事がありません"}
+              description={
+                q ? "検索結果が見つかりません" : "まだブログ記事がありません"
+              }
             />
           </ProCard>
         ) : (
           <ProCard ghost gutter={[16, 16]} wrap>
-            {current.map((blog) => (
+            {current.map((blog, idx) => (
               <ProCard
                 key={blog.id}
                 colSpan={{ xs: 24, sm: 12, lg: 8 }}
-                hoverable
+                hoverable={!screens.xs} // tắt hover trên mobile cho nhẹ
                 bordered
-                style={{ borderRadius: 12 }}
+                style={{
+                  borderRadius: 12,
+                  // contain layout/paint giúp trình duyệt tối ưu composite
+                  contain: "content",
+                  willChange: "transform",
+                }}
                 bodyStyle={{ padding: 12 }}
                 onClick={() => onOpen(blog.id)}
                 className="blog-card"
@@ -339,7 +394,7 @@ export default function BlogList() {
                 <div
                   style={{
                     position: "relative",
-                    height: screens.xs ? 150 : 190,
+                    height: screens.xs ? 148 : 190,
                     overflow: "hidden",
                     borderRadius: 10,
                     background: "#f5f6fa",
@@ -349,16 +404,34 @@ export default function BlogList() {
                   <img
                     src={
                       blog.thumbnail
-                        ? getImageUrl(blog.thumbnail)
+                        ? getImageUrl(blog.thumbnail, {
+                            w: screens.xs ? 640 : 960,
+                          })
                         : "https://via.placeholder.com/600x320/f0f0f0/666666?text=No+Image"
                     }
+                    srcSet={
+                      blog.thumbnail
+                        ? [
+                            `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
+                            `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
+                            `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
+                            `${getImageUrl(blog.thumbnail, { w: 1280 })} 1280w`,
+                          ].join(", ")
+                        : undefined
+                    }
+                    sizes={
+                      screens.xs ? "(max-width: 576px) 100vw, 640px" : "33vw"
+                    }
                     alt={blog.title}
-                    loading="lazy"
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    // ảnh eager đầu tiên để cảm giác “vào là thấy”, còn lại lazy
+                    decoding="async"
+                    fetchpriority={idx === 0 ? "high" : "low"}
                     style={{
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
-                      transition: "transform .3s",
+                      transition: "transform .25s",
                     }}
                   />
                   <div style={{ position: "absolute", top: 8, left: 8 }}>
@@ -381,10 +454,7 @@ export default function BlogList() {
 
                 {/* Meta */}
                 <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                  <Space>
-                    <Avatar src={memberInfo?.img} size={26} />
-                    <Text strong>{blog.author}</Text>
-                  </Space>
+                  <Space></Space>
 
                   <Tooltip title={blog.title}>
                     <Title
@@ -405,7 +475,9 @@ export default function BlogList() {
 
                   <Divider style={{ margin: "8px 0" }} />
 
-                  <Space style={{ width: "100%", justifyContent: "space-between" }}>
+                  <Space
+                    style={{ width: "100%", justifyContent: "space-between" }}
+                  >
                     <Space>
                       <Button type="text" size="small" icon={<EyeOutlined />}>
                         閲覧
@@ -451,9 +523,11 @@ export default function BlogList() {
         )}
       </ProCard>
 
-      {/* Hover effect */}
+      {/* Hover effect (tắt scale mạnh cho mobile để đỡ paint) */}
       <style>{`
-        .blog-card:hover img { transform: scale(1.035); }
+        @media (hover:hover) {
+          .blog-card:hover img { transform: scale(1.03); }
+        }
       `}</style>
     </PageContainer>
   );

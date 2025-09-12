@@ -3,6 +3,22 @@ import * as cheerio from "cheerio";
 
 const BASE_URL = "https://www.nogizaka46.com";
 const BLOG_URL = `${BASE_URL}/s/n46/diary/MEMBER/list`;
+
+// Lightweight in-memory cache for blog details to speed up navigation
+const _detailCache = new Map(); // key: blogId -> blog detail object
+
+export const getCachedBlogDetail = (blogId) => _detailCache.get(String(blogId));
+export const prefetchBlogDetail = async (blogId) => {
+  try {
+    const key = String(blogId);
+    if (_detailCache.has(key)) return _detailCache.get(key);
+    const d = await fetchBlogDetail(blogId);
+    if (d) _detailCache.set(key, d);
+    return d;
+  } catch {
+    return undefined;
+  }
+};
 // Fetch tất cả các blog của member
 export const fetchAllBlogs = async (memberCode) => {
   try {
@@ -139,7 +155,7 @@ export const fetchBlogDetail = async (blogId) => {
     // Get original URL
     const originalUrl = `${BASE_URL}/s/n46/diary/detail/${blogId}?cd=MEMBER`;
 
-    return {
+    const detail = {
       id: blogId,
       title,
       date,
@@ -149,6 +165,10 @@ export const fetchBlogDetail = async (blogId) => {
       memberImage: memberInfo?.img || null,
       originalUrl,
     };
+
+    // cache the result for instant reuse
+    _detailCache.set(String(blogId), detail);
+    return detail;
   } catch (error) {
     console.error("Error fetching blog detail:", error);
     return null;

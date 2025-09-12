@@ -10,37 +10,38 @@ const cleanTextForTranslation = (text) => {
 
 const createTranslationPrompt = (text, fromLang, toLang) => {
   const cleanedText = cleanTextForTranslation(text);
-  return `You are a specialized translator for idol blogs, focusing on casual, friendly, and feminine writing styles. Please translate the following text from ${fromLang} to ${toLang} while following these guidelines:
 
-1. MOST IMPORTANT: Use casual first-person pronouns in Vietnamese:
-   - Use "tớ/mình" instead of "tôi" for "I/me"
-   - Use "cậu/bạn" instead of "bạn/các bạn" for "you"
-   - Keep the tone friendly and intimate like talking to close friends
+  if (toLang.toLowerCase() === "vietnamese") {
+    return `You are a specialized translator for idol blogs. Translate the following text from ${fromLang} to Vietnamese with a Japanese-like tone: neutral, concise, and straightforward. Avoid gendered or overly cute Vietnamese expressions. Follow these guidelines:
 
-2. Maintain a youthful, feminine voice throughout:
-   - Write like a young woman sharing with friends
-   - Use gentle, sweet expressions common among young women
-   - Keep the innocent and cheerful personality
-   - Mix in cute expressions naturally
+1. MOST IMPORTANT: Use friendly first/second-person:
+   - Use "tớ" for "I/me" throughout; avoid "tôi" unless formality is explicitly intended
+   - Use "cậu" for "you" (or "bạn" for plural/general audience) when needed
+   - Prefer omitting pronouns when natural to keep Japanese brevity
+   - Avoid particles like "ạ", "dạ", "nhé", "nha", "ạ nhỉ", "ạ nha"
+   - Do not add cutesy tone markers or softeners not present in the source
+
+2. Match Japanese style and rhythm:
+   - Keep sentences concise, direct, and calm; mirror Japanese pacing and breaks
+   - Avoid overly feminine style or teenage slang
+   - Keep wording natural and composed; no added embellishments
 
 3. For emotional expressions:
-   - Show excitement with "á", "ơ", "ủa" instead of formal expressions
-   - Use "hihi", "hehe" for light-hearted moments
-   - Express surprise with "ơ kìa", "ủa" rather than formal phrases
-   - Show happiness with expressions like "vui quá à", "thích ghê"
+   - Keep emotions natural and understated
+   - Avoid interjections/fillers like "á", "ơ", "ủa", "ơ kìa", and cutesy laughs like "hihi", "hehe"
+   - Avoid particles/colloquialisms such as "ạ", "dạ", "vui quá à", "thích ghê", "nhé", "nha"
 
 4. In daily life stories:
-   - Write as if chatting with close friends
-   - Use casual phrases like "thật sự là", "kiểu như là"
-   - Share feelings openly and naturally
-   - Keep the writing style sweet and endearing
+   - Follow the original structure closely; do not over-explain
+   - Avoid filler phrases like "thật sự là", "kiểu như là" unless present in source
+   - Keep the narration clear and straightforward
 
 5. For friendly interactions:
-   - Use heart emojis and cute expressions where appropriate
-   - Show care with phrases like "nhớ nhé", "nha"
-   - Express gratitude casually like "cảm ơn nha", "cảm ơn nhiều nha"
-   - Keep the overall tone warm and intimate
-7. Technical requirements:
+   - Avoid emojis and cute expressions unless explicitly in the source
+   - Use neutral forms for reminders and gratitude; avoid "nhé/nha" and similar softeners
+   - Keep an overall neutral, courteous tone
+
+Technical requirements:
    - Preserve all HTML tags and attributes exactly
    - Only translate text between HTML tags
    - Keep all line breaks and spacing
@@ -51,7 +52,29 @@ Here's the text to translate:
 
 ${cleanedText}
 
-Remember: Focus on conveying the feelings and personal voice of the writer while maintaining accuracy.`;
+Remember: Focus on conveying the feelings and personal voice of the writer while maintaining accuracy. Output must be in Vietnamese.`;
+  }
+
+  // Default English prompt
+  return `You are a specialized translator for idol blogs. Translate the following text from ${fromLang} to English. Keep a friendly, feminine, and youthful tone that reads naturally in English. Avoid Vietnamese words or particles. Do not add introductions or explanations.
+
+Style guidelines for English:
+ - Use natural, conversational English as if chatting with close friends
+ - Keep it gentle, sweet, and cheerful; light emoji use is okay if present in source
+ - Preserve the writer's personality; avoid over-formality
+
+Technical requirements:
+ - Preserve all HTML tags and attributes exactly
+ - Only translate text between HTML tags
+ - Keep all line breaks and spacing
+ - Keep empty HTML tags empty
+ - Do not add or remove HTML tags
+
+Here's the text to translate:
+
+${cleanedText}
+
+Remember: Output must be in English.`;
 };
 
 const splitTextIntoChunks = (text, maxChunkSize = 4000) => {
@@ -105,6 +128,7 @@ const splitTextIntoChunks = (text, maxChunkSize = 4000) => {
 };
 
 export async function translateJapaneseToEnglish(text, onProgress) {
+  console.log("translateJapaneseToEnglish called");
   if (!text) return "";
 
   const chunks = splitTextIntoChunks(text);
@@ -134,6 +158,7 @@ export async function translateJapaneseToEnglish(text, onProgress) {
 }
 
 export async function translateJapaneseToVietnamese(text, onProgress) {
+  console.log("translateJapaneseToVietnamese called");
   if (!text) return "";
 
   const chunks = splitTextIntoChunks(text);
