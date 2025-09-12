@@ -174,7 +174,13 @@ export default function BlogDetailMobile({
   useLayoutEffect(() => {
     if (blog?.id) {
       const cached = _mobileCache.blogContent.get(blog.id);
-      if (cached?.displayContent && cached?.language === language) {
+
+      // Only use cache if it matches current blog AND language AND content
+      if (
+        cached?.displayContent &&
+        cached?.language === language &&
+        cached?.content === blog?.content
+      ) {
         // Set cached content immediately
         setCachedDisplayContent(cached.displayContent);
         setCachedLanguage(cached.language);
@@ -184,7 +190,7 @@ export default function BlogDetailMobile({
           scrollWrapRef.current.scrollTop = 0;
         }
       } else {
-        // Clear cached content if no cache or language mismatch
+        // Clear cached content immediately to prevent showing old content
         setCachedDisplayContent(null);
         setCachedLanguage(language);
 
@@ -193,11 +199,16 @@ export default function BlogDetailMobile({
           scrollWrapRef.current.scrollTop = 0;
         }
 
-        // Force trigger translation if language is not Japanese
+        // Clear cache for this blog to force fresh translation
+        _mobileCache.blogContent.delete(blog.id);
+
+        // If language is not Japanese, show original content while translating
         if (language !== "ja" && blog?.content) {
-          // Trigger parent translation by setting displayContent to null
-          // This will cause parent to detect language change and start translation
-          setCachedDisplayContent(null);
+          // Show original content first, parent will handle translation
+          setCachedDisplayContent(blog.content);
+        } else if (language === "ja") {
+          // Show original Japanese content
+          setCachedDisplayContent(blog.content);
         }
       }
     }
@@ -206,7 +217,10 @@ export default function BlogDetailMobile({
   // ---- Cache management và smooth updates ----
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
-      // Cache content với timestamp
+      // Clear any existing cache for this blog first to prevent stale content
+      _mobileCache.blogContent.delete(blog.id);
+
+      // Cache new content với timestamp
       _mobileCache.blogContent.set(blog.id, {
         content: blog.content,
         displayContent,
@@ -249,22 +263,6 @@ export default function BlogDetailMobile({
       }, 100);
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
-
-  // ---- Force translation trigger when switching blogs ----
-  useEffect(() => {
-    if (
-      blog?.id &&
-      language !== "ja" &&
-      !cachedDisplayContent &&
-      !translating
-    ) {
-      // Clear cache for this blog to force fresh translation
-      _mobileCache.blogContent.delete(blog.id);
-
-      // This will trigger parent to start translation
-      // by ensuring displayContent is null
-    }
-  }, [blog?.id, language, cachedDisplayContent, translating]);
 
   // Lưu vị trí cuộn trước khi rời trang (chỉ khi không phải content mới)
   useEffect(() => {
