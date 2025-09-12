@@ -27,7 +27,15 @@ import {
   ProSkeleton,
 } from "@ant-design/pro-components";
 import { useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useLayoutEffect,
+  useTransition,
+} from "react";
 import { getCachedBlogDetail } from "../services/blogService";
 
 // Utility function for throttle
@@ -60,6 +68,14 @@ const jpFont = {
 
 const LS_FONT = "mblog:fontSize";
 
+/** ---------- Simple in-memory cache for mobile optimization ---------- **/
+const _mobileCache = {
+  blogContent: new Map(), // key: blogId -> { content, displayContent, language, ts }
+  scrollPosition: new Map(), // key: blogId -> number
+  imageCache: new Map(), // key: src -> { loaded: boolean, ts }
+};
+const CACHE_STALE_MS = 1000 * 60 * 5; // 5 phút
+
 // Inject performance attributes into HTML for mobile rendering
 function optimizeHtmlForMobile(html) {
   if (!html) return html;
@@ -87,6 +103,13 @@ export default function BlogDetailMobile({
   navLock,
 }) {
   const navigate = useNavigate();
+
+  // Mobile-optimized state management
+  const [isPending, startTransition] = useTransition();
+  const [cachedDisplayContent, setCachedDisplayContent] =
+    useState(displayContent);
+  const [cachedLanguage, setCachedLanguage] = useState(language);
+
   const goBack = useCallback(() => {
     if (prevId) {
       navigate(`/blog/${prevId}`);
@@ -97,6 +120,7 @@ export default function BlogDetailMobile({
       navigate(backTo);
     }
   }, [navigate, blog?.memberCode, prevId]);
+
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 16
@@ -146,43 +170,88 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // Handle content updates with proper cleanup
-  const prevDisplayContentRef = useRef(displayContent);
+  // ---- Render instantly from cache (nếu có) ----
+  useLayoutEffect(() => {
+    if (blog?.id) {
+      const cached = _mobileCache.blogContent.get(blog.id);
+      if (cached?.displayContent && cached?.language === language) {
+        setCachedDisplayContent(cached.displayContent);
+        setCachedLanguage(cached.language);
+
+        // Khôi phục vị trí cuộn
+        const scrollY = _mobileCache.scrollPosition.get(blog.id);
+        if (typeof scrollY === "number" && scrollWrapRef.current) {
+          requestAnimationFrame(() => {
+            if (scrollWrapRef.current) {
+              scrollWrapRef.current.scrollTop = scrollY;
+            }
+          });
+        }
+      }
+    }
+  }, [blog?.id, language]);
+
+  // ---- Cache management và smooth updates ----
   useEffect(() => {
-    if (
-      displayContent &&
-      !translating &&
-      displayContent !== prevDisplayContentRef.current
-    ) {
-      // Reset read progress immediately
+    if (displayContent && !translating && blog?.id) {
+      // Cache content với timestamp
+      _mobileCache.blogContent.set(blog.id, {
+        content: blog.content,
+        displayContent,
+        language,
+        ts: Date.now(),
+      });
+
+      // Update cached state trong transition để mượt hơn
+      startTransition(() => {
+        setCachedDisplayContent(displayContent);
+        setCachedLanguage(language);
+      });
+
+      // Reset read progress
       setReadPct(0);
 
-      // Force scroll to top with proper timing
-      const scrollToTop = () => {
-        if (scrollWrapRef.current) {
-          // Force reflow to ensure DOM is updated
-          scrollWrapRef.current.offsetHeight;
-          // Instant scroll to top
-          scrollWrapRef.current.scrollTop = 0;
-        }
-      };
-
-      // Use requestAnimationFrame for smooth transition
-      requestAnimationFrame(() => {
-        scrollToTop();
-        // Update ref to prevent unnecessary re-runs
-        prevDisplayContentRef.current = displayContent;
-      });
+      // Smooth scroll to top
+      if (scrollWrapRef.current) {
+        requestAnimationFrame(() => {
+          if (scrollWrapRef.current) {
+            scrollWrapRef.current.scrollTop = 0;
+          }
+        });
+      }
     }
-  }, [displayContent, translating]);
+  }, [displayContent, translating, language, blog?.id, blog?.content]);
+
+  // Lưu vị trí cuộn trước khi rời trang
+  useEffect(() => {
+    if (!blog?.id) return;
+
+    const onStore = () => {
+      if (scrollWrapRef.current) {
+        _mobileCache.scrollPosition.set(
+          blog.id,
+          scrollWrapRef.current.scrollTop
+        );
+      }
+    };
+
+    window.addEventListener("pagehide", onStore);
+    window.addEventListener("beforeunload", onStore);
+
+    return () => {
+      onStore();
+      window.removeEventListener("pagehide", onStore);
+      window.removeEventListener("beforeunload", onStore);
+    };
+  }, [blog?.id]);
 
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 24));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 14));
 
-  // Optimized HTML with lazy images
+  // Optimized HTML with lazy images - sử dụng cached content
   const optimizedHtml = useMemo(() => {
-    return optimizeHtmlForMobile(displayContent || blog?.content || "");
-  }, [displayContent, blog?.content]);
+    return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
+  }, [cachedDisplayContent, blog?.content]);
 
   // Sticky TopBar
   const TopBar = useMemo(
@@ -246,27 +315,27 @@ export default function BlogDetailMobile({
             </Space>
             <Space>
               {/* trạng thái dịch */}
-              {translating ? (
+              {translating || isPending ? (
                 <Tag
                   icon={<LoadingOutlined />}
                   color="processing"
                   style={{ marginRight: 6 }}
                 >
-                  {language === "vi"
+                  {cachedLanguage === "vi"
                     ? "Đang dịch..."
-                    : language === "en"
+                    : cachedLanguage === "en"
                     ? "Translating..."
                     : "翻訳中..."}
                 </Tag>
               ) : (
                 <Tag color="default" style={{ marginRight: 6 }}>
-                  {language.toUpperCase()}
+                  {cachedLanguage.toUpperCase()}
                 </Tag>
               )}
 
               <Segmented
                 size="small"
-                value={language}
+                value={cachedLanguage}
                 onChange={(val) => setLanguage(val)}
                 options={[
                   { label: "日", value: "ja" },
@@ -285,8 +354,9 @@ export default function BlogDetailMobile({
       </Affix>
     ),
     [
-      language,
+      cachedLanguage,
       translating,
+      isPending,
       prevId,
       setLanguage,
       nextId,
@@ -331,21 +401,21 @@ export default function BlogDetailMobile({
     }
   }, []);
 
-  // Enhanced image loading with proper state management
+  // Enhanced image loading with global cache
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    const imageLoadCache = new Map();
-
-    // Enhanced image loading handler with state persistence
+    // Enhanced image loading handler with global cache
     const markImagesLoaded = () => {
       const images = wrap.getElementsByTagName("img");
       Array.from(images).forEach((img) => {
         const src = img.getAttribute("src");
+        if (!src) return;
 
-        // Check if image was previously loaded
-        if (src && imageLoadCache.has(src)) {
+        // Check global cache first
+        const cached = _mobileCache.imageCache.get(src);
+        if (cached?.loaded) {
           img.setAttribute("data-loaded", "true");
           img.style.opacity = "1";
           return;
@@ -353,13 +423,14 @@ export default function BlogDetailMobile({
 
         if (img.complete) {
           img.setAttribute("data-loaded", "true");
-          if (src) imageLoadCache.set(src, true);
+          img.style.opacity = "1";
+          _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
         } else {
           img.style.opacity = "0";
           img.onload = () => {
             img.setAttribute("data-loaded", "true");
             img.style.opacity = "1";
-            if (src) imageLoadCache.set(src, true);
+            _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
           };
         }
       });
@@ -380,7 +451,7 @@ export default function BlogDetailMobile({
         img.onload = null;
       });
     };
-  }, [onScroll, displayContent]);
+  }, [onScroll, cachedDisplayContent]);
 
   // Loading skeleton (ngon hơn Spin)
   if (loading) {
@@ -575,7 +646,7 @@ export default function BlogDetailMobile({
           <Card title="Ngôn ngữ" size="small" bordered>
             <Segmented
               block
-              value={language}
+              value={cachedLanguage}
               onChange={(val) => setLanguage(val)}
               options={[
                 { label: "Nhật", value: "ja" },
