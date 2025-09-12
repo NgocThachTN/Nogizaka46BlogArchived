@@ -27,7 +27,7 @@ Translation:`;
 };
 
 // Hàm để chia nhỏ text thành các phần
-const splitTextIntoChunks = (text, maxLength = 4000) => {
+const splitTextIntoChunks = (text, maxLength = 5000) => {
   // Làm sạch text trước khi chia
   const cleanedText = cleanTextForTranslation(text);
 
@@ -119,7 +119,7 @@ export const translateText = async (text, fromLang, toLang, onProgress) => {
     // Chia nhỏ text thành các phần
     const chunks = splitTextIntoChunks(text);
     console.log(
-      `Đã chia thành ${chunks.length} phần nhỏ (mỗi phần tối đa 3000 ký tự)`
+      `Đã chia thành ${chunks.length} phần nhỏ (mỗi phần tối đa 5000 ký tự)`
     );
 
     // Log kích thước của từng phần để kiểm tra
