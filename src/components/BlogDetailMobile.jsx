@@ -172,6 +172,11 @@ export default function BlogDetailMobile({
   const lastPctRef = useRef(0);
   const throttledUpdateRef = useRef(null);
 
+  // Header visibility state for scroll-based hiding
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollThreshold = 10; // Minimum scroll distance to trigger hide/show
+
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
@@ -342,8 +347,8 @@ export default function BlogDetailMobile({
   console.log("BlogDetailMobile - blog.title:", blog?.title);
   console.log("BlogDetailMobile - blog:", blog);
 
-  // Sticky TopBar with integrated author info
-  const TopBar = useMemo(
+  // Fixed Navigation Bar (always visible)
+  const NavigationBar = useMemo(
     () => (
       <Affix offsetTop={0}>
         <div
@@ -351,8 +356,7 @@ export default function BlogDetailMobile({
             ...jpFont,
             background: "#fff",
             borderBottom: "1px solid rgba(0,0,0,0.06)",
-            // Ensure the TopBar stays above any scrolling content/overlays
-            zIndex: 998,
+            zIndex: 999,
             position: "fixed",
             top: 0,
             left: 0,
@@ -360,7 +364,6 @@ export default function BlogDetailMobile({
             width: "100%",
           }}
         >
-          {/* Navigation Row */}
           <div style={{ padding: "8px 12px" }}>
             <Space
               align="center"
@@ -445,96 +448,6 @@ export default function BlogDetailMobile({
               </Space>
             </Space>
           </div>
-
-          {/* Author Info Row - Integrated into TopBar */}
-          {blog && (
-            <div
-              style={{
-                padding: "0 12px 8px 12px",
-                borderTop: "1px solid rgba(0,0,0,0.04)",
-                background: "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)",
-              }}
-            >
-              <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  fontSize: "14px",
-                }}
-              >
-                {/* Author Info - Left Side */}
-                <Space
-                  align="center"
-                  style={{ flex: "0 0 auto", maxWidth: "45%" }}
-                >
-                  <Avatar
-                    src={
-                      getImageUrl(memberInfo?.img) ||
-                      getImageUrl(blog?.memberImage) ||
-                      "https://via.placeholder.com/300x300?text=No+Image"
-                    }
-                    size={40}
-                    style={{
-                      border: "2px solid #fff",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    }}
-                  />
-                  <div>
-                    <Text strong style={{ color: "#111827", fontSize: "15px" }}>
-                      {memberInfo?.name || blog.author}
-                    </Text>
-                    <div
-                      style={{
-                        color: "#666",
-                        marginTop: 1,
-                        fontSize: "12px",
-                      }}
-                    >
-                      <CalendarOutlined style={{ marginRight: 6 }} />
-                      <Text>{blog.date}</Text>
-                    </div>
-                  </div>
-                </Space>
-
-                {/* Blog Title - Center/Right Side */}
-                <div
-                  style={{
-                    flex: 1,
-                    textAlign: "right",
-                    paddingLeft: 12,
-                    paddingRight: 8,
-                    minWidth: 0, // Allow text to shrink
-                  }}
-                >
-                  <Text
-                    strong
-                    style={{
-                      color: "#111827",
-                      fontSize: "13px",
-                      lineHeight: 1.2,
-                      display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {displayTitle || blog?.title || "Không có title"}
-                  </Text>
-                </div>
-
-                {/* Info Button - Right Side */}
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<InfoCircleOutlined />}
-                  onClick={() => setDrawerVisible(true)}
-                  style={{ color: "#666", flexShrink: 0 }}
-                />
-              </div>
-            </div>
-          )}
         </div>
       </Affix>
     ),
@@ -550,13 +463,118 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
-      blog,
-      displayTitle,
-      memberInfo,
     ]
   );
 
-  // Create a single throttled updater for scroll progress
+  // Author Bar (scroll-hideable)
+  const AuthorBar = useMemo(
+    () => (
+      <Affix offsetTop={48}>
+        <div
+          style={{
+            ...jpFont,
+            background: "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            zIndex: 998,
+            position: "fixed",
+            top: 48,
+            left: 0,
+            right: 0,
+            width: "100%",
+            // Add smooth transition for show/hide
+            transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
+            transition: "transform 0.3s ease-in-out",
+            willChange: "transform",
+          }}
+        >
+          {blog && (
+            <div
+              style={{
+                padding: "8px 12px",
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontSize: "14px",
+              }}
+            >
+              {/* Author Info - Left Side */}
+              <Space
+                align="center"
+                style={{ flex: "0 0 auto", maxWidth: "45%" }}
+              >
+                <Avatar
+                  src={
+                    getImageUrl(memberInfo?.img) ||
+                    getImageUrl(blog?.memberImage) ||
+                    "https://via.placeholder.com/300x300?text=No+Image"
+                  }
+                  size={40}
+                  style={{
+                    border: "2px solid #fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  }}
+                />
+                <div>
+                  <Text strong style={{ color: "#111827", fontSize: "15px" }}>
+                    {memberInfo?.name || blog.author}
+                  </Text>
+                  <div
+                    style={{
+                      color: "#666",
+                      marginTop: 1,
+                      fontSize: "12px",
+                    }}
+                  >
+                    <CalendarOutlined style={{ marginRight: 6 }} />
+                    <Text>{blog.date}</Text>
+                  </div>
+                </div>
+              </Space>
+
+              {/* Blog Title - Center/Right Side */}
+              <div
+                style={{
+                  flex: 1,
+                  textAlign: "right",
+                  paddingLeft: 12,
+                  paddingRight: 8,
+                  minWidth: 0, // Allow text to shrink
+                }}
+              >
+                <Text
+                  strong
+                  style={{
+                    color: "#111827",
+                    fontSize: "13px",
+                    lineHeight: 1.2,
+                    display: "block",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {displayTitle || blog?.title || "Không có title"}
+                </Text>
+              </div>
+
+              {/* Info Button - Right Side */}
+              <Button
+                type="text"
+                size="small"
+                icon={<InfoCircleOutlined />}
+                onClick={() => setDrawerVisible(true)}
+                style={{ color: "#666", flexShrink: 0 }}
+              />
+            </div>
+          )}
+        </div>
+      </Affix>
+    ),
+    [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
+  );
+
+  // Create a single throttled updater for scroll progress and header visibility
   useEffect(() => {
     throttledUpdateRef.current = throttle(() => {
       const wrap = scrollWrapRef.current;
@@ -566,6 +584,7 @@ export default function BlogDetailMobile({
       const lastTotal = lastTotalRef.current;
       const lastScrolled = lastScrolledRef.current;
 
+      // Update read progress
       if (
         Math.abs(total - lastTotal) > 1 ||
         Math.abs(scrolled - lastScrolled) > 1
@@ -579,8 +598,23 @@ export default function BlogDetailMobile({
         lastTotalRef.current = total;
         lastScrolledRef.current = scrolled;
       }
+
+      // Handle header visibility based on scroll direction
+      const currentScrollY = scrolled;
+      const scrollDifference = Math.abs(currentScrollY - lastScrollY.current);
+
+      if (scrollDifference > scrollThreshold) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+          // Scrolling down and past 50px - hide header
+          setIsHeaderVisible(false);
+        } else if (currentScrollY < lastScrollY.current) {
+          // Scrolling up - show header
+          setIsHeaderVisible(true);
+        }
+        lastScrollY.current = currentScrollY;
+      }
     }, 100);
-  }, []);
+  }, [scrollThreshold]);
 
   // Optimized scroll handler using the stable throttled function
   const onScroll = useCallback(() => {
@@ -644,7 +678,8 @@ export default function BlogDetailMobile({
         }}
         style={{ padding: 0, margin: 0, background: "#fff" }}
       >
-        {TopBar}
+        {NavigationBar}
+        {AuthorBar}
         <ProCard
           ghost
           style={{
@@ -673,7 +708,8 @@ export default function BlogDetailMobile({
         }}
         style={{ padding: 0, margin: 0, background: "#fff" }}
       >
-        {TopBar}
+        {NavigationBar}
+        {AuthorBar}
         <ProCard
           ghost
           style={{
@@ -721,7 +757,8 @@ export default function BlogDetailMobile({
         overflow: "hidden",
       }}
     >
-      {TopBar}
+      {NavigationBar}
+      {AuthorBar}
 
       {/* scroll container để bắt progress */}
       <div
@@ -739,7 +776,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: "100px", // Add padding to account for fixed top bar with author info
+          paddingTop: "96px", // Add padding to account for fixed navigation bar (48px) + author bar (48px)
         }}
       >
         <ProCard
@@ -849,56 +886,6 @@ export default function BlogDetailMobile({
           )}
         </Space>
       </Drawer>
-
-      {/* Floating buttons */}
-      <FloatButton.Group
-        shape="square"
-        style={{ right: 12, bottom: 12, zIndex: 997 }}
-      >
-        <FloatButton
-          icon={
-            pendingNavId &&
-            pendingNavId === prevId &&
-            prevId &&
-            !getCachedBlogDetail(prevId) ? (
-              <LoadingOutlined />
-            ) : (
-              <span style={{ fontWeight: 700, fontSize: 16 }}>&lt;</span>
-            )
-          }
-          onClick={() => (prevId && fastGo ? fastGo(prevId) : goBack())}
-          tooltip={prevId ? "Bài trước" : "Quay lại"}
-          disabled={navLock && !!prevId}
-          style={navFabStyle}
-        />
-        {nextId ? (
-          <FloatButton
-            icon={
-              pendingNavId &&
-              pendingNavId === nextId &&
-              !getCachedBlogDetail(nextId) ? (
-                <LoadingOutlined />
-              ) : (
-                <span style={{ fontWeight: 700, fontSize: 16 }}>&gt;</span>
-              )
-            }
-            onClick={() => fastGo && fastGo(nextId)}
-            tooltip="Bài tiếp theo"
-            disabled={!nextId || navLock}
-            style={navFabStyle}
-          />
-        ) : null}
-        <FloatButton
-          icon={<TranslationOutlined />}
-          tooltip="Dịch JP/EN/VI"
-          onClick={() => setDrawerVisible(true)}
-        />
-        <FloatButton.BackTop
-          target={() => scrollWrapRef.current}
-          icon={<ArrowUpOutlined />}
-          tooltip="Lên đầu"
-        />
-      </FloatButton.Group>
 
       {/* Progress đọc ở mép dưới màn hình */}
       <Affix offsetBottom={0}>
