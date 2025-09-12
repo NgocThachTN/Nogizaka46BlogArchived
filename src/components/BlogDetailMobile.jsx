@@ -152,6 +152,7 @@ export default function BlogDetailMobile({
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
   const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
+  const ticking = useRef(false);
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -575,23 +576,7 @@ export default function BlogDetailMobile({
         lastScrolledRef.current = scrolled;
       }
 
-      // Handle header visibility based on scroll direction - use window scroll for mobile
-      const currentScrollY = window.scrollY || window.pageYOffset || 0;
-      const scrollDifference = currentScrollY - lastScrollY.current;
-
-      // Only update if there's significant scroll movement
-      if (Math.abs(scrollDifference) > scrollThreshold) {
-        if (scrollDifference > 0 && currentScrollY > 100) {
-          // Scrolling down and past 100px - hide header
-          console.log("Hiding header - scrolling down:", currentScrollY);
-          setIsHeaderVisible(false);
-        } else if (scrollDifference < 0) {
-          // Scrolling up - show header
-          console.log("Showing header - scrolling up:", currentScrollY);
-          setIsHeaderVisible(true);
-        }
-        lastScrollY.current = currentScrollY;
-      }
+      // Header visibility is now handled by separate mobile-optimized effect
     }, 100);
   }, [scrollThreshold]);
 
@@ -619,20 +604,53 @@ export default function BlogDetailMobile({
     };
   }, [onScroll]);
 
-  // Separate effect for window scroll (mobile compatibility)
+  // Mobile-optimized scroll handler
   useEffect(() => {
-    const handleWindowScroll = () => {
-      if (throttledUpdateRef.current) {
-        throttledUpdateRef.current();
+    const handleScroll = () => {
+      if (!ticking.current) {
+        requestAnimationFrame(() => {
+          const currentScrollY =
+            window.pageYOffset ||
+            document.documentElement.scrollTop ||
+            document.body.scrollTop ||
+            0;
+          const scrollDifference = currentScrollY - lastScrollY.current;
+
+          console.log("Scroll detected:", {
+            currentScrollY,
+            scrollDifference,
+            isHeaderVisible,
+          });
+
+          if (Math.abs(scrollDifference) > scrollThreshold) {
+            if (scrollDifference > 0 && currentScrollY > 50) {
+              // Scrolling down - hide header
+              console.log("Hiding header - scrolling down:", currentScrollY);
+              setIsHeaderVisible(false);
+            } else if (scrollDifference < 0) {
+              // Scrolling up - show header
+              console.log("Showing header - scrolling up:", currentScrollY);
+              setIsHeaderVisible(true);
+            }
+            lastScrollY.current = currentScrollY;
+          }
+          ticking.current = false;
+        });
+        ticking.current = true;
       }
     };
 
-    window.addEventListener("scroll", handleWindowScroll, { passive: true });
+    // Add multiple event listeners for better mobile support
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("touchmove", handleScroll, { passive: true });
+    document.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
-      window.removeEventListener("scroll", handleWindowScroll);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("touchmove", handleScroll);
+      document.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [scrollThreshold, isHeaderVisible]);
 
   // Separate effect for image visibility - chỉ chạy khi content thay đổi
   useEffect(() => {
