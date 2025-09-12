@@ -241,16 +241,14 @@ export default function BlogDetailMobile({
         });
       }
 
-      // Ensure images are visible after content change
-      setTimeout(() => {
-        if (scrollWrapRef.current) {
-          const images = scrollWrapRef.current.getElementsByTagName("img");
-          Array.from(images).forEach((img) => {
-            img.style.opacity = "1";
-            img.style.transition = "opacity 0.3s ease";
-          });
-        }
-      }, 100);
+      // Simple image handling - no delays or complex logic
+      if (scrollWrapRef.current) {
+        const images = scrollWrapRef.current.getElementsByTagName("img");
+        Array.from(images).forEach((img) => {
+          img.style.opacity = "1";
+          img.style.transition = "none";
+        });
+      }
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
 
@@ -318,10 +316,7 @@ export default function BlogDetailMobile({
     return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
   }, [cachedDisplayContent, blog?.content]);
 
-  // Debug logging
-  console.log("BlogDetailMobile - displayTitle:", displayTitle);
-  console.log("BlogDetailMobile - blog.title:", blog?.title);
-  console.log("BlogDetailMobile - blog:", blog);
+  // Debug logging removed for performance
 
   // Fixed Navigation Bar (always visible)
   const NavigationBar = useMemo(
@@ -612,133 +607,44 @@ export default function BlogDetailMobile({
     };
   }, [onScroll]);
 
-  // Android-optimized scroll handler using touch events
+  // Simplified scroll handler - only for header visibility
   useEffect(() => {
-    let startY = 0;
-    let currentY = 0;
-    let isScrolling = false;
-
-    const handleTouchStart = (e) => {
-      startY = e.touches[0].clientY;
-      isScrolling = true;
-    };
-
-    const handleTouchMove = (e) => {
-      if (!isScrolling) return;
-
-      currentY = e.touches[0].clientY;
-      const diff = startY - currentY;
-
-      console.log("Touch move detected:", {
-        startY,
-        currentY,
-        diff,
-        isHeaderVisible,
-      });
-
-      if (Math.abs(diff) > 10) {
-        if (diff > 0) {
-          // Vuốt lên (startY > currentY) - ẩn header
-          console.log("Hiding header - swipe up:", window.scrollY);
-          setIsHeaderVisible(false);
-        } else if (diff < 0) {
-          // Vuốt xuống (startY < currentY) - hiện header
-          console.log("Showing header - swipe down:", window.scrollY);
-          setIsHeaderVisible(true);
-        }
-        startY = currentY;
-      }
-    };
-
-    const handleTouchEnd = () => {
-      isScrolling = false;
-    };
-
-    // Fallback scroll handler
     const handleScroll = () => {
       const currentScrollY =
         window.pageYOffset || document.documentElement.scrollTop || 0;
       const scrollDifference = currentScrollY - lastScrollY.current;
 
-      console.log("Scroll fallback:", {
-        currentScrollY,
-        scrollDifference,
-        isHeaderVisible,
-      });
-
       if (Math.abs(scrollDifference) > scrollThreshold) {
         if (scrollDifference > 0) {
           // Scroll down - ẩn header
-          console.log("Hiding header - scroll down:", currentScrollY);
           setIsHeaderVisible(false);
         } else if (scrollDifference < 0) {
           // Scroll up - hiện header
-          console.log("Showing header - scroll up:", currentScrollY);
           setIsHeaderVisible(true);
         }
         lastScrollY.current = currentScrollY;
       }
     };
 
-    // Add touch events for Android
-    document.addEventListener("touchstart", handleTouchStart, {
-      passive: true,
-    });
-    document.addEventListener("touchmove", handleTouchMove, { passive: true });
-    document.addEventListener("touchend", handleTouchEnd, { passive: true });
-
-    // Add wheel events for desktop/mobile
-    document.addEventListener("wheel", handleScroll, { passive: true });
-
-    // Add pointer events for modern browsers
-    document.addEventListener("pointerdown", handleTouchStart, {
-      passive: true,
-    });
-    document.addEventListener("pointermove", handleTouchMove, {
-      passive: true,
-    });
-    document.addEventListener("pointerup", handleTouchEnd, { passive: true });
-
-    // Fallback scroll events
+    // Only use window scroll for simplicity
     window.addEventListener("scroll", handleScroll, { passive: true });
-    document.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
-      document.removeEventListener("touchstart", handleTouchStart);
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", handleTouchEnd);
-      document.removeEventListener("wheel", handleScroll);
-      document.removeEventListener("pointerdown", handleTouchStart);
-      document.removeEventListener("pointermove", handleTouchMove);
-      document.removeEventListener("pointerup", handleTouchEnd);
       window.removeEventListener("scroll", handleScroll);
-      document.removeEventListener("scroll", handleScroll);
     };
-  }, [scrollThreshold, isHeaderVisible]);
+  }, [scrollThreshold]);
 
-  // Separate effect for image visibility - chỉ chạy khi content thay đổi
+  // Simple image handling - no complex logic
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap || !cachedDisplayContent) return;
 
-    // Đảm bảo ảnh hiển thị sau khi content load
-    const ensureImagesVisible = () => {
-      const images = wrap.getElementsByTagName("img");
-      Array.from(images).forEach((img) => {
-        // Chỉ set nếu chưa được set
-        if (img.style.opacity !== "1") {
-          img.style.opacity = "1";
-          img.style.transition = "opacity 0.3s ease";
-        }
-      });
-    };
-
-    // Delay để đảm bảo DOM đã render xong
-    const timeoutId = setTimeout(ensureImagesVisible, 50);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    // Simple image visibility - no transitions or complex logic
+    const images = wrap.getElementsByTagName("img");
+    Array.from(images).forEach((img) => {
+      img.style.opacity = "1";
+      img.style.transition = "none"; // Disable transitions
+    });
   }, [cachedDisplayContent]);
 
   // Loading skeleton (ngon hơn Spin)
@@ -852,10 +758,9 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: isHeaderVisible ? "96px" : "48px", // Dynamic padding: 96px when author bar visible, 48px when hidden
-          transition: isHeaderVisible
-            ? "padding-top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)"
-            : "padding-top 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)", // Sync with author bar animation
+          paddingTop: isHeaderVisible ? "96px" : "48px",
+          // Simplified transition
+          transition: "padding-top 0.3s ease",
         }}
       >
         <ProCard
@@ -1062,22 +967,15 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Completely disable image interaction to prevent jank */
+            /* Minimal CSS to prevent jank */
             pointer-events: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-user-drag: none;
             user-select: none;
-            /* Force hardware acceleration */
+            /* Simple hardware acceleration */
             transform: translateZ(0);
-            will-change: transform;
-            /* Prevent any touch interference */
-            touch-action: none;
-          }
-          /* Ensure images are always visible */
-          .jp-prose img {
-            opacity: 1 !important;
-            transition: opacity 0.3s ease;
-            min-height: 200px;
+            /* No transitions or complex properties */
+            opacity: 1;
             background: rgba(0,0,0,0.05);
           }
           .jp-prose p {
