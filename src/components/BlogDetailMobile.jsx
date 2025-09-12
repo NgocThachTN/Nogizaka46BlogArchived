@@ -340,6 +340,8 @@ export default function BlogDetailMobile({
           background: "#fff",
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "contain",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
           width: "100%",
           position: "relative",
           display: "flex",
@@ -549,6 +551,17 @@ export default function BlogDetailMobile({
 
       {/* Full-bleed overrides */}
       <style>{`
+          /* Hide scrollbar for Chrome, Safari and Opera */
+          *::-webkit-scrollbar {
+            display: none;
+          }
+          
+          /* Hide scrollbar for IE, Edge and Firefox */
+          * {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+          }
+
           html, body, #root { 
             height: 100%; 
             min-height: 100vh;
