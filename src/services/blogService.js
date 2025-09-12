@@ -111,7 +111,89 @@ export const fetchBlogDetail = async (blogId) => {
 
     const $ = cheerio.load(response.data);
 
-    const title = $(".bd--title").text().trim();
+    // Try multiple selectors for title - prioritize meta tags
+    let title = $('meta[property="og:title"]').attr("content")?.trim();
+    console.log("Title from og:title meta:", title);
+
+    if (!title) {
+      title = $('meta[name="twitter:title"]').attr("content")?.trim();
+      console.log("Title from twitter:title meta:", title);
+    }
+    if (!title) {
+      title = $(".bd--title").text().trim();
+      console.log("Title from .bd--title:", title);
+    }
+    if (!title) {
+      title = $("h1").text().trim();
+      console.log("Title from h1:", title);
+    }
+    if (!title) {
+      title = $(".bd--hd__ttl").text().trim();
+      console.log("Title from .bd--hd__ttl:", title);
+    }
+    if (!title) {
+      title = $(".bd--hd h1").text().trim();
+      console.log("Title from .bd--hd h1:", title);
+    }
+    if (!title) {
+      title = $(".bd--hd__ttl h1").text().trim();
+      console.log("Title from .bd--hd__ttl h1:", title);
+    }
+    if (!title) {
+      title = $(".bd--hd__ttl h2").text().trim();
+      console.log("Title from .bd--hd__ttl h2:", title);
+    }
+    if (!title) {
+      title = $(".bd--hd__ttl h3").text().trim();
+      console.log("Title from .bd--hd__ttl h3:", title);
+    }
+    if (!title) {
+      title = $(".bd--hd__ttl").find("h1, h2, h3").first().text().trim();
+      console.log("Title from .bd--hd__ttl first heading:", title);
+    }
+    if (!title) {
+      title = $(".bd--hd").find("h1, h2, h3").first().text().trim();
+      console.log("Title from .bd--hd first heading:", title);
+    }
+    if (!title) {
+      title = $("title").text().trim();
+      console.log("Title from title tag:", title);
+    }
+
+    // Debug: log all possible title elements
+    console.log(
+      "All h1 elements:",
+      $("h1")
+        .map((i, el) => $(el).text().trim())
+        .get()
+    );
+    console.log(
+      "All elements with 'title' in class:",
+      $("[class*='title']")
+        .map((i, el) => $(el).text().trim())
+        .get()
+    );
+    console.log(
+      "All elements in .bd--hd:",
+      $(".bd--hd")
+        .find("*")
+        .map((i, el) => $(el).text().trim())
+        .get()
+    );
+    console.log(
+      "All h2 elements:",
+      $("h2")
+        .map((i, el) => $(el).text().trim())
+        .get()
+    );
+    console.log(
+      "All h3 elements:",
+      $("h3")
+        .map((i, el) => $(el).text().trim())
+        .get()
+    );
+    console.log("All text content in .bd--hd:", $(".bd--hd").text());
+    console.log("All text content in .bd--hd__ttl:", $(".bd--hd__ttl").text());
     const date = $(".bd--hd__date").text().trim();
     const content = $(".bd--edit");
 

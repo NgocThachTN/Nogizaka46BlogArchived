@@ -337,6 +337,11 @@ export default function BlogDetailMobile({
     return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
   }, [cachedDisplayContent, blog?.content]);
 
+  // Debug logging
+  console.log("BlogDetailMobile - displayTitle:", displayTitle);
+  console.log("BlogDetailMobile - blog.title:", blog?.title);
+  console.log("BlogDetailMobile - blog:", blog);
+
   // Sticky TopBar with integrated author info
   const TopBar = useMemo(
     () => (
@@ -459,7 +464,11 @@ export default function BlogDetailMobile({
                   fontSize: "14px",
                 }}
               >
-                <Space align="center">
+                {/* Author Info - Left Side */}
+                <Space
+                  align="center"
+                  style={{ flex: "0 0 auto", maxWidth: "45%" }}
+                >
                   <Avatar
                     src={
                       getImageUrl(memberInfo?.img) ||
@@ -489,13 +498,14 @@ export default function BlogDetailMobile({
                   </div>
                 </Space>
 
+                {/* Blog Title - Center/Right Side */}
                 <div
                   style={{
                     flex: 1,
-                    textAlign: "center",
-                    paddingLeft: 8,
+                    textAlign: "right",
+                    paddingLeft: 12,
                     paddingRight: 8,
-                    maxWidth: "60%",
+                    minWidth: 0, // Allow text to shrink
                   }}
                 >
                   <Text
@@ -510,10 +520,11 @@ export default function BlogDetailMobile({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {displayTitle || blog.title}
+                    {displayTitle || blog?.title || "Không có title"}
                   </Text>
                 </div>
 
+                {/* Info Button - Right Side */}
                 <Button
                   type="text"
                   size="small"
