@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Typography,
   Image,
@@ -24,34 +24,61 @@ import {
 } from "@ant-design/icons";
 import { PageContainer } from "@ant-design/pro-components";
 import { useState, useEffect } from "react";
-import { fetchAllBlogs, getImageUrl } from "../services/blogService";
+import {
+  fetchAllBlogs,
+  getImageUrl,
+  fetchMemberInfo,
+} from "../services/blogService";
 
 const { Text, Title } = Typography;
 
 const BlogList = () => {
   const navigate = useNavigate();
+  const { memberCode } = useParams();
   const [blogs, setBlogs] = useState([]);
   const [filteredBlogs, setFilteredBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [memberInfo, setMemberInfo] = useState(null);
   const pageSize = 9;
 
   useEffect(() => {
-    loadAllBlogs();
-  }, []);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [blogs, member] = await Promise.all([
+          fetchAllBlogs(memberCode),
+          fetchMemberInfo(memberCode),
+        ]);
+        setBlogs(blogs);
+        setFilteredBlogs(blogs);
+        setMemberInfo(member);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setError("データの読み込み中にエラーが発生しました。");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [memberCode]);
 
-  const loadAllBlogs = async () => {
+  const reloadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const allBlogs = await fetchAllBlogs();
-      setBlogs(allBlogs);
-      setFilteredBlogs(allBlogs);
+      const [blogs, member] = await Promise.all([
+        fetchAllBlogs(memberCode),
+        fetchMemberInfo(memberCode),
+      ]);
+      setBlogs(blogs);
+      setFilteredBlogs(blogs);
+      setMemberInfo(member);
     } catch (error) {
-      console.error("Error loading blogs:", error);
-      setError("Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.");
+      console.error("Error loading data:", error);
+      setError("データの読み込み中にエラーが発生しました。");
     } finally {
       setLoading(false);
     }
@@ -94,7 +121,7 @@ const BlogList = () => {
           <Title level={4} type="danger">
             {error}
           </Title>
-          <Button type="primary" onClick={loadAllBlogs}>
+          <Button type="primary" onClick={reloadData}>
             再試行
           </Button>
         </div>
@@ -111,7 +138,10 @@ const BlogList = () => {
             <div className="flex justify-center items-center mb-4">
               <Avatar
                 size={64}
-                src="https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
+                src={
+                  memberInfo?.img ||
+                  "https://via.placeholder.com/300x300?text=No+Image"
+                }
                 className="shadow-md"
               />
             </div>
@@ -121,7 +151,7 @@ const BlogList = () => {
             </Title>
 
             <Title level={3} className="text-gray-600 font-normal mb-6">
-              一ノ瀬 美空 公式ブログ
+              {memberInfo?.name || "Loading..."} 公式ブログ
             </Title>
 
             {/* Simple Stats */}

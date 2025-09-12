@@ -21,25 +21,10 @@ import { ProCard } from "@ant-design/pro-components";
 
 const { Text, Title } = Typography;
 
-const memberInfo = {
-  code: "55390",
-  name: "一ノ瀬 美空",
-  english_name: "Miku Ichinose",
-  kana: "いちのせ みく",
-  cate: "5期生",
-  img: "https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg",
-  link: "https://www.nogizaka46.com/s/n46/artist/55390",
-  pick: "選抜メンバー",
-  god: "福神",
-  birthday: "2003/05/24",
-  blood: "B型",
-  constellation: "ふたご座",
-  groupcode: "5期生",
-};
-
-const MemberProfile = () => {
+const MemberProfile = ({ memberInfo, className }) => {
+  if (!memberInfo) return null;
   return (
-    <ProCard ghost colSpan={{ xs: 24, md: 8, xl: 6 }}>
+    <div className={className}>
       <Card
         style={{ borderRadius: 16, overflow: "hidden" }}
         bodyStyle={{ padding: 0 }}
@@ -132,7 +117,7 @@ const MemberProfile = () => {
           </Button>
         </div>
       </Card>
-    </ProCard>
+    </div>
   );
 };
 

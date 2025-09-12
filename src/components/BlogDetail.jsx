@@ -33,7 +33,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
-import { fetchBlogDetail } from "../services/blogService";
+import { fetchBlogDetail, fetchMemberInfo } from "../services/blogService";
 import BlogDetailMobile from "./BlogDetailMobile";
 
 // ⚠️ IMPORT DeepSeek helpers bạn đã viết
@@ -90,6 +90,7 @@ export default function BlogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [blog, setBlog] = useState(null);
+  const [memberInfo, setMemberInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [language, setLanguage] = useState("ja");
@@ -148,6 +149,16 @@ export default function BlogDetail() {
           message.warning("Blog không có nội dung.");
         }
         setBlog(data);
+
+        // Fetch member info
+        if (data.memberCode) {
+          console.log("Fetching member info for code:", data.memberCode);
+          const member = await fetchMemberInfo(data.memberCode);
+          console.log("Member info received:", member);
+          setMemberInfo(member);
+        } else {
+          console.log("No member code found in blog data:", data);
+        }
       } catch (e) {
         console.error("Error loading blog:", e);
         message.error("Lỗi khi tải blog: " + (e.message || "Không xác định"));
@@ -432,8 +443,8 @@ export default function BlogDetail() {
             >
               <Avatar
                 src={
-                  blog.memberImage ||
-                  "https://www.nogizaka46.com/images/46/d21/1d87f2203680137df7346b7551ed0.jpg"
+                  memberInfo?.img ||
+                  "https://via.placeholder.com/300x300?text=No+Image"
                 }
                 size={window.innerWidth < 768 ? 56 : 64}
                 style={{
@@ -450,7 +461,7 @@ export default function BlogDetail() {
                   strong
                   style={{ fontSize: window.innerWidth < 768 ? 15 : 16 }}
                 >
-                  {blog.author}
+                  {memberInfo?.name || blog.author}
                 </Text>
                 <div
                   style={{

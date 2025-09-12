@@ -98,7 +98,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/members" replace />} />
                 <Route path="/members" element={<MemberList />} />
-                <Route path="/blog" element={<BlogList />} />
+                <Route path="/blogs/:memberCode" element={<BlogList />} />
                 <Route path="/blog/:id" element={<BlogDetail />} />
               </Routes>
             </div>

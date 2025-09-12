@@ -1,5 +1,6 @@
 // MemberList.jsx — Ant Design Pro + nhóm theo Gen + 5 thẻ mỗi hàng
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Typography,
@@ -65,6 +66,7 @@ const getAge = (birthday) => {
 };
 
 const MemberList = () => {
+  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [genFilter, setGenFilter] = useState("ALL");
@@ -228,6 +230,7 @@ const MemberList = () => {
                         hoverable
                         bordered={false}
                         className="member-card"
+                        onClick={() => navigate(`/blogs/${m.code}`)}
                         style={{
                           borderRadius: 16,
                           overflow: "hidden",

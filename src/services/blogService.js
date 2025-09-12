@@ -3,17 +3,15 @@ import * as cheerio from "cheerio";
 
 const BASE_URL = "https://www.nogizaka46.com";
 const BLOG_URL = `${BASE_URL}/s/n46/diary/MEMBER/list`;
-const MEMBER_CODE = "55390"; // Ichinose Miku's code
-
 // Fetch tất cả các blog của member
-export const fetchAllBlogs = async () => {
+export const fetchAllBlogs = async (memberCode) => {
   try {
     let allBlogs = [];
     let currentPage = 0;
     let hasNextPage = true;
 
     while (hasNextPage) {
-      const { blogs, nextPage } = await fetchBlogPage(currentPage);
+      const { blogs, nextPage } = await fetchBlogPage(currentPage, memberCode);
       allBlogs = [...allBlogs, ...blogs];
       hasNextPage = nextPage;
       currentPage++;
@@ -27,13 +25,13 @@ export const fetchAllBlogs = async () => {
 };
 
 // Fetch một trang blog
-const fetchBlogPage = async (page) => {
+const fetchBlogPage = async (page, memberCode) => {
   try {
     const response = await axios.get(BLOG_URL, {
       params: {
-        ct: MEMBER_CODE,
+        ct: memberCode,
         page: page,
-        ima: Math.floor(Date.now() / 1000),
+        ima: Math.floor(Date.now() / 1000), // Timestamp hiện tại
       },
       headers: {
         "User-Agent":
@@ -80,6 +78,7 @@ const fetchBlogPage = async (page) => {
 // Fetch chi tiết một blog
 export const fetchBlogDetail = async (blogId) => {
   try {
+    // Fetch blog content
     const response = await axios.get(
       `${BASE_URL}/s/n46/diary/detail/${blogId}`,
       {
@@ -108,16 +107,47 @@ export const fetchBlogDetail = async (blogId) => {
       }
     });
 
-    // Get member image
-    const memberImg = $(".bd--hd__fig img").attr("src");
+    // Get member code from URL and name
+    const profileLink = $(".bd--prof__link").attr("href");
+    console.log("Profile link found:", profileLink);
+
+    // Extract member code from URL pattern like: /s/n46/artist/55384
+    const memberCode = profileLink?.match(/\/artist\/(\d+)/)?.[1];
+    console.log("Extracted member code:", memberCode);
+
+    const author = $(".bd--prof__name").text().trim();
+    console.log("Author name from blog:", author);
+
+    // Fetch member info to get correct image
+    const memberResponse = await axios.get(
+      `${BASE_URL}/s/n46/api/list/member?callback=res`,
+      {
+        responseType: "text",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      }
+    );
+
+    const jsonStr = memberResponse.data
+      .replace(/^res\(/, "")
+      .replace(/\);?$/, "");
+    const memberApi = JSON.parse(jsonStr);
+    const memberInfo = memberApi.data.find((m) => m.code === memberCode);
+
+    // Get original URL
+    const originalUrl = `${BASE_URL}/s/n46/diary/detail/${blogId}?cd=MEMBER`;
 
     return {
       id: blogId,
       title,
       date,
       content: content.html() || "",
-      author: "一ノ瀬 美空",
-      memberImage: memberImg ? `${BASE_URL}${memberImg}` : null,
+      memberCode,
+      author,
+      memberImage: memberInfo?.img || null,
+      originalUrl,
     };
   } catch (error) {
     console.error("Error fetching blog detail:", error);
@@ -132,4 +162,35 @@ export const getImageUrl = (imagePath) => {
   return `${BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
 };
 
+// Fetch thông tin member từ code
+export const fetchMemberInfo = async (memberCode) => {
+  try {
+    console.log("Fetching member info for code:", memberCode);
+    const response = await axios.get(
+      `${BASE_URL}/s/n46/api/list/member?callback=res`,
+      {
+        responseType: "text",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      }
+    );
+    const jsonStr = response.data.replace(/^res\(/, "").replace(/\);?$/, "");
+    const api = JSON.parse(jsonStr);
+    console.log("Looking for member with code:", memberCode);
+    const member = api.data.find((m) => m.code === memberCode);
+    console.log("Found member:", member);
 
+    if (!member) {
+      console.log(
+        "All available members:",
+        api.data.map((m) => ({ code: m.code, name: m.name }))
+      );
+    }
+    return member || null;
+  } catch (error) {
+    console.error("Error fetching member info:", error);
+    return null;
+  }
+};
