@@ -449,8 +449,12 @@ export default function BlogDetailMobile({
         <div
           style={{
             ...jpFont,
-            background: "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            background: isHeaderVisible
+              ? "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)"
+              : "linear-gradient(135deg, rgba(250,250,250,0) 0%, rgba(245,245,245,0) 100%)",
+            borderBottom: isHeaderVisible
+              ? "1px solid rgba(0,0,0,0.06)"
+              : "1px solid rgba(0,0,0,0)",
             zIndex: 998,
             position: "fixed",
             top: 48,
@@ -459,8 +463,10 @@ export default function BlogDetailMobile({
             width: "100%",
             // Add smooth transition for show/hide
             transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
-            transition: "transform 0.3s ease-in-out",
-            willChange: "transform",
+            transition: isHeaderVisible
+              ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
+              : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
+            willChange: "transform, opacity, background, border-color",
             // Hide completely when not visible
             visibility: isHeaderVisible ? "visible" : "hidden",
             opacity: isHeaderVisible ? 1 : 0,
@@ -847,7 +853,9 @@ export default function BlogDetailMobile({
           flexDirection: "column",
           touchAction: "pan-y",
           paddingTop: isHeaderVisible ? "96px" : "48px", // Dynamic padding: 96px when author bar visible, 48px when hidden
-          transition: "padding-top 0.3s ease-in-out", // Smooth transition for padding
+          transition: isHeaderVisible
+            ? "padding-top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)"
+            : "padding-top 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)", // Sync with author bar animation
         }}
       >
         <ProCard
