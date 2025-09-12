@@ -225,12 +225,13 @@ export default function BlogDetailMobile({
         });
       }
 
-      // Clear image processing flags when content changes
+      // Ensure images are visible after content change
       setTimeout(() => {
         if (scrollWrapRef.current) {
           const images = scrollWrapRef.current.getElementsByTagName("img");
           Array.from(images).forEach((img) => {
-            img.removeAttribute("data-processed");
+            img.style.opacity = "1";
+            img.style.transition = "opacity 0.3s ease";
           });
         }
       }, 100);
@@ -436,71 +437,31 @@ export default function BlogDetailMobile({
     }
   }, []);
 
-  // Enhanced image loading with stable state management
+  // Simple image loading - chỉ đảm bảo ảnh hiển thị
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Simple image loading handler without debouncing
-    const markImagesLoaded = () => {
+    // Đơn giản: chỉ đảm bảo ảnh hiển thị
+    const ensureImagesVisible = () => {
       const images = wrap.getElementsByTagName("img");
       Array.from(images).forEach((img) => {
-        const src = img.getAttribute("src");
-        if (!src) return;
-
-        // Skip if already processed
-        if (img.getAttribute("data-processed") === "true") return;
-
-        // Mark as processed
-        img.setAttribute("data-processed", "true");
-
-        // Check global cache first
-        const cached = _mobileCache.imageCache.get(src);
-        if (cached?.loaded) {
-          img.setAttribute("data-loaded", "true");
-          img.style.opacity = "1";
-          return;
-        }
-
-        // Set initial state
-        img.style.opacity = "0";
-
-        if (img.complete) {
-          img.setAttribute("data-loaded", "true");
-          img.style.opacity = "1";
-          _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
-        } else {
-          img.onload = () => {
-            img.setAttribute("data-loaded", "true");
-            img.style.opacity = "1";
-            _mobileCache.imageCache.set(src, {
-              loaded: true,
-              ts: Date.now(),
-            });
-          };
-          img.onerror = () => {
-            img.style.opacity = "0.5";
-            img.setAttribute("data-loaded", "error");
-          };
-        }
+        // Đảm bảo ảnh luôn hiển thị
+        img.style.opacity = "1";
+        img.style.transition = "opacity 0.3s ease";
       });
     };
 
-    // Setup scroll handler with passive flag for better performance
+    // Setup scroll handler
     wrap.addEventListener("scroll", onScroll, { passive: true });
 
-    // Initialize handlers
+    // Initialize
     onScroll();
-    markImagesLoaded();
+    ensureImagesVisible();
 
-    // Enhanced cleanup
+    // Cleanup
     return () => {
       wrap.removeEventListener("scroll", onScroll);
-      const images = wrap.getElementsByTagName("img");
-      Array.from(images).forEach((img) => {
-        img.onload = null;
-        img.onerror = null;
-      });
     };
   }, [onScroll, cachedDisplayContent]);
 
@@ -905,30 +866,12 @@ export default function BlogDetailMobile({
             /* Prevent any touch interference */
             touch-action: none;
           }
-          /* Preload space for images to prevent layout shifts */
-          .jp-prose img:not([data-loaded]) {
-            min-height: 200px;
-            background: rgba(0,0,0,0.05);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-          
-          /* Smooth image loading */
-          .jp-prose img[data-loaded="true"] {
+          /* Ensure images are always visible */
+          .jp-prose img {
             opacity: 1 !important;
             transition: opacity 0.3s ease;
-          }
-          
-          /* Error state for images */
-          .jp-prose img[data-loaded="error"] {
-            opacity: 0.5;
-            background: rgba(255,0,0,0.1);
-          }
-          
-          /* Ensure images are visible by default */
-          .jp-prose img {
-            opacity: 1;
-            transition: opacity 0.3s ease;
+            min-height: 200px;
+            background: rgba(0,0,0,0.05);
           }
           .jp-prose p {
             margin: 0.85em 0;
