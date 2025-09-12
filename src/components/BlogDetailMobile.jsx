@@ -455,6 +455,8 @@ export default function BlogDetailMobile({
           position: "relative",
           display: "flex",
           flexDirection: "column",
+          touchAction: "pan-y",
+          scrollBehavior: "smooth",
         }}
       >
         <ProCard
@@ -678,24 +680,9 @@ export default function BlogDetailMobile({
             scrollbar-width: none;  /* Firefox */
           }
 
-          /* Smooth touch interaction for mobile */
+          /* Minimal touch optimization */
           * {
             -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-          }
-
-          /* Allow text selection in content areas */
-          .jp-prose, .jp-prose * {
-            -webkit-user-select: text;
-            -khtml-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
           }
 
           html, body, #root { 
@@ -753,17 +740,14 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Simple mobile touch optimization */
-            touch-action: manipulation;
+            /* Prevent image jank during scroll */
+            pointer-events: none;
             -webkit-tap-highlight-color: transparent;
-            /* Prevent selection and drag */
-            -webkit-user-select: none;
-            user-select: none;
+            /* Allow smooth scrolling over images */
+            touch-action: pan-y;
+            /* Prevent image selection/drag */
             -webkit-user-drag: none;
-            /* Smooth rendering */
-            image-rendering: auto;
-            /* Simple hardware acceleration */
-            transform: translateZ(0);
+            user-select: none;
           }
           /* Preload space for images to prevent layout shifts */
           .jp-prose img:not([data-loaded]) {
