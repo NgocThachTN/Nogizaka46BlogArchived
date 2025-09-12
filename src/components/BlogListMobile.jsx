@@ -172,7 +172,7 @@ export default function BlogListMobile() {
         setError(null);
 
         // Fetch song song với timeout
-        const fetchWithTimeout = (promise, timeout = 10000) => {
+        const fetchWithTimeout = (promise, timeout = 100000) => {
           return Promise.race([
             promise,
             new Promise((_, reject) =>
@@ -186,13 +186,13 @@ export default function BlogListMobile() {
             ? Promise.resolve(cachedB.list)
             : fetchWithTimeout(
                 fetchAllBlogs(memberCode, { signal: controller.signal }),
-                8000
+                80000
               ),
           isFreshM
             ? Promise.resolve(cachedM.info)
             : fetchWithTimeout(
                 fetchMemberInfo(memberCode, { signal: controller.signal }),
-                5000
+                50000
               ),
         ]);
 
@@ -716,7 +716,7 @@ export default function BlogListMobile() {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {blog.author}
+                    
                       </Text>
                     </div>
 
