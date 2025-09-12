@@ -192,9 +192,16 @@ export default function BlogDetailMobile({
         if (scrollWrapRef.current) {
           scrollWrapRef.current.scrollTop = 0;
         }
+
+        // Force trigger translation if language is not Japanese
+        if (language !== "ja" && blog?.content) {
+          // Trigger parent translation by setting displayContent to null
+          // This will cause parent to detect language change and start translation
+          setCachedDisplayContent(null);
+        }
       }
     }
-  }, [blog?.id, language]);
+  }, [blog?.id, language, blog?.content]);
 
   // ---- Cache management và smooth updates ----
   useEffect(() => {
@@ -242,6 +249,22 @@ export default function BlogDetailMobile({
       }, 100);
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
+
+  // ---- Force translation trigger when switching blogs ----
+  useEffect(() => {
+    if (
+      blog?.id &&
+      language !== "ja" &&
+      !cachedDisplayContent &&
+      !translating
+    ) {
+      // Clear cache for this blog to force fresh translation
+      _mobileCache.blogContent.delete(blog.id);
+
+      // This will trigger parent to start translation
+      // by ensuring displayContent is null
+    }
+  }, [blog?.id, language, cachedDisplayContent, translating]);
 
   // Lưu vị trí cuộn trước khi rời trang (chỉ khi không phải content mới)
   useEffect(() => {
