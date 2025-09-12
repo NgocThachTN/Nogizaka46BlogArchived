@@ -150,7 +150,6 @@ export default function BlogDetailMobile({
 
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
   const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
   useEffect(() => {
@@ -583,39 +582,64 @@ export default function BlogDetailMobile({
     }, 100);
   }, [scrollThreshold]);
 
-  // Combined scroll handler for both progress and author bar visibility
+  // Touch-based scroll handler for mobile
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+
+  const handleTouchStart = useCallback((e) => {
+    setTouchStartY(e.touches[0].clientY);
+    setIsScrolling(true);
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e) => {
+      if (!isScrolling) return;
+
+      const currentY = e.touches[0].clientY;
+      const diff = touchStartY - currentY;
+
+      if (Math.abs(diff) > 20) {
+        // Minimum swipe distance
+        if (diff > 0) {
+          // Swipe up - ẩn header
+          setIsHeaderVisible(false);
+        } else {
+          // Swipe down - hiện header
+          setIsHeaderVisible(true);
+        }
+        setTouchStartY(currentY); // Reset start position
+      }
+    },
+    [isScrolling, touchStartY]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    setIsScrolling(false);
+  }, []);
+
+  // Regular scroll handler for progress only
   const onScroll = useCallback(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Update read progress
+    // Update read progress only
     if (throttledUpdateRef.current) {
       throttledUpdateRef.current();
     }
+  }, []);
 
-    // Update author bar visibility (mobile logic)
-    const currentScrollY = wrap.scrollTop;
-    const scrollDifference = currentScrollY - lastScrollY.current;
-
-    if (Math.abs(scrollDifference) > scrollThreshold) {
-      if (scrollDifference > 0) {
-        // Scroll down (kéo xuống) - hiện header
-        setIsHeaderVisible(true);
-      } else if (scrollDifference < 0) {
-        // Scroll up (kéo lên) - ẩn header
-        setIsHeaderVisible(false);
-      }
-      lastScrollY.current = currentScrollY;
-    }
-  }, [scrollThreshold]);
-
-  // Single scroll handler setup
+  // Setup touch and scroll handlers
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Setup scroll handler for container
+    // Setup scroll handler for progress
     wrap.addEventListener("scroll", onScroll, { passive: true });
+
+    // Setup touch handlers for header visibility
+    wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
+    wrap.addEventListener("touchmove", handleTouchMove, { passive: true });
+    wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     // Initialize
     onScroll();
@@ -623,8 +647,11 @@ export default function BlogDetailMobile({
     // Cleanup
     return () => {
       wrap.removeEventListener("scroll", onScroll);
+      wrap.removeEventListener("touchstart", handleTouchStart);
+      wrap.removeEventListener("touchmove", handleTouchMove);
+      wrap.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [onScroll]);
+  }, [onScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
