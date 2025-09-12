@@ -146,34 +146,23 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // Handle content updates with smooth transitions
+  // Handle content updates
   useEffect(() => {
     if (displayContent && !translating) {
       // Reset read progress immediately
       setReadPct(0);
 
-      // Smoother scroll to top handling
-      if (scrollWrapRef.current) {
-        // Preserve existing images temporarily
-        const images = scrollWrapRef.current.getElementsByTagName('img');
-        Array.from(images).forEach(img => {
-          if (img.complete && img.getAttribute('data-loaded') === 'true') {
-            img.style.transition = 'none';
-            img.style.opacity = '1';
-          }
-        });
+      // Delay scroll to allow images to start loading
+      const scrollToTop = () => {
+        if (scrollWrapRef.current) {
+          scrollWrapRef.current.scrollTop = 0;
+        }
+      };
 
-        // Scroll to top smoothly
-        scrollWrapRef.current.style.scrollBehavior = 'instant';
-        scrollWrapRef.current.scrollTop = 0;
-        
-        // Reset scroll behavior after scroll
-        requestAnimationFrame(() => {
-          if (scrollWrapRef.current) {
-            scrollWrapRef.current.style.scrollBehavior = 'smooth';
-          }
-        });
-      }
+      // Use requestAnimationFrame to ensure smooth transition
+      requestAnimationFrame(() => {
+        requestAnimationFrame(scrollToTop);
+      });
     }
   }, [displayContent, translating]);
 
@@ -332,48 +321,31 @@ export default function BlogDetailMobile({
     }
   }, []);
 
-  // Enhanced image loading with state persistence
+  // Handle image loading
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    const imageLoadCache = new Map();
-    
-    // Enhanced image loading handler with state persistence
+    // Mark images as loaded when they finish loading
     const markImagesLoaded = () => {
       const images = wrap.getElementsByTagName("img");
       Array.from(images).forEach((img) => {
-        const src = img.getAttribute('src');
-        
-        // Check if image was previously loaded
-        if (src && imageLoadCache.has(src)) {
-          img.setAttribute("data-loaded", "true");
-          img.style.opacity = "1";
-          return;
-        }
-
         if (img.complete) {
           img.setAttribute("data-loaded", "true");
-          if (src) imageLoadCache.set(src, true);
         } else {
-          img.style.opacity = "0";
-          img.onload = () => {
-            img.setAttribute("data-loaded", "true");
-            img.style.opacity = "1";
-            if (src) imageLoadCache.set(src, true);
-          };
+          img.onload = () => img.setAttribute("data-loaded", "true");
         }
       });
     };
 
-    // Setup scroll handler with passive flag for better performance
+    // Setup scroll handler
     wrap.addEventListener("scroll", onScroll, { passive: true });
 
-    // Initialize handlers
+    // Initialize
     onScroll();
     markImagesLoaded();
 
-    // Enhanced cleanup
+    // Cleanup
     return () => {
       wrap.removeEventListener("scroll", onScroll);
       const images = wrap.getElementsByTagName("img");
@@ -490,7 +462,14 @@ export default function BlogDetailMobile({
           position: "relative",
           display: "flex",
           flexDirection: "column",
-          touchAction: "pan-y",
+          /* Optimize for mobile scrolling */
+          scrollBehavior: "auto",
+          /* Hardware acceleration */
+          transform: "translateZ(0)",
+          willChange: "scroll-position",
+          /* Prevent scroll jank */
+          backfaceVisibility: "hidden",
+          perspective: "1000px",
         }}
       >
         <ProCard
@@ -714,15 +693,24 @@ export default function BlogDetailMobile({
             scrollbar-width: none;  /* Firefox */
           }
 
-          /* Minimal touch optimization */
+          /* Smooth touch interaction for mobile */
           * {
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
           }
 
-          /* Force smooth scrolling on mobile */
-          .ant-pro-page-container {
-            -webkit-overflow-scrolling: touch;
-            overflow-scrolling: touch;
+          /* Allow text selection in content areas */
+          .jp-prose, .jp-prose * {
+            -webkit-user-select: text;
+            -khtml-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
           }
 
           html, body, #root { 
@@ -771,41 +759,30 @@ export default function BlogDetailMobile({
             background: #fff;
             width: 100% !important;
           }
-  
-          .jp-prose img {
-            border-radius: 12px;
-            margin: 14px auto;
-            max-width: 100%;
-            height: auto;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0,0,0,0.06);
-            display: block;
-            /* Completely disable image interaction to prevent jank */
-            pointer-events: none;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-user-drag: none;
-            user-select: none;
-            /* Force hardware acceleration */
-            transform: translateZ(0);
-            will-change: transform;
-            /* Prevent any touch interference */
-            touch-action: none;
-          }
-          /* Preload space for images to prevent layout shifts */
-          .jp-prose img:not([data-loaded]) {
-            min-height: 200px;
-            background: rgba(0,0,0,0.05);
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-            will-change: opacity;
-          }
-          
-          /* Enhanced smooth image loading */
-          .jp-prose img[data-loaded="true"] {
-            opacity: 1 !important;
-            transition: opacity 0.3s ease-out;
-            will-change: opacity;
-          }
+            .jp-prose img {
+              border-radius: 12px;
+              margin: 14px auto;
+              max-width: 100%;
+              height: auto;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+              border: 1px solid rgba(0,0,0,0.06);
+              display: block;
+              touch-action: manipulation;
+              -webkit-tap-highlight-color: transparent;
+              -webkit-user-select: none;
+              user-select: none;
+              -webkit-user-drag: none;
+              image-rendering: auto;
+              image-rendering: -webkit-optimize-contrast;
+              /* Remove unsupported aspect-ratio and contain properties */
+              /* Prevent layout shift: use min-height as placeholder */
+              transition: box-shadow 0.2s;
+            }
+            /* Preload space for images to prevent layout shifts */
+            .jp-prose img:not([data-loaded]) {
+              min-height: 180px;
+              background: rgba(0,0,0,0.05);
+            }
           .jp-prose p {
             margin: 0.85em 0;
             text-align: justify;
