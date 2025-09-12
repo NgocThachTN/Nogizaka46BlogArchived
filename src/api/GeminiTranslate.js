@@ -14,15 +14,17 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
   if (toLang.toLowerCase() === "vietnamese") {
     return `Translate from ${fromLang} to Vietnamese with Japanese idol blog style:
 
-- Use "em" for I/me, "anh or mọi người" for you (idol speaking to fans)
-- NEVER use "ạ", "á", "nè", "nhé", "nha" in any case 
-- Keep tone natural, mature with subtle cuteness (20s-30s female idol style)
-- Write naturally without Vietnamese particles or interjections
+- Use "mình" for I/me when talking about self, "mọi người" for fans
+- Use proper Vietnamese address terms for members: "cậu" (same age), "chị" (older), "em" (younger)
+- Keep tone intimate, natural, gentle like an idol writing diary for fans
+- Preserve metaphors and imagery (sky, sun, heroine, illusions, etc.)
+- Make text sincere and emotional, not dry translation
+- Ensure clear paragraph structure, use paragraph breaks (⸻) to maintain original blog rhythm
+- Emphasize emotional expressions: use repetition, exclamations (!!!), or emojis if present in original
 - Preserve HTML tags exactly, only translate text between tags
-- Keep sentences concise and natural like Japanese style
-- Use natural, conversational expressions with subtle idol charm
-- Do NOT add any emojis or symbols
-- Keep original content structure exactly
+- Keep original content structure and emotional flow
+- Use natural, conversational Vietnamese with idol charm
+- Maintain the diary-like, personal writing style
 
 Text: ${cleanedText}
 
