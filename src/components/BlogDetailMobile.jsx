@@ -152,10 +152,18 @@ export default function BlogDetailMobile({
       // Reset read progress immediately
       setReadPct(0);
 
-      // Instant scroll to top to prevent image jank
-      if (scrollWrapRef.current) {
-        scrollWrapRef.current.scrollTop = 0;
-      }
+      // Force scroll to top with a small delay to ensure DOM is updated
+      const scrollToTop = () => {
+        if (scrollWrapRef.current) {
+          // Force reflow to ensure DOM is updated
+          scrollWrapRef.current.offsetHeight;
+          // Instant scroll to top
+          scrollWrapRef.current.scrollTop = 0;
+        }
+      };
+
+      // Use setTimeout to ensure DOM is fully updated
+      setTimeout(scrollToTop, 0);
     }
   }, [displayContent, translating]);
 
@@ -456,7 +464,6 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          scrollBehavior: "smooth",
         }}
       >
         <ProCard
@@ -685,6 +692,12 @@ export default function BlogDetailMobile({
             -webkit-tap-highlight-color: transparent;
           }
 
+          /* Force smooth scrolling on mobile */
+          .ant-pro-page-container {
+            -webkit-overflow-scrolling: touch;
+            overflow-scrolling: touch;
+          }
+
           html, body, #root { 
             height: 100%; 
             min-height: 100vh;
@@ -740,14 +753,16 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Prevent image jank during scroll */
+            /* Completely disable image interaction to prevent jank */
             pointer-events: none;
             -webkit-tap-highlight-color: transparent;
-            /* Allow smooth scrolling over images */
-            touch-action: pan-y;
-            /* Prevent image selection/drag */
             -webkit-user-drag: none;
             user-select: none;
+            /* Force hardware acceleration */
+            transform: translateZ(0);
+            will-change: transform;
+            /* Prevent any touch interference */
+            touch-action: none;
           }
           /* Preload space for images to prevent layout shifts */
           .jp-prose img:not([data-loaded]) {
