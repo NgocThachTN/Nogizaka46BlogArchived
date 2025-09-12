@@ -16,7 +16,6 @@ import {
   TranslationOutlined,
   ArrowUpOutlined,
   LeftOutlined,
-  RightOutlined,
   MenuOutlined,
   InfoCircleOutlined,
   CalendarOutlined,
@@ -29,6 +28,7 @@ import {
 } from "@ant-design/pro-components";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getCachedBlogDetail } from "../services/blogService";
 
 // Utility function for throttle
 function throttle(func, limit) {
@@ -82,6 +82,9 @@ export default function BlogDetailMobile({
   displayContent, // HTML (JP/EN/VI) render ra
   prevId,
   nextId,
+  fastGo,
+  pendingNavId,
+  navLock,
 }) {
   const navigate = useNavigate();
   const goBack = useCallback(() => {
@@ -97,6 +100,38 @@ export default function BlogDetailMobile({
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 16
+  );
+
+  // Styled nav buttons (Ant Design Pro vibe)
+  const navFabStyle = useMemo(
+    () => ({
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      background: "#fff",
+      color: "#111",
+      border: "1px solid rgba(0,0,0,0.06)",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    }),
+    []
+  );
+  const navTopBtnStyle = useMemo(
+    () => ({
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      background: "#fff",
+      color: "#111",
+      border: "1px solid rgba(0,0,0,0.06)",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 700,
+      fontSize: 16,
+      padding: 0,
+    }),
+    []
   );
 
   // progress đọc (%)
@@ -142,7 +177,7 @@ export default function BlogDetailMobile({
             borderBottom: "1px solid rgba(0,0,0,0.06)",
             padding: 8,
             // Ensure the TopBar stays above any scrolling content/overlays
-            zIndex: 1001,
+            zIndex: 998,
             position: "relative",
           }}
         >
@@ -152,12 +187,39 @@ export default function BlogDetailMobile({
           >
             <Space>
               <Button type="text" icon={<LeftOutlined />} onClick={goBack} />
+              {prevId ? (
+                <Button
+                  type="default"
+                  size="small"
+                  style={navTopBtnStyle}
+                  disabled={!prevId || navLock}
+                  onClick={() => fastGo && fastGo(prevId)}
+                >
+                  {pendingNavId &&
+                  pendingNavId === prevId &&
+                  !getCachedBlogDetail(prevId) ? (
+                    <LoadingOutlined />
+                  ) : (
+                    "<"
+                  )}
+                </Button>
+              ) : null}
               {nextId ? (
                 <Button
-                  type="text"
-                  icon={<RightOutlined />}
-                  onClick={() => navigate(`/blog/${nextId}`)}
-                />
+                  type="primary"
+                  size="small"
+                  style={navTopBtnStyle}
+                  disabled={!nextId || navLock}
+                  onClick={() => fastGo && fastGo(nextId)}
+                >
+                  {pendingNavId &&
+                  pendingNavId === nextId &&
+                  !getCachedBlogDetail(nextId) ? (
+                    <LoadingOutlined />
+                  ) : (
+                    ">"
+                  )}
+                </Button>
               ) : null}
             </Space>
             <Space>
@@ -205,7 +267,17 @@ export default function BlogDetailMobile({
         </div>
       </Affix>
     ),
-    [language, translating, goBack, setLanguage, nextId, navigate]
+    [
+      language,
+      translating,
+      goBack,
+      setLanguage,
+      nextId,
+      fastGo,
+      pendingNavId,
+      navLock,
+      navTopBtnStyle,
+    ]
   );
 
   // Create a single throttled updater for scroll progress
@@ -521,18 +593,39 @@ export default function BlogDetailMobile({
       {/* Floating buttons */}
       <FloatButton.Group
         shape="square"
-        style={{ right: 12, bottom: 12, zIndex: 1001 }}
+        style={{ right: 12, bottom: 12, zIndex: 997 }}
       >
         <FloatButton
-          icon={<LeftOutlined />}
-          onClick={goBack}
-          tooltip="Quay lại"
+          icon={
+            pendingNavId &&
+            pendingNavId === prevId &&
+            prevId &&
+            !getCachedBlogDetail(prevId) ? (
+              <LoadingOutlined />
+            ) : (
+              <span style={{ fontWeight: 700, fontSize: 16 }}>&lt;</span>
+            )
+          }
+          onClick={() => (prevId && fastGo ? fastGo(prevId) : goBack())}
+          tooltip={prevId ? "Bài trước" : "Quay lại"}
+          disabled={navLock && !!prevId}
+          style={navFabStyle}
         />
         {nextId ? (
           <FloatButton
-            icon={<RightOutlined />}
-            onClick={() => navigate(`/blog/${nextId}`)}
+            icon={
+              pendingNavId &&
+              pendingNavId === nextId &&
+              !getCachedBlogDetail(nextId) ? (
+                <LoadingOutlined />
+              ) : (
+                <span style={{ fontWeight: 700, fontSize: 16 }}>&gt;</span>
+              )
+            }
+            onClick={() => fastGo && fastGo(nextId)}
             tooltip="Bài tiếp theo"
+            disabled={!nextId || navLock}
+            style={navFabStyle}
           />
         ) : null}
         <FloatButton
@@ -562,8 +655,7 @@ export default function BlogDetailMobile({
             style={{
               height: "100%",
               width: "100%",
-              background:
-                "linear-gradient(90deg, rgba(147,51,234,1) 0%, rgba(99,102,241,1) 100%)",
+              background: "#1677ff",
               transform: `translateX(${readPct - 100}%)`,
               willChange: "transform",
               transition: "transform 0.1s ease-out",

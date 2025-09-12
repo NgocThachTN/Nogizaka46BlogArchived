@@ -1,4 +1,4 @@
-// BlogDetailPro.jsx — React JS + Ant Design Pro + DeepSeek Translate
+// BlogDetailPro.jsx — Ant Design Pro • Ultra-fast Prev/Next (cache-first, prefetch, transition)
 import { useParams, useNavigate } from "react-router-dom";
 import {
   PageContainer,
@@ -25,13 +25,19 @@ import {
   LeftOutlined,
   CalendarOutlined,
   ShareAltOutlined,
-  EyeOutlined,
   LinkOutlined,
   ArrowUpOutlined,
   LoadingOutlined,
   RightOutlined,
 } from "@ant-design/icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  useTransition,
+} from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import {
@@ -44,7 +50,6 @@ import {
   prefetchBlogDetail,
 } from "../services/blogService";
 import BlogDetailMobile from "./BlogDetailMobile";
-
 import {
   translateJapaneseToEnglish,
   translateJapaneseToVietnamese,
@@ -83,7 +88,6 @@ const t = {
     vi: "Đã sao chép liên kết",
   },
   nextPost: { ja: "次の記事", en: "Next Post", vi: "Bài tiếp theo" },
-  latestPost: { ja: "最新", en: "Newest", vi: "Mới nhất" },
   openSource: { ja: "元ページ", en: "Original", vi: "Trang gốc" },
   toc: { ja: "目次", en: "Contents", vi: "Mục lục" },
   readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
@@ -98,12 +102,13 @@ const LS_KEY_TTL_VI = "blog:trttl:vi";
 export default function BlogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [blog, setBlog] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [language, setLanguage] = useState("ja");
-  const [readingMode, setReadingMode] = useState(true);
+  const [readingMode, _SET_READING_MODE] = useState(true);
   const [fontSizeKey, setFontSizeKey] = useState(
     () => localStorage.getItem(LS_KEY_SIZE) || "md"
   );
@@ -113,47 +118,41 @@ export default function BlogDetail() {
   const [trTitle, setTrTitle] = useState({ en: "", vi: "" });
   const [translating, setTranslating] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const contentRef = useRef(null);
-  const [navIds, setNavIds] = useState({
-    prevId: null,
-    nextId: null,
-    latestId: null,
-  });
 
-  // Hàm để làm sạch kết quả hiển thị
-  const cleanDisplayText = (text) => {
-    if (!text) return "";
-    return text
+  const [navIds, setNavIds] = useState({ prevId: null, nextId: null });
+  const [navLock, setNavLock] = useState(false);
+  const [pendingNavId, setPendingNavId] = useState(null); // hiển thị spinner nhỏ ở header khi chưa có cache
+  const [_IS_PENDING, startTransition] = useTransition();
+
+  const contentRef = useRef(null);
+
+  // cleanup helpers
+  const cleanDisplayText = (text) =>
+    (text || "")
       .replace(/```html/g, "")
       .replace(/```/g, "")
       .trim();
-  };
 
   // Handle window resize
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Back
+  const onBack = () => {
+    const backTo = blog?.memberCode ? `/blogs/${blog.memberCode}` : "/";
+    navigate(backTo);
+  };
+
+  // Share
   const onShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       message.success(t.copied[language]);
     } catch {
       message.info(window.location.href);
-    }
-  };
-  const onBack = () => {
-    if (navIds.prevId) {
-      navigate(`/blog/${navIds.prevId}`);
-    } else {
-      const backTo = blog?.memberCode
-        ? `/blogs/${blog.memberCode}`
-        : "/members";
-      navigate(backTo);
     }
   };
 
@@ -165,10 +164,11 @@ export default function BlogDetail() {
         if (cached) {
           setBlog(cached);
           setLoading(false);
+        } else {
+          setLoading(true);
         }
-        if (!cached) setLoading(true);
+
         const data = await fetchBlogDetail(id);
-        console.log("Blog data loaded:", data); // Debug log
         if (!data) {
           message.error("Không thể tải nội dung blog. Vui lòng thử lại sau.");
           return;
@@ -178,22 +178,19 @@ export default function BlogDetail() {
         }
         setBlog(data);
 
-        // Fetch member info (code first, then fallback to name)
+        // Member info
         let member = null;
-        if (data.memberCode) {
-          console.log("Fetching member info for code:", data.memberCode);
-          member = await fetchMemberInfo(data.memberCode);
-        }
-        if (!member && data.author) {
-          console.log("Fallback: fetching member info by name:", data.author);
+        if (data.memberCode) member = await fetchMemberInfo(data.memberCode);
+        if (!member && data.author)
           member = await fetchMemberInfoByName(data.author);
-        }
         setMemberInfo(member);
       } catch (e) {
         console.error("Error loading blog:", e);
-        message.error("Lỗi khi tải blog: " + (e.message || "Không xác định"));
+        message.error("Lỗi khi tải blog.");
       } finally {
         setLoading(false);
+        setPendingNavId(null);
+        setNavLock(false);
       }
     })();
   }, [id]);
@@ -203,33 +200,30 @@ export default function BlogDetail() {
     localStorage.setItem(LS_KEY_SIZE, fontSizeKey);
   }, [fontSizeKey]);
 
-  // Compute prev/next ids for the same member timeline
+  // Compute prev/next ids
   useEffect(() => {
     (async () => {
       try {
         if (!blog?.id) return;
-        // Determine member code: prefer from blog, fallback by author name
+
         let code = blog?.memberCode;
         if (!code && blog?.author) {
           const m = await fetchMemberInfoByName(blog.author);
           code = m?.code;
         }
         if (!code) return;
+
         const list = await fetchAllBlogs(code);
         if (!Array.isArray(list) || list.length === 0) return;
+
         const index = list.findIndex((b) => String(b.id) === String(blog.id));
         if (index === -1) return;
-        // list is newest -> oldest
-        const nextNewer = index > 0 ? list[index - 1]?.id : null;
-        const prevOlder = index < list.length - 1 ? list[index + 1]?.id : null;
-        const latestId = list[0]?.id || null;
-        setNavIds({
-          prevId: prevOlder || null,
-          nextId: nextNewer || null,
-          latestId,
-        });
 
-        // Prefetch neighbors to speed up next taps
+        const nextNewer = index > 0 ? list[index - 1]?.id : null; // Next
+        const prevOlder = index < list.length - 1 ? list[index + 1]?.id : null; // Prev
+        setNavIds({ prevId: prevOlder || null, nextId: nextNewer || null });
+
+        // Prefetch neighbors
         if (prevOlder) prefetchBlogDetail(prevOlder);
         if (nextNewer) prefetchBlogDetail(nextNewer);
       } catch (e) {
@@ -238,7 +232,7 @@ export default function BlogDetail() {
     })();
   }, [blog?.memberCode, blog?.author, blog?.id]);
 
-  // table of contents & readtime
+  // TOC & read time
   const { toc, plainText } = useMemo(() => {
     if (!blog?.content) return { toc: [], plainText: "" };
     const temp = document.createElement("div");
@@ -267,13 +261,6 @@ export default function BlogDetail() {
     (async () => {
       if (!blog?.content || language === "ja") return;
 
-      console.log("Starting translation for:", {
-        language,
-        contentLength: blog.content.length,
-        title: blog.title,
-      });
-
-      // try get from localStorage cache per post id
       const keyHtml =
         (language === "en" ? LS_KEY_TR_EN : LS_KEY_TR_VI) + `:${id}`;
       const keyTtl =
@@ -282,7 +269,6 @@ export default function BlogDetail() {
       const cachedTtl = localStorage.getItem(keyTtl);
 
       if (cachedHtml && cachedTtl) {
-        console.log("Using cached translation");
         setTrHtml((s) => ({ ...s, [language]: cachedHtml }));
         setTrTitle((s) => ({ ...s, [language]: cachedTtl }));
         return;
@@ -290,75 +276,53 @@ export default function BlogDetail() {
 
       try {
         setTranslating(true);
-        console.log("Translating content...");
-
-        // Translate title first with proper language check
+        // Translate title
         let titleOut = "";
         if (language === "en") {
           titleOut = await translateJapaneseToEnglish(blog.title || "");
-        } else if (language === "vi") {
+        } else {
           titleOut = await translateJapaneseToVietnamese(blog.title || "");
         }
 
-        console.log("Title translated:", titleOut);
-
-        // Đăng ký callback — chỉ cập nhật state sau khi hoàn tất để tránh hiển thị preface
+        // Chunk callback
         let translatedContent = "";
         const updateProgress = (translatedChunk, isLast) => {
           if (!translatedChunk) return;
-
-          const cleanedChunk = translatedChunk
+          const cleaned = translatedChunk
             .replace(/```html/g, "")
             .replace(/```/g, "")
             .trim();
-
-          translatedContent += cleanedChunk;
+          translatedContent += cleaned;
 
           if (isLast) {
-            setTrHtml((prevState) => {
-              const newState = { ...prevState };
-              newState[language] = translatedContent;
-              return newState;
-            });
+            setTrHtml((prev) => ({ ...prev, [language]: translatedContent }));
             localStorage.setItem(keyHtml, translatedContent);
-            message.success("Dịch thành công!");
           }
         };
 
-        // Then translate content with proper language check
-        console.log("Starting content translation for language:", language);
+        // Translate content
         if (language === "en") {
-          console.log("Translating to English...");
           await translateJapaneseToEnglish(blog.content, updateProgress);
-        } else if (language === "vi") {
-          console.log("Translating to Vietnamese...");
+        } else {
           await translateJapaneseToVietnamese(blog.content, updateProgress);
         }
 
-        console.log("Content translated, length:", translatedContent.length);
-
-        // Kiểm tra kết quả dịch tiêu đề
         const safeTtl = (titleOut || "").trim();
-        if (!safeTtl) {
-          throw new Error("Không nhận được kết quả dịch tiêu đề");
+        if (safeTtl) {
+          setTrTitle((s) => ({ ...s, [language]: safeTtl }));
+          localStorage.setItem(keyTtl, safeTtl);
         }
-
-        // Lưu tiêu đề đã dịch
-        setTrTitle((s) => ({ ...s, [language]: safeTtl }));
-        localStorage.setItem(keyTtl, safeTtl);
-
         message.success("Dịch thành công!");
       } catch (err) {
         console.error("Translation failed:", err);
-        message.error(err.message || "Lỗi dịch. Vui lòng thử lại sau.");
-        // Giữ nguyên nội dung đã dịch được (nếu có)
+        message.error("Lỗi dịch. Vui lòng thử lại sau.");
       } finally {
         setTranslating(false);
       }
     })();
   }, [language, blog?.content, blog?.title, id]);
 
-  // Pick title/content by language
+  // Display title/content by language
   const displayTitle =
     language === "ja"
       ? blog?.title
@@ -369,7 +333,54 @@ export default function BlogDetail() {
       ? blog?.content
       : cleanDisplayText(trHtml[language]);
 
-  // Render mobile view
+  // ---- SPEED-FOCUSED NAVIGATION ----
+  const fastGo = useCallback(
+    (targetId) => {
+      if (!targetId || navLock) return;
+      setNavLock(true);
+
+      const cachedNext = getCachedBlogDetail(targetId);
+
+      // Có cache → render ngay (optimistic)
+      if (cachedNext) {
+        setPendingNavId(null);
+        setBlog(cachedNext);
+        // cuộn lên đầu để cảm giác chuyển trang tức thì
+        window.scrollTo({ top: 0, behavior: "instant" });
+        // điều hướng "nhẹ" để đồng bộ URL nhưng không chặn UI
+        startTransition(() => navigate(`/blog/${targetId}`));
+        // prefetch hàng xóm của target để lần sau nhanh
+        prefetchBlogDetail(targetId);
+        // Thả khoá nhẹ
+        setTimeout(() => setNavLock(false), 180);
+        return;
+      }
+
+      // Chưa có cache → hiển thị spinner nhỏ ở header, vẫn phản hồi ngay lập tức
+      setPendingNavId(targetId);
+      startTransition(() => navigate(`/blog/${targetId}`));
+      // fetch nền sẽ setBlog trong effect [id]
+      setTimeout(() => setNavLock(false), 280);
+    },
+    [navigate, navLock, startTransition]
+  );
+
+  // prefetch khi hover nút
+  const onHoverPrefetch = (postId) => {
+    if (postId) prefetchBlogDetail(postId);
+  };
+
+  // Keyboard ← →
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "ArrowLeft" && navIds.prevId) fastGo(navIds.prevId);
+      if (e.key === "ArrowRight" && navIds.nextId) fastGo(navIds.nextId);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navIds.prevId, navIds.nextId, fastGo]);
+
+  // Mobile
   if (isMobile) {
     return (
       <BlogDetailMobile
@@ -382,11 +393,14 @@ export default function BlogDetail() {
         displayContent={displayContent}
         prevId={navIds.prevId}
         nextId={navIds.nextId}
+        fastGo={fastGo}
+        pendingNavId={pendingNavId}
+        navLock={navLock}
       />
     );
   }
 
-  // Desktop loading state
+  // Desktop loading
   if (loading) {
     return (
       <PageContainer header={{ title: t.loading[language] }}>
@@ -397,7 +411,7 @@ export default function BlogDetail() {
     );
   }
 
-  // Desktop not found state
+  // Not found
   if (!blog) {
     return (
       <PageContainer header={{ title: t.notFound[language] }}>
@@ -427,24 +441,39 @@ export default function BlogDetail() {
           </Space>
         ),
         extra: [
-          <Button
-            key="prev-post"
-            icon={<LeftOutlined />}
-            onClick={() => navIds.prevId && navigate(`/blog/${navIds.prevId}`)}
-            disabled={!navIds.prevId}
-          >
-            {t.prevPost[language]}
+          <Button key="back" icon={<LeftOutlined />} onClick={onBack}>
+            {t.back[language]}
           </Button>,
-          navIds.nextId ? (
+
+          // PREV
+          <Tooltip key="prev" title={t.prevPost[language]}>
             <Button
-              key="next-post"
+              icon={<LeftOutlined />}
+              onClick={() => fastGo(navIds.prevId)}
+              onMouseEnter={() => onHoverPrefetch(navIds.prevId)}
+              disabled={!navIds.prevId || navLock}
+            />
+          </Tooltip>,
+
+          // NEXT (kèm spinner nhỏ nếu đang pending & chưa cache)
+          <Tooltip key="next" title={t.nextPost[language]}>
+            <Button
               type="primary"
-              icon={<RightOutlined />}
-              onClick={() => navigate(`/blog/${navIds.nextId}`)}
-            >
-              {t.nextPost[language]}
-            </Button>
-          ) : null,
+              icon={
+                pendingNavId &&
+                pendingNavId === navIds.nextId &&
+                !getCachedBlogDetail(navIds.nextId) ? (
+                  <LoadingOutlined />
+                ) : (
+                  <RightOutlined />
+                )
+              }
+              onClick={() => fastGo(navIds.nextId)}
+              onMouseEnter={() => onHoverPrefetch(navIds.nextId)}
+              disabled={!navIds.nextId || navLock}
+            />
+          </Tooltip>,
+
           <Select
             key="lang"
             value={language}
@@ -456,13 +485,7 @@ export default function BlogDetail() {
               { value: "vi", label: "Tiếng Việt" },
             ]}
           />,
-          <Tooltip key="mode" title={readingMode ? "通常モード" : "読書モード"}>
-            <Button
-              icon={<EyeOutlined />}
-              type={readingMode ? "default" : "primary"}
-              onClick={() => setReadingMode((v) => !v)}
-            />
-          </Tooltip>,
+
           <Segmented
             key="seg-size"
             options={[
@@ -476,21 +499,10 @@ export default function BlogDetail() {
             onChange={(v) => setFontSizeKey(v)}
             style={{ marginLeft: 8 }}
           />,
+
           <Button key="share" icon={<ShareAltOutlined />} onClick={onShare}>
             {t.share[language]}
           </Button>,
-          <Button key="back" icon={<LeftOutlined />} onClick={onBack}>
-            {t.back[language]}
-          </Button>,
-          navIds.nextId && (
-            <Button
-              key="next"
-              type="primary"
-              onClick={() => navigate(`/blog/${navIds.nextId}`)}
-            >
-              {t.nextPost[language]}
-            </Button>
-          ),
         ],
       }}
       token={{ colorBgPageContainer: readingMode ? "#fafafa" : undefined }}
@@ -502,7 +514,7 @@ export default function BlogDetail() {
             style={{ borderRadius: 16, ...jpFont }}
             bodyStyle={{ padding: readingMode ? 32 : 24, position: "relative" }}
           >
-            {/* small overlay spinner when translating */}
+            {/* Overlay translating */}
             {translating && (
               <div
                 style={{
@@ -514,17 +526,18 @@ export default function BlogDetail() {
                   justifyContent: "center",
                   zIndex: 2,
                   borderRadius: 16,
+                  backdropFilter: "blur(1.5px)",
                 }}
               >
-                <Space>
-                  <LoadingOutlined />
-                  <span>
+                <Space direction="vertical" align="center">
+                  <Spin indicator={<LoadingOutlined spin />} />
+                  <Text type="secondary" style={{ fontSize: 13 }}>
                     {language === "vi"
-                      ? "Đang dịch..."
+                      ? "Đang dịch nội dung..."
                       : language === "en"
-                      ? "Translating..."
+                      ? "Translating content..."
                       : "翻訳中..."}
-                  </span>
+                  </Text>
                 </Space>
               </div>
             )}
@@ -577,7 +590,7 @@ export default function BlogDetail() {
 
             <Divider style={{ margin: "12px 0 20px" }} />
 
-            {/* Content (JP/Translated) */}
+            {/* Content */}
             <div
               ref={contentRef}
               className="jp-prose"
@@ -590,50 +603,17 @@ export default function BlogDetail() {
             />
           </Card>
 
-          {/* Bottom nav */}
-          <div
-            style={{
-              marginTop: window.innerWidth < 768 ? 12 : 16,
-              display: "flex",
-              flexDirection: window.innerWidth < 768 ? "column" : "row",
-              gap: window.innerWidth < 768 ? "8px" : "12px",
-            }}
-          >
-            <Button
-              icon={<LeftOutlined />}
-              onClick={onBack}
-              style={{
-                width: window.innerWidth < 768 ? "100%" : "auto",
-                height: window.innerWidth < 768 ? "36px" : "32px",
-              }}
-            >
-              {t.back[language]}
-            </Button>
-            {navIds.nextId && (
-              <Button
-                type="primary"
-                onClick={() => navigate(`/blog/${navIds.nextId}`)}
-                style={{
-                  width: window.innerWidth < 768 ? "100%" : "auto",
-                  height: window.innerWidth < 768 ? "36px" : "32px",
-                }}
-              >
-                {t.nextPost[language]}
-              </Button>
-            )}
+          {/* Bottom nav (tối giản) */}
+          <Space style={{ marginTop: 12 }} wrap>
             {blog.originalUrl && (
               <Button
                 icon={<LinkOutlined />}
                 onClick={() => window.open(blog.originalUrl, "_blank")}
-                style={{
-                  width: window.innerWidth < 768 ? "100%" : "auto",
-                  height: window.innerWidth < 768 ? "36px" : "32px",
-                }}
               >
                 {t.openSource[language]}
               </Button>
             )}
-          </div>
+          </Space>
         </ProCard>
 
         {/* Sidebar */}
@@ -762,11 +742,7 @@ export default function BlogDetail() {
           text-align: justify; 
           line-height: ${window.innerWidth < 768 ? "1.6" : "inherit"};
         }
-        .jp-prose a { 
-          color: #6b21a8; 
-          text-decoration: none;
-          padding: ${window.innerWidth < 768 ? "2px 0" : "0"}; 
-        }
+        .jp-prose a { color: #6b21a8; text-decoration: none; }
         .jp-prose a:hover { text-decoration: underline; }
         .jp-prose img { 
           border-radius: ${window.innerWidth < 768 ? "8px" : "12px"}; 
@@ -780,32 +756,6 @@ export default function BlogDetail() {
               : "0 4px 12px rgba(0,0,0,0.1)"
           };
           border: 1px solid rgba(0,0,0,0.1);
-        }
-        .jp-prose img:active {
-          transform: ${window.innerWidth < 768 ? "scale(0.98)" : "none"};
-          transition: transform 0.2s ease;
-        }
-        .jp-prose blockquote { 
-          border-left: 3px solid #e9d5ff; 
-          background: #faf5ff; 
-          padding: ${window.innerWidth < 768 ? "6px 10px" : "8px 12px"}; 
-          border-radius: ${window.innerWidth < 768 ? "6px" : "8px"}; 
-          color: #4b5563;
-          font-size: ${window.innerWidth < 768 ? "0.95em" : "1em"};
-        }
-        .jp-prose strong { color: #111827; }
-        .jp-prose ul, .jp-prose ol { 
-          padding-left: ${window.innerWidth < 768 ? "1em" : "1.2em"}; 
-          margin: ${window.innerWidth < 768 ? "0.5em 0" : "0.75em 0"};
-        }
-        .jp-prose li { 
-          margin: ${window.innerWidth < 768 ? "0.3em 0" : "0.5em 0"};
-        }
-        .jp-prose code { 
-          background: #f5f5f5; 
-          border-radius: ${window.innerWidth < 768 ? "4px" : "6px"}; 
-          padding: ${window.innerWidth < 768 ? "0 4px" : "0 6px"};
-          font-size: ${window.innerWidth < 768 ? "0.9em" : "1em"};
         }
       `}</style>
       {/* dynamic heading scale */}
