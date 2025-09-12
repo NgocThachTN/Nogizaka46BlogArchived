@@ -12,75 +12,30 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
   const cleanedText = cleanTextForTranslation(text);
 
   if (toLang.toLowerCase() === "vietnamese") {
-    return `You are a specialized translator for idol blogs. Translate the following text from ${fromLang} to Vietnamese with a Japanese-like tone: neutral, concise, and straightforward. Avoid gendered or overly cute Vietnamese expressions. Follow these guidelines:
+    return `Translate from ${fromLang} to Vietnamese with idol blog style:
 
-1. MOST IMPORTANT: Use idol-style first/second-person (mature yet cute):
-   - Use "em" for "I/me" throughout; avoid "tôi" unless formality is explicitly intended
-   - Use "anh" for "you" (or "mọi người" for plural/general audience) when needed
-   - NEVER use "tớ", "cậu", "nè" - only use "em/anh" or omit pronouns
-   - Prefer omitting pronouns when natural to keep Japanese brevity
-   - Use gentle particles like "nhé", "nha" sparingly for natural idol charm
-   - NEVER use "ạ" or "nè" as they sound annoying
-   - Add subtle cute tone markers that match idol personality
+- Use "em" for I/me, "anh" for you (or omit pronouns)
+- NEVER use "tớ/cậu", "ạ", "nè" 
+- Keep tone mature yet charming (20s-30s idol)
+- Use "nhé/nha" sparingly for warmth
+- Preserve HTML tags exactly, only translate text between tags
+- Keep sentences concise and natural
 
-2. Match Japanese idol style and rhythm:
-   - Keep sentences concise, direct, and calm; mirror Japanese pacing and breaks
-   - Use mature yet charming expressions appropriate for idols in their 20s-30s
-   - Keep wording natural and composed with subtle idol-like warmth
+Text: ${cleanedText}
 
-3. For emotional expressions:
-   - Keep emotions natural and understated with idol-like charm
-   - Use gentle interjections like "á", "ơ" sparingly for natural reactions
-   - Use appropriate particles like "nhé", "nha" for idol-style warmth
-   - NEVER use "ạ" or "nè" as they sound annoying
-
-4. In daily life stories:
-   - Follow the original structure closely; do not over-explain
-   - Use natural filler phrases like "thật sự là", "kiểu như là" when appropriate for idol charm
-   - Keep the narration clear and straightforward with idol-like personality
-
-5. For friendly interactions:
-   - Do not add emojis or cute expressions unless explicitly present in source
-   - Use gentle forms for reminders and gratitude; include "nhé/nha" for idol warmth
-   - NEVER use "ạ" or "nè" as they sound annoying
-   - Keep an overall mature yet charming idol tone
-
-Technical requirements:
-   - Preserve all HTML tags and attributes exactly
-   - Only translate text between HTML tags
-   - Keep all line breaks and spacing
-   - Keep empty HTML tags empty
-   - Do not add or remove HTML tags
-   - Do not add emojis, symbols, or expressions not present in source
-   - Keep original content structure and meaning exactly
-
-Here's the text to translate:
-
-${cleanedText}
-
-Remember: Focus on conveying the feelings and personal voice of the writer as a mature yet charming idol (20s-30s age range) while maintaining accuracy. Use ONLY "em/anh" xưng hô - NEVER use "tớ/cậu", "ạ", or "nè". Follow Japanese idol style naturally. Output must be in Vietnamese.`;
+Output ONLY the translated content in Vietnamese. No explanations, no additional text.`;
   }
 
   // Default English prompt
-  return `You are a specialized translator for idol blogs. Translate the following text from ${fromLang} to English. Keep a friendly, feminine, and youthful tone that reads naturally in English. Avoid Vietnamese words or particles. Do not add introductions or explanations.
+  return `Translate from ${fromLang} to English with idol blog style:
+- Keep tone friendly, feminine, and youthful
+- Use natural conversational English
+- Preserve HTML tags exactly, only translate text between tags
+- Keep original personality and structure
 
-Style guidelines for English:
- - Use natural, conversational English as if chatting with close friends
- - Keep it gentle, sweet, and cheerful; light emoji use is okay if present in source
- - Preserve the writer's personality; avoid over-formality
+Text: ${cleanedText}
 
-Technical requirements:
- - Preserve all HTML tags and attributes exactly
- - Only translate text between HTML tags
- - Keep all line breaks and spacing
- - Keep empty HTML tags empty
- - Do not add or remove HTML tags
-
-Here's the text to translate:
-
-${cleanedText}
-
-Remember: Output must be in English.`;
+Output ONLY the translated content in English. No explanations, no additional text.`;
 };
 
 const splitTextIntoChunks = (text, maxChunkSize = 4000) => {
