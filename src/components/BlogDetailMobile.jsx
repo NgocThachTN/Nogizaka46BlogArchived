@@ -187,6 +187,11 @@ export default function BlogDetailMobile({
         // Clear cached content if no cache or language mismatch
         setCachedDisplayContent(null);
         setCachedLanguage(language);
+
+        // Reset scroll position when switching blogs
+        if (scrollWrapRef.current) {
+          scrollWrapRef.current.scrollTop = 0;
+        }
       }
     }
   }, [blog?.id, language]);
@@ -442,28 +447,42 @@ export default function BlogDetailMobile({
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Đơn giản: chỉ đảm bảo ảnh hiển thị
-    const ensureImagesVisible = () => {
-      const images = wrap.getElementsByTagName("img");
-      Array.from(images).forEach((img) => {
-        // Đảm bảo ảnh luôn hiển thị
-        img.style.opacity = "1";
-        img.style.transition = "opacity 0.3s ease";
-      });
-    };
-
     // Setup scroll handler
     wrap.addEventListener("scroll", onScroll, { passive: true });
 
     // Initialize
     onScroll();
-    ensureImagesVisible();
 
     // Cleanup
     return () => {
       wrap.removeEventListener("scroll", onScroll);
     };
-  }, [onScroll, cachedDisplayContent]);
+  }, [onScroll]);
+
+  // Separate effect for image visibility - chỉ chạy khi content thay đổi
+  useEffect(() => {
+    const wrap = scrollWrapRef.current;
+    if (!wrap || !cachedDisplayContent) return;
+
+    // Đảm bảo ảnh hiển thị sau khi content load
+    const ensureImagesVisible = () => {
+      const images = wrap.getElementsByTagName("img");
+      Array.from(images).forEach((img) => {
+        // Chỉ set nếu chưa được set
+        if (img.style.opacity !== "1") {
+          img.style.opacity = "1";
+          img.style.transition = "opacity 0.3s ease";
+        }
+      });
+    };
+
+    // Delay để đảm bảo DOM đã render xong
+    const timeoutId = setTimeout(ensureImagesVisible, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [cachedDisplayContent]);
 
   // Loading skeleton (ngon hơn Spin)
   if (loading) {
