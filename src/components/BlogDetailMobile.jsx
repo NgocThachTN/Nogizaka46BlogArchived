@@ -271,6 +271,7 @@ export default function BlogDetailMobile({
       language,
       translating,
       goBack,
+      prevId,
       setLanguage,
       nextId,
       fastGo,
@@ -732,10 +733,15 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             contain: paint;
-            content-visibility: auto;
-            will-change: transform;
-            transform: translateZ(0);
-            aspect-ratio: attr(width) / attr(height);
+            display: block;
+            /* Prevent image drag/select causing scroll jank on mobile */
+            -webkit-user-drag: none;
+            user-select: none;
+            /* Allow vertical panning without interpreting as image gesture */
+            touch-action: pan-y;
+            /* Avoid extra layer promotions that can cause repaint thrash */
+            backface-visibility: hidden;
+            -webkit-tap-highlight-color: transparent;
           }
           /* Preload space for images to prevent layout shifts */
           .jp-prose img:not([data-loaded]) {
