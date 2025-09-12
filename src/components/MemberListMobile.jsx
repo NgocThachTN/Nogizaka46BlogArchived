@@ -7,7 +7,13 @@
 // - Safe JSONP parse + error states + skeletons
 // - Smooth 60fps scrolling: content-visibility for images, layout containment
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -26,7 +32,11 @@ import {
   Badge,
   Divider,
 } from "antd";
-import { PageContainer, ProCard, ProSkeleton } from "@ant-design/pro-components";
+import {
+  PageContainer,
+  ProCard,
+  ProSkeleton,
+} from "@ant-design/pro-components";
 import {
   SearchOutlined,
   FilterOutlined,
@@ -45,10 +55,21 @@ const jpFont = {
 };
 
 /** Gen order */
-const GEN_ORDER = ["6期生", "5期生", "4期生", "3期生", "2期生", "1期生", "その他"];
+const GEN_ORDER = [
+  "6期生",
+  "5期生",
+  "4期生",
+  "3期生",
+  "2期生",
+  "1期生",
+  "その他",
+];
 
 /** Helpers */
-const getGen = (m) => m.cate?.trim() || m.groupcode?.trim() || (m.code === "10001" ? "その他" : "その他");
+const getGen = (m) =>
+  m.cate?.trim() ||
+  m.groupcode?.trim() ||
+  (m.code === "10001" ? "その他" : "その他");
 
 const getAge = (birthday) => {
   if (!birthday) return null;
@@ -58,7 +79,9 @@ const getAge = (birthday) => {
   if (!y || !m || !d) return null;
   const today = new Date();
   let age = today.getFullYear() - y;
-  const hasHadBirthday = today.getMonth() + 1 > m || (today.getMonth() + 1 === m && today.getDate() >= d);
+  const hasHadBirthday =
+    today.getMonth() + 1 > m ||
+    (today.getMonth() + 1 === m && today.getDate() >= d);
   if (!hasHadBirthday) age -= 1;
   return age;
 };
@@ -103,11 +126,19 @@ export default function MemberListMobile() {
     (async () => {
       try {
         setLoading(true);
-        const resp = await axios.get("https://www.nogizaka46.com/s/n46/api/list/member?callback=res", { responseType: "text" });
-        const jsonStr = (resp.data || "").replace(/^res\(/, "").replace(/\);?$/, "");
+        const resp = await axios.get(
+          "https://www.nogizaka46.com/s/n46/api/list/member?callback=res",
+          { responseType: "text" }
+        );
+        const jsonStr = (resp.data || "")
+          .replace(/^res\(/, "")
+          .replace(/\);?$/, "");
         const api = JSON.parse(jsonStr);
         const active = (api.data || []).filter((m) => m.graduation === "NO");
-        const normalized = active.map((m) => ({ ...m, img: m.img || "https://via.placeholder.com/320x320?text=No+Image" }));
+        const normalized = active.map((m) => ({
+          ...m,
+          img: m.img || "https://via.placeholder.com/320x320?text=No+Image",
+        }));
         if (!canceled) setMembers(normalized);
       } catch (e) {
         console.error(e);
@@ -135,7 +166,9 @@ export default function MemberListMobile() {
     return members.filter((m) => {
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
-      const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""}`.toLowerCase();
+      const hay = `${m.name} ${m.english_name || ""} ${
+        m.kana || ""
+      }`.toLowerCase();
       return hay.includes(kw);
     });
   }, [members, genFilter, keyword]);
@@ -148,7 +181,10 @@ export default function MemberListMobile() {
       if (!map.has(g)) map.set(g, []);
       map.get(g).push(m);
     });
-    const known = GEN_ORDER.filter((g) => map.has(g)).map((g) => ({ gen: g, items: map.get(g) }));
+    const known = GEN_ORDER.filter((g) => map.has(g)).map((g) => ({
+      gen: g,
+      items: map.get(g),
+    }));
     const others = Array.from(map.keys())
       .filter((g) => !GEN_ORDER.includes(g))
       .map((g) => ({ gen: g, items: map.get(g) }));
@@ -173,60 +209,133 @@ export default function MemberListMobile() {
         hoverable
         onClick={() => navigate(`/blogs/${m.code}`)}
         style={{
-          borderRadius: 16,
+          borderRadius: 12,
           overflow: "hidden",
           background: "#fff",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-          marginBottom: 12,
+          boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
+          marginBottom: 8,
           contain: "layout paint style",
+          width: "100%",
+          maxWidth: "100%",
         }}
         bodyStyle={{ padding: 0 }}
       >
-        <div style={{ display: "flex", height: 112 }}>
+        <div style={{ display: "flex", height: 96 }}>
           {/* Image */}
-          <div style={{ width: 112, height: 112, position: "relative", background: "#f7f7f9", flexShrink: 0 }}>
+          <div
+            style={{
+              width: 96,
+              height: 96,
+              position: "relative",
+              background: "#f7f7f9",
+              flexShrink: 0,
+            }}
+          >
             <img
               src={m.img}
               alt={m.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover", contentVisibility: "auto", containIntrinsicSize: "160px 160px" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                contentVisibility: "auto",
+                containIntrinsicSize: "120px 120px",
+              }}
               loading="lazy"
               onError={(e) => {
-                e.currentTarget.src = "https://via.placeholder.com/320x320?text=No+Image";
+                e.currentTarget.src =
+                  "https://via.placeholder.com/320x320?text=No+Image";
               }}
             />
-            <Tag color="purple" style={{ position: "absolute", top: 8, right: 8, fontSize: 10, padding: "2px 6px", borderRadius: 8 }}>
-              {getGen(m)}
+            <Tag
+              color="purple"
+              style={{
+                position: "absolute",
+                top: 6,
+                right: 6,
+                fontSize: 9,
+                padding: "1px 4px",
+                borderRadius: 6,
+                lineHeight: 1.2,
+              }}
+            >
+              {getGen(m).length > 3 ? getGen(m).slice(0, 3) : getGen(m)}
             </Tag>
           </div>
 
           {/* Text */}
-          <div style={{ flex: 1, padding: 14, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div
+            style={{
+              flex: 1,
+              padding: 12,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              minWidth: 0,
+            }}
+          >
             <div>
-              <Text strong style={{ ...jpFont, fontSize: 16, lineHeight: 1.3, display: "block", marginBottom: 4, color: "#111827" }}>
+              <Text
+                strong
+                style={{
+                  ...jpFont,
+                  fontSize: 15,
+                  lineHeight: 1.3,
+                  display: "block",
+                  marginBottom: 2,
+                  color: "#111827",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {m.name}
               </Text>
               {m.english_name ? (
-                <Text type="secondary" style={{ fontSize: 12, display: "block", fontStyle: "italic" }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: 11,
+                    display: "block",
+                    fontStyle: "italic",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {m.english_name}
                 </Text>
               ) : null}
             </div>
 
-            <Space size={[4, 4]} wrap>
+            <Space size={[2, 2]} wrap>
               {m.birthday && (
-                <Tag style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: 8, fontSize: 10 }}>
-                  🎂 {m.birthday}
-                  {age != null ? `（${age}）` : ""}
+                <Tag
+                  style={{
+                    background: "rgba(99,102,241,0.06)",
+                    border: "1px solid rgba(99,102,241,0.25)",
+                    borderRadius: 6,
+                    fontSize: 9,
+                    padding: "1px 4px",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  🎂 {m.birthday.split("/")[0]}
+                  {age != null ? `(${age})` : ""}
                 </Tag>
               )}
               {m.blood && (
-                <Tag style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, fontSize: 10 }}>
+                <Tag
+                  style={{
+                    background: "rgba(16,185,129,0.06)",
+                    border: "1px solid rgba(16,185,129,0.2)",
+                    borderRadius: 6,
+                    fontSize: 9,
+                    padding: "1px 4px",
+                    lineHeight: 1.2,
+                  }}
+                >
                   🩸 {m.blood}
-                </Tag>
-              )}
-              {m.constellation && (
-                <Tag style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)", borderRadius: 8, fontSize: 10 }}>
-                  ⭐ {m.constellation}
                 </Tag>
               )}
             </Space>
@@ -237,39 +346,93 @@ export default function MemberListMobile() {
   };
 
   return (
-    <PageContainer header={false} token={{ paddingInlinePageContainerContent: 0 }} style={{ background: "#fff" }}>
+    <PageContainer
+      header={false}
+      token={{
+        paddingInlinePageContainerContent: 0,
+        paddingBlockPageContainerContent: 0,
+        paddingInlinePageContainer: 0,
+      }}
+      style={{
+        background: "#fff",
+        padding: 0,
+        margin: 0,
+        minHeight: "100dvh",
+        width: "100vw",
+        maxWidth: "100%",
+        overflow: "hidden",
+      }}
+    >
       {/* Sticky Hero */}
       <Affix offsetTop={0}>
-        <div style={{ background: "#fff", borderBottom: "1px solid #f2f2f5" }}>
-          <ProCard ghost bodyStyle={{ padding: 12 }} style={{ ...jpFont }}>
-            <Space style={{ width: "100%", justifyContent: "space-between" }} align="center">
+        <div
+          style={{
+            background: "#fff",
+            borderBottom: "1px solid #f2f2f5",
+            width: "100%",
+            zIndex: 998,
+          }}
+        >
+          <ProCard
+            ghost
+            bodyStyle={{ padding: "12px 16px" }}
+            style={{
+              ...jpFont,
+              width: "100%",
+              maxWidth: "100%",
+            }}
+          >
+            <Space
+              style={{ width: "100%", justifyContent: "space-between" }}
+              align="center"
+            >
               <Space direction="vertical" size={0}>
-                <Text type="secondary" style={{ letterSpacing: 2 }}>
+                <Text
+                  type="secondary"
+                  style={{ letterSpacing: 2, fontSize: 12 }}
+                >
                   乃木坂46 メンバー
                 </Text>
-                <Title level={4} style={{ margin: 0, lineHeight: 1.2 }}>
+                <Title
+                  level={4}
+                  style={{ margin: 0, lineHeight: 1.2, fontSize: 18 }}
+                >
                   Members
                 </Title>
               </Space>
-              <Button type="text" icon={<FilterOutlined />} onClick={() => setFilterDrawerVisible(true)} style={{ borderRadius: 10 }} />
+              <Button
+                type="text"
+                icon={<FilterOutlined />}
+                onClick={() => setFilterDrawerVisible(true)}
+                style={{ borderRadius: 10, flexShrink: 0 }}
+              />
             </Space>
 
             {/* Gen chips + Search */}
-            <div style={{ marginTop: 10 }}>
+            <div style={{ marginTop: 12 }}>
               <Segmented
                 value={genFilter}
                 onChange={setGenFilter}
-                options={genList.map((g) => ({ label: g === "ALL" ? "すべて" : g, value: g }))}
-                size="large"
+                options={genList.map((g) => ({
+                  label:
+                    g === "ALL" ? "すべて" : g.length > 3 ? g.slice(0, 3) : g,
+                  value: g,
+                }))}
+                size="small"
                 block
+                style={{ marginBottom: 8 }}
               />
               <Input
                 allowClear
                 prefix={<SearchOutlined />}
                 placeholder="メンバーを検索…"
                 onChange={onSearchChange}
-                size="large"
-                style={{ borderRadius: 12, background: "#fafafa", marginTop: 10 }}
+                size="middle"
+                style={{
+                  borderRadius: 12,
+                  background: "#fafafa",
+                  width: "100%",
+                }}
               />
             </div>
           </ProCard>
@@ -277,7 +440,15 @@ export default function MemberListMobile() {
       </Affix>
 
       {/* Content */}
-      <div style={{ padding: 12, contain: "layout paint style" }}>
+      <div
+        style={{
+          padding: "12px 16px 80px",
+          contain: "layout paint style",
+          width: "100%",
+          maxWidth: "100%",
+          minHeight: "calc(100dvh - 120px)",
+        }}
+      >
         {loading ? (
           <ProCard ghost>
             <ProSkeleton type="list" />
@@ -289,7 +460,7 @@ export default function MemberListMobile() {
         ) : (
           <Collapse
             ghost
-            size="large"
+            size="middle"
             style={{ background: "transparent" }}
             items={grouped.map(({ gen, items }) => {
               const isCollapsed = collapsedGens.has(gen);
@@ -297,34 +468,69 @@ export default function MemberListMobile() {
                 key: gen,
                 label: (
                   <div
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "4px 0" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      padding: "2px 0",
+                    }}
                     onClick={() => toggleGenCollapse(gen)}
                   >
                     <Space>
-                      <StarOutlined style={{ color: "#7c3aed", fontSize: 16 }} />
-                      <span style={{ ...jpFont, fontWeight: 700, fontSize: 16, color: "#18181b" }}>{gen}</span>
+                      <StarOutlined
+                        style={{ color: "#7c3aed", fontSize: 14 }}
+                      />
+                      <span
+                        style={{
+                          ...jpFont,
+                          fontWeight: 700,
+                          fontSize: 14,
+                          color: "#18181b",
+                        }}
+                      >
+                        {gen}
+                      </span>
                     </Space>
                     <Space>
-                      <Tag style={{ background: "#f5f3ff", border: "1px solid #e9d5ff", color: "#6d28d9", borderRadius: 12, fontWeight: 600, fontSize: 12, padding: "2px 8px" }}>
+                      <Tag
+                        style={{
+                          background: "#f5f3ff",
+                          border: "1px solid #e9d5ff",
+                          color: "#6d28d9",
+                          borderRadius: 8,
+                          fontWeight: 600,
+                          fontSize: 10,
+                          padding: "1px 6px",
+                        }}
+                      >
                         {items.length}
                       </Tag>
-                      {isCollapsed ? <RightOutlined style={{ color: "#7c3aed", fontSize: 14 }} /> : <DownOutlined style={{ color: "#7c3aed", fontSize: 14 }} />}
+                      {isCollapsed ? (
+                        <RightOutlined
+                          style={{ color: "#7c3aed", fontSize: 12 }}
+                        />
+                      ) : (
+                        <DownOutlined
+                          style={{ color: "#7c3aed", fontSize: 12 }}
+                        />
+                      )}
                     </Space>
                   </div>
                 ),
                 children: (
-                  <div style={{ padding: "8px 0" }}>
+                  <div style={{ padding: "4px 0" }}>
                     {items.map((m) => (
                       <MemberCard key={m.code} m={m} />
                     ))}
                   </div>
                 ),
                 style: {
-                  marginBottom: 12,
-                  borderRadius: 16,
+                  marginBottom: 8,
+                  borderRadius: 12,
                   border: "1px solid #f1f1f5",
                   background: "#fff",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                 },
                 forceRender: false,
                 showArrow: false,
@@ -332,7 +538,9 @@ export default function MemberListMobile() {
               };
             })}
             expandIcon={() => null}
-            activeKey={grouped.map(({ gen }) => (collapsedGens.has(gen) ? null : gen)).filter(Boolean)}
+            activeKey={grouped
+              .map(({ gen }) => (collapsedGens.has(gen) ? null : gen))
+              .filter(Boolean)}
             onChange={(keys) => {
               const newCollapsed = new Set();
               grouped.forEach(({ gen }) => {
@@ -360,7 +568,10 @@ export default function MemberListMobile() {
             </Text>
             <Segmented
               block
-              options={genList.map((g) => ({ label: g === "ALL" ? "すべて" : g, value: g }))}
+              options={genList.map((g) => ({
+                label: g === "ALL" ? "すべて" : g,
+                value: g,
+              }))}
               value={genFilter}
               onChange={setGenFilter}
               size="large"
@@ -371,20 +582,116 @@ export default function MemberListMobile() {
 
       {/* Styles */}
       <style>{`
-        .ant-card { transition: transform .2s ease, box-shadow .2s ease; }
-        .ant-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+        /* Full-bleed mobile overrides */
+        html, body, #root { 
+          height: 100%; 
+          min-height: 100vh;
+          min-height: 100dvh;
+          background: #fff;
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          max-width: 100vw;
+          overflow-x: hidden;
+        }
+        body { 
+          margin: 0; 
+          padding: 0;
+          overscroll-behavior: none;
+        }
+        #root {
+          display: flex;
+          flex-direction: column;
+        }
+        .ant-pro-page-container { 
+          padding: 0 !important;
+          margin: 0 !important;
+          width: 100% !important;
+          max-width: 100vw !important;
+          min-height: 100vh !important;
+          min-height: 100dvh !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+        .ant-pro-page-container-children-container {
+          flex: 1 !important;
+          margin: 0 !important; 
+          padding: 0 !important;
+          width: 100% !important;
+          max-width: 100vw !important;
+        }
 
-        .ant-collapse { border: none !important; background: transparent !important; }
-        .ant-collapse-item { border: 1px solid #f1f1f5 !important; border-radius: 16px !important; margin-bottom: 12px !important; background: #fff !important; box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important; overflow: hidden !important; }
-        .ant-collapse-item-active { box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important; }
-        .ant-collapse-header { padding: 16px 20px !important; background: linear-gradient(135deg, #ffffff, #fafafc) !important; border: none !important; border-radius: 16px !important; cursor: pointer !important; transition: all 0.3s ease !important; }
-        .ant-collapse-header:hover { background: linear-gradient(135deg, #f8f9ff, #f0f2ff) !important; }
-        .ant-collapse-content { border: none !important; background: #fff !important; border-radius: 0 0 16px 16px !important; }
-        .ant-collapse-content-box { padding: 8px 20px 20px !important; }
-        .ant-collapse-arrow { display: none !important; }
+        /* Card styles */
+        .ant-card { 
+          transition: transform .2s ease, box-shadow .2s ease; 
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        .ant-card:hover { 
+          transform: translateY(-1px); 
+          box-shadow: 0 4px 12px rgba(0,0,0,.06); 
+        }
+
+        /* Collapse styles */
+        .ant-collapse { 
+          border: none !important; 
+          background: transparent !important; 
+          width: 100% !important;
+        }
+        .ant-collapse-item { 
+          border: 1px solid #f1f1f5 !important; 
+          border-radius: 12px !important; 
+          margin-bottom: 8px !important; 
+          background: #fff !important; 
+          box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important; 
+          overflow: hidden !important; 
+          width: 100% !important;
+        }
+        .ant-collapse-item-active { 
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; 
+        }
+        .ant-collapse-header { 
+          padding: 12px 16px !important; 
+          background: linear-gradient(135deg, #ffffff, #fafafc) !important; 
+          border: none !important; 
+          border-radius: 12px !important; 
+          cursor: pointer !important; 
+          transition: all 0.3s ease !important; 
+        }
+        .ant-collapse-header:hover { 
+          background: linear-gradient(135deg, #f8f9ff, #f0f2ff) !important; 
+        }
+        .ant-collapse-content { 
+          border: none !important; 
+          background: #fff !important; 
+          border-radius: 0 0 12px 12px !important; 
+        }
+        .ant-collapse-content-box { 
+          padding: 4px 16px 16px !important; 
+        }
+        .ant-collapse-arrow { 
+          display: none !important; 
+        }
 
         /* Mobile image perf */
-        img[loading="lazy"] { content-visibility: auto; contain-intrinsic-size: 160px 160px; }
+        img[loading="lazy"] { 
+          content-visibility: auto; 
+          contain-intrinsic-size: 120px 120px; 
+        }
+
+        /* Hide scrollbars */
+        *::-webkit-scrollbar {
+          display: none;
+        }
+        * {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        /* Touch optimization */
+        * {
+          -webkit-tap-highlight-color: transparent;
+        }
       `}</style>
     </PageContainer>
   );
