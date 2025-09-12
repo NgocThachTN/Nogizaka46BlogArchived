@@ -582,76 +582,86 @@ export default function BlogDetailMobile({
     }, 100);
   }, [scrollThreshold]);
 
-  // Touch-based scroll handler for mobile
-  const [touchStartY, setTouchStartY] = useState(0);
+  // Android-optimized scroll handler
+  const lastScrollTime = useRef(0);
+  const lastScrollY = useRef(0);
+  const scrollTimeout = useRef(null);
   const [isScrolling, setIsScrolling] = useState(false);
 
-  const handleTouchStart = useCallback((e) => {
-    setTouchStartY(e.touches[0].clientY);
-    setIsScrolling(true);
-  }, []);
-
-  const handleTouchMove = useCallback(
-    (e) => {
-      if (!isScrolling) return;
-
-      const currentY = e.touches[0].clientY;
-      const diff = touchStartY - currentY;
-
-      if (Math.abs(diff) > 20) {
-        // Minimum swipe distance
-        if (diff > 0) {
-          // Swipe up - ẩn header
-          setIsHeaderVisible(false);
-        } else {
-          // Swipe down - hiện header
-          setIsHeaderVisible(true);
-        }
-        setTouchStartY(currentY); // Reset start position
-      }
-    },
-    [isScrolling, touchStartY]
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    setIsScrolling(false);
-  }, []);
-
-  // Regular scroll handler for progress only
-  const onScroll = useCallback(() => {
+  const handleScroll = useCallback(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Update read progress only
-    if (throttledUpdateRef.current) {
-      throttledUpdateRef.current();
-    }
-  }, []);
+    const currentScrollY = wrap.scrollTop;
+    const currentTime = Date.now();
 
-  // Setup touch and scroll handlers
+    // Debounce scroll events
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+
+    if (!isScrolling) {
+      setIsScrolling(true);
+      lastScrollTime.current = currentTime;
+      return;
+    }
+
+    // Only process if enough time has passed
+    if (currentTime - lastScrollTime.current < 50) return;
+
+    const scrollDifference = currentScrollY - (lastScrollY.current || 0);
+
+    if (Math.abs(scrollDifference) > 10) {
+      if (scrollDifference > 0) {
+        // Scroll down - hiện header
+        setIsHeaderVisible(true);
+      } else {
+        // Scroll up - ẩn header
+        setIsHeaderVisible(false);
+      }
+      lastScrollY.current = currentScrollY;
+      lastScrollTime.current = currentTime;
+    }
+  }, [isScrolling]);
+
+  // Setup scroll handlers for Android
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Setup scroll handler for progress
-    wrap.addEventListener("scroll", onScroll, { passive: true });
+    // Combined scroll handler for both progress and header
+    const combinedScrollHandler = () => {
+      // Update progress
+      if (throttledUpdateRef.current) {
+        throttledUpdateRef.current();
+      }
 
-    // Setup touch handlers for header visibility
-    wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
-    wrap.addEventListener("touchmove", handleTouchMove, { passive: true });
-    wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
+      // Update header visibility
+      handleScroll();
+    };
+
+    // Setup scroll handler
+    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
+
+    // Setup wheel events for better Android support
+    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
 
     // Initialize
-    onScroll();
+    combinedScrollHandler();
 
     // Cleanup
     return () => {
-      wrap.removeEventListener("scroll", onScroll);
-      wrap.removeEventListener("touchstart", handleTouchStart);
-      wrap.removeEventListener("touchmove", handleTouchMove);
-      wrap.removeEventListener("touchend", handleTouchEnd);
+      wrap.removeEventListener("scroll", combinedScrollHandler);
+      wrap.removeEventListener("wheel", combinedScrollHandler);
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
     };
-  }, [onScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [handleScroll]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
