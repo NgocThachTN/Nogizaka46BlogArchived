@@ -53,11 +53,11 @@ import {
 
 const { Title, Text } = Typography;
 
-/** Japanese color palette */
+/** Japanese color palette - Purple theme */
 const colors = {
-  primary: "#e91e63", // Sakura pink
-  secondary: "#9c27b0", // Purple
-  accent: "#ff5722", // Orange
+  primary: "#9c27b0", // Purple
+  secondary: "#7b1fa2", // Dark purple
+  accent: "#e91e63", // Pink accent
   success: "#4caf50", // Green
   warning: "#ff9800", // Amber
   error: "#f44336", // Red
@@ -67,7 +67,7 @@ const colors = {
   background: "#fafafa", // Light gray
   surface: "#ffffff", // White
   border: "#e0e0e0", // Light border
-  shadow: "rgba(0,0,0,0.08)", // Subtle shadow
+  shadow: "rgba(156,39,176,0.08)", // Purple shadow
 };
 
 /** JP font - Japanese style */
@@ -78,13 +78,15 @@ const jpFont = {
   letterSpacing: "0.02em",
 };
 
-/** Simple in-memory cache */
+/** Enhanced in-memory cache with performance optimizations */
 const _cache = {
-  blogsByMember: new Map(), // key: memberCode -> { list, ts }
+  blogsByMember: new Map(), // key: memberCode -> { list, ts, loading }
   memberByCode: new Map(), // key: memberCode -> { info, ts }
   scrollY: new Map(), // key: memberCode -> number
+  imageCache: new Map(), // key: imageUrl -> { loaded: boolean }
 };
-const STALE_MS = 1000 * 60 * 3; // 3 phút coi là "fresh"
+const STALE_MS = 1000 * 60 * 5; // 5 phút coi là "fresh"
+const CACHE_LIMIT = 50; // Giới hạn cache để tránh memory leak
 
 export default function BlogListMobile() {
   const navigate = useNavigate();
@@ -94,6 +96,7 @@ export default function BlogListMobile() {
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imagesLoaded, setImagesLoaded] = useState(new Set());
 
   // Tìm kiếm mượt: defer + debounce
   const [q, setQ] = useState("");
@@ -103,10 +106,26 @@ export default function BlogListMobile() {
   const [memberInfo, setMemberInfo] = useState(null);
 
   const abortRef = useRef(null);
-  const PAGE_SIZE = 6; // Mobile optimized
+  const PAGE_SIZE = 8; // Tăng số lượng để giảm pagination
+  const imageObserverRef = useRef(null);
 
   // Chuyển state nặng sang background để không block thread
   const [, startTransition] = useTransition();
+
+  // Cache cleanup để tránh memory leak
+  useEffect(() => {
+    const cleanup = () => {
+      if (_cache.blogsByMember.size > CACHE_LIMIT) {
+        const entries = Array.from(_cache.blogsByMember.entries());
+        entries.sort((a, b) => b[1].ts - a[1].ts);
+        const toDelete = entries.slice(CACHE_LIMIT);
+        toDelete.forEach(([key]) => _cache.blogsByMember.delete(key));
+      }
+    };
+
+    const interval = setInterval(cleanup, 60000); // Cleanup mỗi phút
+    return () => clearInterval(interval);
+  }, []);
 
   // ---- Render instantly from cache ----
   useLayoutEffect(() => {
@@ -127,43 +146,68 @@ export default function BlogListMobile() {
     }
   }, [memberCode]);
 
-  // ---- Load + revalidate ----
+  // ---- Load + revalidate với tối ưu hóa ----
   useEffect(() => {
     const controller = new AbortController();
     abortRef.current = controller;
 
     const load = async (revalidateOnly = false) => {
       try {
-        if (
-          !revalidateOnly &&
-          !_cache.blogsByMember.get(memberCode)?.list?.length
-        ) {
-          setLoading(true);
-        }
-        setError(null);
-
         const now = Date.now();
         const cachedB = _cache.blogsByMember.get(memberCode);
         const cachedM = _cache.memberByCode.get(memberCode);
         const isFreshB = cachedB && now - cachedB.ts < STALE_MS;
         const isFreshM = cachedM && now - cachedM.ts < STALE_MS;
 
+        // Nếu có cache fresh, không cần loading
         if (isFreshB && isFreshM) {
           setLoading(false);
           return;
         }
 
-        // Fetch song song
+        // Chỉ show loading nếu không có cache hoặc không phải revalidate
+        if (!revalidateOnly && !cachedB?.list?.length) {
+          setLoading(true);
+        }
+        setError(null);
+
+        // Fetch song song với timeout
+        const fetchWithTimeout = (promise, timeout = 10000) => {
+          return Promise.race([
+            promise,
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Timeout")), timeout)
+            ),
+          ]);
+        };
+
         const [all, member] = await Promise.all([
           isFreshB
             ? Promise.resolve(cachedB.list)
-            : fetchAllBlogs(memberCode, { signal: controller.signal }),
+            : fetchWithTimeout(
+                fetchAllBlogs(memberCode, { signal: controller.signal }),
+                8000
+              ),
           isFreshM
             ? Promise.resolve(cachedM.info)
-            : fetchMemberInfo(memberCode, { signal: controller.signal }),
+            : fetchWithTimeout(
+                fetchMemberInfo(memberCode, { signal: controller.signal }),
+                5000
+              ),
         ]);
 
         if (!controller.signal.aborted) {
+          // Cập nhật cache trước khi set state
+          _cache.blogsByMember.set(memberCode, {
+            list: all,
+            ts: Date.now(),
+            loading: false,
+          });
+          _cache.memberByCode.set(memberCode, {
+            info: member,
+            ts: Date.now(),
+          });
+
           startTransition(() => {
             setBlogs(all);
             setFiltered(
@@ -177,9 +221,6 @@ export default function BlogListMobile() {
             );
           });
           setMemberInfo(member);
-
-          _cache.blogsByMember.set(memberCode, { list: all, ts: Date.now() });
-          _cache.memberByCode.set(memberCode, { info: member, ts: Date.now() });
         }
       } catch (e) {
         if (e.name !== "AbortError") {
@@ -245,6 +286,41 @@ export default function BlogListMobile() {
     _cache.scrollY.set(memberCode, window.scrollY);
     navigate(`/blog/${id}`);
   };
+
+  // Lazy loading cho images
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            const src = img.dataset.src;
+            if (src && !_cache.imageCache.get(src)) {
+              img.src = src;
+              _cache.imageCache.set(src, { loaded: true });
+              setImagesLoaded((prev) => new Set([...prev, src]));
+            }
+          }
+        });
+      },
+      { rootMargin: "50px" }
+    );
+
+    imageObserverRef.current = observer;
+    return () => observer.disconnect();
+  }, []);
+
+  // Preload images cho trang hiện tại
+  useEffect(() => {
+    current.forEach((blog, idx) => {
+      if (idx < 3 && blog.thumbnail) {
+        // Preload 3 ảnh đầu
+        const img = new Image();
+        img.src = getImageUrl(blog.thumbnail, { w: 480 });
+        _cache.imageCache.set(img.src, { loaded: true });
+      }
+    });
+  }, [current]);
 
   // ====== RENDER ======
 
@@ -527,6 +603,11 @@ export default function BlogListMobile() {
                           ? getImageUrl(blog.thumbnail, { w: 480 })
                           : "https://via.placeholder.com/600x320/f0f0f0/666666?text=No+Image"
                       }
+                      data-src={
+                        blog.thumbnail
+                          ? getImageUrl(blog.thumbnail, { w: 480 })
+                          : undefined
+                      }
                       alt={blog.title}
                       loading={idx < 2 ? "eager" : "lazy"}
                       style={{
@@ -534,6 +615,22 @@ export default function BlogListMobile() {
                         height: "100%",
                         objectFit: "cover",
                         transition: "transform 0.3s ease",
+                        filter: imagesLoaded.has(
+                          getImageUrl(blog.thumbnail, { w: 480 })
+                        )
+                          ? "none"
+                          : "blur(2px)",
+                      }}
+                      onLoad={() => {
+                        if (blog.thumbnail) {
+                          const src = getImageUrl(blog.thumbnail, { w: 480 });
+                          setImagesLoaded((prev) => new Set([...prev, src]));
+                        }
+                      }}
+                      ref={(img) => {
+                        if (img && imageObserverRef.current && idx >= 2) {
+                          imageObserverRef.current.observe(img);
+                        }
                       }}
                     />
 
@@ -742,7 +839,7 @@ export default function BlogListMobile() {
         }
         .ant-card:hover { 
           transform: translateY(-2px) scale(1.01); 
-          box-shadow: 0 8px 25px rgba(233, 30, 99, 0.15) !important; 
+          box-shadow: 0 8px 25px rgba(156, 39, 176, 0.15) !important; 
         }
 
         /* Japanese Input */
@@ -753,8 +850,8 @@ export default function BlogListMobile() {
           box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
         }
         .ant-input:focus {
-          border-color: #e91e63 !important;
-          box-shadow: 0 4px 12px rgba(233, 30, 99, 0.2) !important;
+          border-color: #9c27b0 !important;
+          box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2) !important;
         }
 
         /* Japanese Button */
@@ -777,8 +874,8 @@ export default function BlogListMobile() {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
         .ant-pagination-item-active {
-          background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%) !important;
-          border-color: #e91e63 !important;
+          background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%) !important;
+          border-color: #9c27b0 !important;
           color: white !important;
         }
 
@@ -786,6 +883,22 @@ export default function BlogListMobile() {
         img[loading="lazy"] { 
           content-visibility: auto; 
           contain-intrinsic-size: 120px 120px; 
+        }
+        
+        /* Performance optimizations */
+        .ant-card {
+          contain: layout paint style;
+          will-change: transform;
+        }
+        
+        /* Smooth image loading */
+        img {
+          transition: filter 0.3s ease, transform 0.3s ease;
+        }
+        
+        /* Optimize scrolling */
+        .ant-pro-page-container-children-container {
+          contain: layout paint;
         }
 
         /* Hide scrollbars */
