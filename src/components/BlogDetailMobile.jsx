@@ -152,7 +152,6 @@ export default function BlogDetailMobile({
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
   const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
-  const ticking = useRef(false);
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -604,50 +603,106 @@ export default function BlogDetailMobile({
     };
   }, [onScroll]);
 
-  // Mobile-optimized scroll handler
+  // Android-optimized scroll handler using touch events
   useEffect(() => {
-    const handleScroll = () => {
-      if (!ticking.current) {
-        requestAnimationFrame(() => {
-          const currentScrollY =
-            window.pageYOffset ||
-            document.documentElement.scrollTop ||
-            document.body.scrollTop ||
-            0;
-          const scrollDifference = currentScrollY - lastScrollY.current;
+    let startY = 0;
+    let currentY = 0;
+    let isScrolling = false;
 
-          console.log("Scroll detected:", {
-            currentScrollY,
-            scrollDifference,
-            isHeaderVisible,
-          });
+    const handleTouchStart = (e) => {
+      startY = e.touches[0].clientY;
+      isScrolling = true;
+    };
 
-          if (Math.abs(scrollDifference) > scrollThreshold) {
-            if (scrollDifference > 0 && currentScrollY > 50) {
-              // Scrolling down - hide header
-              console.log("Hiding header - scrolling down:", currentScrollY);
-              setIsHeaderVisible(false);
-            } else if (scrollDifference < 0) {
-              // Scrolling up - show header
-              console.log("Showing header - scrolling up:", currentScrollY);
-              setIsHeaderVisible(true);
-            }
-            lastScrollY.current = currentScrollY;
-          }
-          ticking.current = false;
-        });
-        ticking.current = true;
+    const handleTouchMove = (e) => {
+      if (!isScrolling) return;
+
+      currentY = e.touches[0].clientY;
+      const diff = startY - currentY;
+
+      console.log("Touch move detected:", {
+        startY,
+        currentY,
+        diff,
+        isHeaderVisible,
+      });
+
+      if (Math.abs(diff) > 10) {
+        if (diff > 0) {
+          // Vuốt lên (startY > currentY) - ẩn header
+          console.log("Hiding header - swipe up:", window.scrollY);
+          setIsHeaderVisible(false);
+        } else if (diff < 0) {
+          // Vuốt xuống (startY < currentY) - hiện header
+          console.log("Showing header - swipe down:", window.scrollY);
+          setIsHeaderVisible(true);
+        }
+        startY = currentY;
       }
     };
 
-    // Add multiple event listeners for better mobile support
+    const handleTouchEnd = () => {
+      isScrolling = false;
+    };
+
+    // Fallback scroll handler
+    const handleScroll = () => {
+      const currentScrollY =
+        window.pageYOffset || document.documentElement.scrollTop || 0;
+      const scrollDifference = currentScrollY - lastScrollY.current;
+
+      console.log("Scroll fallback:", {
+        currentScrollY,
+        scrollDifference,
+        isHeaderVisible,
+      });
+
+      if (Math.abs(scrollDifference) > scrollThreshold) {
+        if (scrollDifference > 0) {
+          // Scroll down - ẩn header
+          console.log("Hiding header - scroll down:", currentScrollY);
+          setIsHeaderVisible(false);
+        } else if (scrollDifference < 0) {
+          // Scroll up - hiện header
+          console.log("Showing header - scroll up:", currentScrollY);
+          setIsHeaderVisible(true);
+        }
+        lastScrollY.current = currentScrollY;
+      }
+    };
+
+    // Add touch events for Android
+    document.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    // Add wheel events for desktop/mobile
+    document.addEventListener("wheel", handleScroll, { passive: true });
+
+    // Add pointer events for modern browsers
+    document.addEventListener("pointerdown", handleTouchStart, {
+      passive: true,
+    });
+    document.addEventListener("pointermove", handleTouchMove, {
+      passive: true,
+    });
+    document.addEventListener("pointerup", handleTouchEnd, { passive: true });
+
+    // Fallback scroll events
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("touchmove", handleScroll, { passive: true });
     document.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("wheel", handleScroll);
+      document.removeEventListener("pointerdown", handleTouchStart);
+      document.removeEventListener("pointermove", handleTouchMove);
+      document.removeEventListener("pointerup", handleTouchEnd);
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("touchmove", handleScroll);
       document.removeEventListener("scroll", handleScroll);
     };
   }, [scrollThreshold, isHeaderVisible]);
