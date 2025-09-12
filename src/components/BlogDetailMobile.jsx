@@ -152,17 +152,17 @@ export default function BlogDetailMobile({
       // Reset read progress immediately
       setReadPct(0);
 
-      // Delay scroll to allow images to start loading
+      // Wait for images to start rendering before scroll to top
       const scrollToTop = () => {
         if (scrollWrapRef.current) {
           scrollWrapRef.current.scrollTop = 0;
         }
       };
 
-      // Use requestAnimationFrame to ensure smooth transition
-      requestAnimationFrame(() => {
+      // Wait for next paint, then scroll to top
+      setTimeout(() => {
         requestAnimationFrame(scrollToTop);
-      });
+      }, 120);
     }
   }, [displayContent, translating]);
 
@@ -774,15 +774,18 @@ export default function BlogDetailMobile({
               -webkit-user-drag: none;
               image-rendering: auto;
               image-rendering: -webkit-optimize-contrast;
-              /* Remove unsupported aspect-ratio and contain properties */
-              /* Prevent layout shift: use min-height as placeholder */
-              transition: box-shadow 0.2s;
+              opacity: 0;
+              transition: opacity 0.4s, box-shadow 0.2s;
             }
-            /* Preload space for images to prevent layout shifts */
-            .jp-prose img:not([data-loaded]) {
-              min-height: 180px;
-              background: rgba(0,0,0,0.05);
+            .jp-prose img[data-loaded] {
+              opacity: 1;
+              transition: opacity 0.4s, box-shadow 0.2s;
             }
+          /* Preload space for images to prevent layout shifts */
+          .jp-prose img:not([data-loaded]) {
+            min-height: 180px;
+            background: rgba(0,0,0,0.05);
+          }
           .jp-prose p {
             margin: 0.85em 0;
             text-align: justify;
