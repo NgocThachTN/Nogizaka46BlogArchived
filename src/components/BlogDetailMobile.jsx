@@ -105,10 +105,13 @@ export default function BlogDetailMobile({
   const navigate = useNavigate();
 
   // Mobile-optimized state management
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
   const [cachedDisplayContent, setCachedDisplayContent] =
     useState(displayContent);
   const [cachedLanguage, setCachedLanguage] = useState(language);
+
+  // Track previous blog ID to detect blog changes
+  const prevBlogIdRef = useRef(blog?.id);
 
   const goBack = useCallback(() => {
     if (prevId) {
@@ -170,29 +173,17 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // ---- Render instantly from cache (nếu có) ----
+  // ---- Clear old content immediately when blog changes ----
   useLayoutEffect(() => {
     if (blog?.id) {
-      const cached = _mobileCache.blogContent.get(blog.id);
+      // Detect if blog ID changed
+      const blogChanged = prevBlogIdRef.current !== blog.id;
 
-      // Only use cache if it matches current blog AND language AND content
-      if (
-        cached?.displayContent &&
-        cached?.language === language &&
-        cached?.content === blog?.content
-      ) {
-        // Set cached content immediately
-        setCachedDisplayContent(cached.displayContent);
-        setCachedLanguage(cached.language);
-
-        // Reset scroll position for new content
-        if (scrollWrapRef.current) {
-          scrollWrapRef.current.scrollTop = 0;
-        }
-      } else {
-        // Clear cached content immediately to prevent showing old content
+      if (blogChanged) {
+        // Blog changed - clear everything immediately
         setCachedDisplayContent(null);
         setCachedLanguage(language);
+        prevBlogIdRef.current = blog.id;
 
         // Reset scroll position when switching blogs
         if (scrollWrapRef.current) {
@@ -202,13 +193,27 @@ export default function BlogDetailMobile({
         // Clear cache for this blog to force fresh translation
         _mobileCache.blogContent.delete(blog.id);
 
-        // If language is not Japanese, show original content while translating
-        if (language !== "ja" && blog?.content) {
-          // Show original content first, parent will handle translation
+        // Show original content while waiting for translation
+        if (blog?.content) {
           setCachedDisplayContent(blog.content);
-        } else if (language === "ja") {
-          // Show original Japanese content
-          setCachedDisplayContent(blog.content);
+        }
+      } else {
+        // Same blog - check if we have valid cache
+        const cached = _mobileCache.blogContent.get(blog.id);
+        if (
+          cached?.displayContent &&
+          cached?.language === language &&
+          cached?.content === blog?.content
+        ) {
+          // Use cached content
+          setCachedDisplayContent(cached.displayContent);
+          setCachedLanguage(cached.language);
+        } else {
+          // Clear cache and show original content
+          _mobileCache.blogContent.delete(blog.id);
+          if (blog?.content) {
+            setCachedDisplayContent(blog.content);
+          }
         }
       }
     }
@@ -228,11 +233,9 @@ export default function BlogDetailMobile({
         ts: Date.now(),
       });
 
-      // Update cached state trong transition để mượt hơn
-      startTransition(() => {
-        setCachedDisplayContent(displayContent);
-        setCachedLanguage(language);
-      });
+      // Update cached state immediately (not in transition) to prevent flicker
+      setCachedDisplayContent(displayContent);
+      setCachedLanguage(language);
 
       // Reset read progress
       setReadPct(0);
