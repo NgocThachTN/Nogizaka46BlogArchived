@@ -15,8 +15,8 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
     return `Translate from ${fromLang} to Vietnamese with Japanese idol blog style:
 
 - Use "em" for I/me, "anh or mọi người" for you (idol speaking to fans)
-- NEVER use "ạ", "á", "nè", "nhé", "nha" - these sound unnatural
-- Keep tone natural, mature yet charming (20s-30s Japanese female idol style)
+- NEVER use "ạ", "á", "nè", "nhé", "nha" in any case 
+- Keep tone natural, mature yet charming (20s-30s female idol style)
 - Write naturally without Vietnamese particles or interjections
 - Preserve HTML tags exactly, only translate text between tags
 - Keep sentences concise and natural like Japanese style
