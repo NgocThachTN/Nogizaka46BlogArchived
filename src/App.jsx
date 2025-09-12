@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import BlogList from "./components/BlogList";
 import BlogDetail from "./components/BlogDetail";
 import MemberProfile from "./components/MemberProfile";
+import MemberList from "./components/MemberList";
 import "./App.css";
 
 function App() {
@@ -71,7 +72,7 @@ function App() {
             }
             logo={false}
             fixSiderbar
-            collapsed={false}
+            collapsed={isMobile}
             siderWidth={320}
             headerHeight={72}
             menuRender={() => {
@@ -81,7 +82,6 @@ function App() {
                 </div>
               ) : null;
             }}
-            collapsed={isMobile}
             headerRender={() => (
               <div className="flex items-center w-full px-6 py-4 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -96,7 +96,8 @@ function App() {
           >
             <div className="min-h-screen">
               <Routes>
-                <Route path="/" element={<Navigate to="/blog" replace />} />
+                <Route path="/" element={<Navigate to="/members" replace />} />
+                <Route path="/members" element={<MemberList />} />
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/:id" element={<BlogDetail />} />
               </Routes>
