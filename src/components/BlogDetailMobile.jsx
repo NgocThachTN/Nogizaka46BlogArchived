@@ -178,7 +178,7 @@ export default function BlogDetailMobile({
         // Set cached content immediately
         setCachedDisplayContent(cached.displayContent);
         setCachedLanguage(cached.language);
-        
+
         // Reset scroll position for new content
         if (scrollWrapRef.current) {
           scrollWrapRef.current.scrollTop = 0;
@@ -214,13 +214,13 @@ export default function BlogDetailMobile({
       // Force scroll to top immediately for new content
       if (scrollWrapRef.current) {
         // Disable smooth scrolling temporarily
-        scrollWrapRef.current.style.scrollBehavior = 'auto';
+        scrollWrapRef.current.style.scrollBehavior = "auto";
         scrollWrapRef.current.scrollTop = 0;
-        
+
         // Re-enable smooth scrolling after scroll
         requestAnimationFrame(() => {
           if (scrollWrapRef.current) {
-            scrollWrapRef.current.style.scrollBehavior = 'smooth';
+            scrollWrapRef.current.style.scrollBehavior = "smooth";
           }
         });
       }
@@ -236,7 +236,10 @@ export default function BlogDetailMobile({
         // Chỉ lưu scroll position nếu content đã ổn định
         const cached = _mobileCache.blogContent.get(blog.id);
         if (cached && cached.language === language) {
-          _mobileCache.scrollPosition.set(blog.id, scrollWrapRef.current.scrollTop);
+          _mobileCache.scrollPosition.set(
+            blog.id,
+            scrollWrapRef.current.scrollTop
+          );
         }
       }
     };
@@ -465,7 +468,10 @@ export default function BlogDetailMobile({
             img.onload = () => {
               img.setAttribute("data-loaded", "true");
               img.style.opacity = "1";
-              _mobileCache.imageCache.set(src, { loaded: true, ts: Date.now() });
+              _mobileCache.imageCache.set(src, {
+                loaded: true,
+                ts: Date.now(),
+              });
             };
             img.onerror = () => {
               img.style.opacity = "0.5";
