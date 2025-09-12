@@ -146,35 +146,33 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // Handle content updates
+  // Handle content updates with proper cleanup
+  const prevDisplayContentRef = useRef(displayContent);
   useEffect(() => {
-    if (displayContent && !translating) {
+    if (
+      displayContent &&
+      !translating &&
+      displayContent !== prevDisplayContentRef.current
+    ) {
+      // Reset read progress immediately
       setReadPct(0);
 
-      // Scroll to top after DOM update and images start loading
+      // Force scroll to top with proper timing
       const scrollToTop = () => {
         if (scrollWrapRef.current) {
+          // Force reflow to ensure DOM is updated
+          scrollWrapRef.current.offsetHeight;
+          // Instant scroll to top
           scrollWrapRef.current.scrollTop = 0;
         }
       };
 
-      // Use MutationObserver to detect when images are present
-      const wrap = scrollWrapRef.current;
-      if (wrap) {
-        const observer = new MutationObserver(() => {
-          const imgs = wrap.getElementsByTagName('img');
-          if (imgs.length > 0) {
-            scrollToTop();
-            observer.disconnect();
-          }
-        });
-        observer.observe(wrap, { childList: true, subtree: true });
-        // Fallback: scroll after short delay if no images
-        setTimeout(() => {
-          scrollToTop();
-          observer.disconnect();
-        }, 300);
-      }
+      // Use requestAnimationFrame for smooth transition
+      requestAnimationFrame(() => {
+        scrollToTop();
+        // Update ref to prevent unnecessary re-runs
+        prevDisplayContentRef.current = displayContent;
+      });
     }
   }, [displayContent, translating]);
 
@@ -333,31 +331,48 @@ export default function BlogDetailMobile({
     }
   }, []);
 
-  // Handle image loading
+  // Enhanced image loading with proper state management
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Mark images as loaded when they finish loading
+    const imageLoadCache = new Map();
+
+    // Enhanced image loading handler with state persistence
     const markImagesLoaded = () => {
       const images = wrap.getElementsByTagName("img");
       Array.from(images).forEach((img) => {
+        const src = img.getAttribute("src");
+
+        // Check if image was previously loaded
+        if (src && imageLoadCache.has(src)) {
+          img.setAttribute("data-loaded", "true");
+          img.style.opacity = "1";
+          return;
+        }
+
         if (img.complete) {
           img.setAttribute("data-loaded", "true");
+          if (src) imageLoadCache.set(src, true);
         } else {
-          img.onload = () => img.setAttribute("data-loaded", "true");
+          img.style.opacity = "0";
+          img.onload = () => {
+            img.setAttribute("data-loaded", "true");
+            img.style.opacity = "1";
+            if (src) imageLoadCache.set(src, true);
+          };
         }
       });
     };
 
-    // Setup scroll handler
+    // Setup scroll handler with passive flag for better performance
     wrap.addEventListener("scroll", onScroll, { passive: true });
 
-    // Initialize
+    // Initialize handlers
     onScroll();
     markImagesLoaded();
 
-    // Cleanup
+    // Enhanced cleanup
     return () => {
       wrap.removeEventListener("scroll", onScroll);
       const images = wrap.getElementsByTagName("img");
@@ -464,7 +479,6 @@ export default function BlogDetailMobile({
         ref={scrollWrapRef}
         style={{
           height: "100dvh",
-          minHeight: "100dvh",
           overflow: "auto",
           background: "#fff",
           WebkitOverflowScrolling: "touch",
@@ -475,11 +489,7 @@ export default function BlogDetailMobile({
           position: "relative",
           display: "flex",
           flexDirection: "column",
-          scrollBehavior: "auto",
-          transform: "translateZ(0)",
-          willChange: "scroll-position",
-          backfaceVisibility: "hidden",
-          perspective: "1000px",
+          touchAction: "pan-y",
         }}
       >
         <ProCard
@@ -703,24 +713,9 @@ export default function BlogDetailMobile({
             scrollbar-width: none;  /* Firefox */
           }
 
-          /* Smooth touch interaction for mobile */
+          /* Minimal touch optimization */
           * {
             -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-          }
-
-          /* Allow text selection in content areas */
-          .jp-prose, .jp-prose * {
-            -webkit-user-select: text;
-            -khtml-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
           }
 
           html, body, #root { 
@@ -769,32 +764,37 @@ export default function BlogDetailMobile({
             background: #fff;
             width: 100% !important;
           }
-            .jp-prose img {
-              border-radius: 12px;
-              margin: 14px auto;
-              max-width: 100%;
-              height: auto;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-              border: 1px solid rgba(0,0,0,0.06);
-              display: block;
-              touch-action: manipulation;
-              -webkit-tap-highlight-color: transparent;
-              -webkit-user-select: none;
-              user-select: none;
-              -webkit-user-drag: none;
-              image-rendering: auto;
-              image-rendering: -webkit-optimize-contrast;
-              opacity: 1;
-              transition: opacity 0.4s, box-shadow 0.2s;
-            }
-            .jp-prose img[data-loaded] {
-              opacity: 1;
-              transition: opacity 0.4s, box-shadow 0.2s;
-            }
+          .jp-prose img {
+            border-radius: 12px;
+            margin: 14px auto;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.06);
+            display: block;
+            /* Completely disable image interaction to prevent jank */
+            pointer-events: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-drag: none;
+            user-select: none;
+            /* Force hardware acceleration */
+            transform: translateZ(0);
+            will-change: transform;
+            /* Prevent any touch interference */
+            touch-action: none;
+          }
           /* Preload space for images to prevent layout shifts */
           .jp-prose img:not([data-loaded]) {
-            min-height: 180px;
+            min-height: 200px;
             background: rgba(0,0,0,0.05);
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+          }
+          
+          /* Smooth image loading */
+          .jp-prose img[data-loaded="true"] {
+            opacity: 1;
+            transition: opacity 0.3s ease;
           }
           .jp-prose p {
             margin: 0.85em 0;
