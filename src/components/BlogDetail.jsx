@@ -33,11 +33,14 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
-import { fetchBlogDetail, fetchMemberInfo } from "../services/blogService";
+import {
+  fetchBlogDetail,
+  fetchMemberInfo,
+  fetchMemberInfoByName,
+  getImageUrl,
+} from "../services/blogService";
 import BlogDetailMobile from "./BlogDetailMobile";
 
-// ⚠️ IMPORT DeepSeek helpers bạn đã viết
-// đổi path cho đúng chỗ bạn lưu file dịch:
 import {
   translateJapaneseToEnglish,
   translateJapaneseToVietnamese,
@@ -150,15 +153,17 @@ export default function BlogDetail() {
         }
         setBlog(data);
 
-        // Fetch member info
+        // Fetch member info (code first, then fallback to name)
+        let member = null;
         if (data.memberCode) {
           console.log("Fetching member info for code:", data.memberCode);
-          const member = await fetchMemberInfo(data.memberCode);
-          console.log("Member info received:", member);
-          setMemberInfo(member);
-        } else {
-          console.log("No member code found in blog data:", data);
+          member = await fetchMemberInfo(data.memberCode);
         }
+        if (!member && data.author) {
+          console.log("Fallback: fetching member info by name:", data.author);
+          member = await fetchMemberInfoByName(data.author);
+        }
+        setMemberInfo(member);
       } catch (e) {
         console.error("Error loading blog:", e);
         message.error("Lỗi khi tải blog: " + (e.message || "Không xác định"));
@@ -443,7 +448,8 @@ export default function BlogDetail() {
             >
               <Avatar
                 src={
-                  memberInfo?.img ||
+                  getImageUrl(memberInfo?.img) ||
+                  getImageUrl(blog?.memberImage) ||
                   "https://via.placeholder.com/300x300?text=No+Image"
                 }
                 size={window.innerWidth < 768 ? 56 : 64}

@@ -179,7 +179,7 @@ export const fetchMemberInfo = async (memberCode) => {
     const jsonStr = response.data.replace(/^res\(/, "").replace(/\);?$/, "");
     const api = JSON.parse(jsonStr);
     console.log("Looking for member with code:", memberCode);
-    const member = api.data.find((m) => m.code === memberCode);
+    const member = api.data.find((m) => String(m.code) === String(memberCode));
     console.log("Found member:", member);
 
     if (!member) {
@@ -191,6 +191,33 @@ export const fetchMemberInfo = async (memberCode) => {
     return member || null;
   } catch (error) {
     console.error("Error fetching member info:", error);
+    return null;
+  }
+};
+
+// Fetch member info by exact name match (fallback when code is missing)
+export const fetchMemberInfoByName = async (memberName) => {
+  try {
+    if (!memberName) return null;
+    console.log("Fetching member info for name:", memberName);
+    const response = await axios.get(
+      `${BASE_URL}/s/n46/api/list/member?callback=res`,
+      {
+        responseType: "text",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      }
+    );
+    const jsonStr = response.data.replace(/^res\(/, "").replace(/\);?$/, "");
+    const api = JSON.parse(jsonStr);
+    const normalize = (s) => (s || "").replace(/\s+/g, "").trim();
+    const target = normalize(memberName);
+    const member = api.data.find((m) => normalize(m.name) === target);
+    return member || null;
+  } catch (error) {
+    console.error("Error fetching member by name:", error);
     return null;
   }
 };
