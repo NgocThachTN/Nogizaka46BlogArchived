@@ -149,16 +149,20 @@ export default function BlogDetailMobile({
   // Handle content updates
   useEffect(() => {
     if (displayContent && !translating) {
-      // Smooth scroll back to top when content changes
-      if (scrollWrapRef.current) {
-        // Use smooth scrolling to prevent jank
-        scrollWrapRef.current.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      }
-      // Reset read progress
+      // Reset read progress immediately
       setReadPct(0);
+
+      // Delay scroll to allow images to start loading
+      const scrollToTop = () => {
+        if (scrollWrapRef.current) {
+          scrollWrapRef.current.scrollTop = 0;
+        }
+      };
+
+      // Use requestAnimationFrame to ensure smooth transition
+      requestAnimationFrame(() => {
+        requestAnimationFrame(scrollToTop);
+      });
     }
   }, [displayContent, translating]);
 
@@ -451,18 +455,21 @@ export default function BlogDetailMobile({
           overflow: "auto",
           background: "#fff",
           WebkitOverflowScrolling: "touch",
-          overscrollBehavior: "smooth",
+          overscrollBehavior: "contain",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
           position: "relative",
           display: "flex",
           flexDirection: "column",
-          /* Smooth scrolling optimization */
-          scrollBehavior: "smooth",
-          /* Prevent scroll jank on mobile */
+          /* Optimize for mobile scrolling */
+          scrollBehavior: "auto",
+          /* Hardware acceleration */
           transform: "translateZ(0)",
           willChange: "scroll-position",
+          /* Prevent scroll jank */
+          backfaceVisibility: "hidden",
+          perspective: "1000px",
         }}
       >
         <ProCard
@@ -761,18 +768,23 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Smooth touch interaction on mobile */
+            /* Optimize for mobile touch */
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
-            /* Prevent image selection but allow smooth scrolling */
+            /* Prevent selection and drag */
             -webkit-user-select: none;
             user-select: none;
-            /* Smooth image rendering */
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
-            /* Prevent image drag but allow smooth touch */
             -webkit-user-drag: none;
-            pointer-events: auto;
+            /* Smooth image loading and rendering */
+            image-rendering: auto;
+            image-rendering: -webkit-optimize-contrast;
+            /* Prevent layout shifts during loading */
+            aspect-ratio: attr(width) / attr(height);
+            /* Hardware acceleration for smooth scrolling */
+            transform: translateZ(0);
+            will-change: transform;
+            /* Prevent image jank during scroll */
+            contain: layout style paint;
           }
           /* Preload space for images to prevent layout shifts */
           .jp-prose img:not([data-loaded]) {
