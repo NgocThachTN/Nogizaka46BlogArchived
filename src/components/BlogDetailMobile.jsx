@@ -190,13 +190,16 @@ export default function BlogDetailMobile({
           scrollWrapRef.current.scrollTop = 0;
         }
 
-        // Clear cache for this blog to force fresh translation
-        _mobileCache.blogContent.delete(blog.id);
+        // Clear ALL cache to prevent showing old content
+        _mobileCache.blogContent.clear();
 
-        // Show original content while waiting for translation
+        // Show original content immediately - don't wait for translation
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
         }
+
+        // Force reset read progress
+        setReadPct(0);
       } else {
         // Same blog - check if we have valid cache
         const cached = _mobileCache.blogContent.get(blog.id);
@@ -266,6 +269,19 @@ export default function BlogDetailMobile({
       }, 100);
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
+
+  // ---- Force clear content when displayContent changes from parent ----
+  useEffect(() => {
+    if (displayContent && blog?.id) {
+      // This ensures that when parent provides new displayContent,
+      // we immediately show it instead of cached content
+      setCachedDisplayContent(displayContent);
+      setCachedLanguage(language);
+
+      // Clear any existing cache for this blog to prevent conflicts
+      _mobileCache.blogContent.delete(blog.id);
+    }
+  }, [displayContent, language, blog?.id]);
 
   // Lưu vị trí cuộn trước khi rời trang (chỉ khi không phải content mới)
   useEffect(() => {
