@@ -439,6 +439,7 @@ export default function BlogDetail() {
         fastGo={fastGo}
         pendingNavId={pendingNavId}
         navLock={navLock}
+        memberInfo={memberInfo}
       />
     );
   }

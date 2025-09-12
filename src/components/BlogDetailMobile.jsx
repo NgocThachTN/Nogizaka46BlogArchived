@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   Tag,
+  Avatar,
 } from "antd";
 import {
   LoadingOutlined,
@@ -36,7 +37,7 @@ import {
   useLayoutEffect,
   useTransition,
 } from "react";
-import { getCachedBlogDetail } from "../services/blogService";
+import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 
 // Utility function for throttle
 function throttle(func, limit) {
@@ -95,12 +96,14 @@ export default function BlogDetailMobile({
   translating,
   language,
   setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
+  displayTitle, // Title (JP/EN/VI) render ra
   displayContent, // HTML (JP/EN/VI) render ra
   prevId,
   nextId,
   fastGo,
   pendingNavId,
   navLock,
+  memberInfo, // Add memberInfo prop
 }) {
   const navigate = useNavigate();
 
@@ -334,7 +337,7 @@ export default function BlogDetailMobile({
     return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
   }, [cachedDisplayContent, blog?.content]);
 
-  // Sticky TopBar
+  // Sticky TopBar with integrated author info
   const TopBar = useMemo(
     () => (
       <Affix offsetTop={0}>
@@ -343,94 +346,184 @@ export default function BlogDetailMobile({
             ...jpFont,
             background: "#fff",
             borderBottom: "1px solid rgba(0,0,0,0.06)",
-            padding: 8,
             // Ensure the TopBar stays above any scrolling content/overlays
             zIndex: 998,
-            position: "relative",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            width: "100%",
           }}
         >
-          <Space
-            align="center"
-            style={{ width: "100%", justifyContent: "space-between" }}
-          >
-            <Space>
-              <Button
-                type="text"
-                icon={<HomeOutlined />}
-                onClick={() => navigate("/members")}
-              />
-              {prevId ? (
+          {/* Navigation Row */}
+          <div style={{ padding: "8px 12px" }}>
+            <Space
+              align="center"
+              style={{ width: "100%", justifyContent: "space-between" }}
+            >
+              <Space>
                 <Button
-                  type="default"
-                  size="small"
-                  style={navTopBtnStyle}
-                  disabled={!prevId || navLock}
-                  onClick={() => fastGo && fastGo(prevId)}
-                >
-                  {pendingNavId &&
-                  pendingNavId === prevId &&
-                  !getCachedBlogDetail(prevId) ? (
-                    <LoadingOutlined />
-                  ) : (
-                    "<"
-                  )}
-                </Button>
-              ) : null}
-              {nextId ? (
-                <Button
-                  type="primary"
-                  size="small"
-                  style={navTopBtnStyle}
-                  disabled={!nextId || navLock}
-                  onClick={() => fastGo && fastGo(nextId)}
-                >
-                  {pendingNavId &&
-                  pendingNavId === nextId &&
-                  !getCachedBlogDetail(nextId) ? (
-                    <LoadingOutlined />
-                  ) : (
-                    ">"
-                  )}
-                </Button>
-              ) : null}
-            </Space>
-            <Space>
-              {/* trạng thái dịch */}
-              {translating || isPending ? (
-                <Tag
-                  icon={<LoadingOutlined />}
-                  color="processing"
-                  style={{ marginRight: 6 }}
-                >
-                  {cachedLanguage === "vi"
-                    ? "Đang dịch..."
-                    : cachedLanguage === "en"
-                    ? "Translating..."
-                    : "翻訳中..."}
-                </Tag>
-              ) : (
-                <Tag color="default" style={{ marginRight: 6 }}>
-                  {cachedLanguage.toUpperCase()}
-                </Tag>
-              )}
+                  type="text"
+                  icon={<HomeOutlined />}
+                  onClick={() => navigate("/members")}
+                />
+                {prevId ? (
+                  <Button
+                    type="default"
+                    size="small"
+                    style={navTopBtnStyle}
+                    disabled={!prevId || navLock}
+                    onClick={() => fastGo && fastGo(prevId)}
+                  >
+                    {pendingNavId &&
+                    pendingNavId === prevId &&
+                    !getCachedBlogDetail(prevId) ? (
+                      <LoadingOutlined />
+                    ) : (
+                      "<"
+                    )}
+                  </Button>
+                ) : null}
+                {nextId ? (
+                  <Button
+                    type="primary"
+                    size="small"
+                    style={navTopBtnStyle}
+                    disabled={!nextId || navLock}
+                    onClick={() => fastGo && fastGo(nextId)}
+                  >
+                    {pendingNavId &&
+                    pendingNavId === nextId &&
+                    !getCachedBlogDetail(nextId) ? (
+                      <LoadingOutlined />
+                    ) : (
+                      ">"
+                    )}
+                  </Button>
+                ) : null}
+              </Space>
+              <Space>
+                {/* trạng thái dịch */}
+                {translating || isPending ? (
+                  <Tag
+                    icon={<LoadingOutlined />}
+                    color="processing"
+                    style={{ marginRight: 6 }}
+                  >
+                    {cachedLanguage === "vi"
+                      ? "Đang dịch..."
+                      : cachedLanguage === "en"
+                      ? "Translating..."
+                      : "翻訳中..."}
+                  </Tag>
+                ) : (
+                  <Tag color="default" style={{ marginRight: 6 }}>
+                    {cachedLanguage.toUpperCase()}
+                  </Tag>
+                )}
 
-              <Segmented
-                size="small"
-                value={cachedLanguage}
-                onChange={(val) => setLanguage(val)}
-                options={[
-                  { label: "日", value: "ja" },
-                  { label: "EN", value: "en" },
-                  { label: "VI", value: "vi" },
-                ]}
-              />
-              <Button
-                type="text"
-                icon={<FontSizeOutlined />}
-                onClick={() => setDrawerVisible(true)}
-              />
+                <Segmented
+                  size="small"
+                  value={cachedLanguage}
+                  onChange={(val) => setLanguage(val)}
+                  options={[
+                    { label: "日", value: "ja" },
+                    { label: "EN", value: "en" },
+                    { label: "VI", value: "vi" },
+                  ]}
+                />
+                <Button
+                  type="text"
+                  icon={<FontSizeOutlined />}
+                  onClick={() => setDrawerVisible(true)}
+                />
+              </Space>
             </Space>
-          </Space>
+          </div>
+
+          {/* Author Info Row - Integrated into TopBar */}
+          {blog && (
+            <div
+              style={{
+                padding: "0 12px 8px 12px",
+                borderTop: "1px solid rgba(0,0,0,0.04)",
+                background: "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)",
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: "14px",
+                }}
+              >
+                <Space align="center">
+                  <Avatar
+                    src={
+                      getImageUrl(memberInfo?.img) ||
+                      getImageUrl(blog?.memberImage) ||
+                      "https://via.placeholder.com/300x300?text=No+Image"
+                    }
+                    size={40}
+                    style={{
+                      border: "2px solid #fff",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  <div>
+                    <Text strong style={{ color: "#111827", fontSize: "15px" }}>
+                      {memberInfo?.name || blog.author}
+                    </Text>
+                    <div
+                      style={{
+                        color: "#666",
+                        marginTop: 1,
+                        fontSize: "12px",
+                      }}
+                    >
+                      <CalendarOutlined style={{ marginRight: 6 }} />
+                      <Text>{blog.date}</Text>
+                    </div>
+                  </div>
+                </Space>
+
+                <div
+                  style={{
+                    flex: 1,
+                    textAlign: "center",
+                    paddingLeft: 8,
+                    paddingRight: 8,
+                    maxWidth: "60%",
+                  }}
+                >
+                  <Text
+                    strong
+                    style={{
+                      color: "#111827",
+                      fontSize: "13px",
+                      lineHeight: 1.2,
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {displayTitle || blog.title}
+                  </Text>
+                </div>
+
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<InfoCircleOutlined />}
+                  onClick={() => setDrawerVisible(true)}
+                  style={{ color: "#666", flexShrink: 0 }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </Affix>
     ),
@@ -446,6 +539,9 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
+      blog,
+      displayTitle,
+      memberInfo,
     ]
   );
 
@@ -632,6 +728,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
+          paddingTop: "100px", // Add padding to account for fixed top bar with author info
         }}
       >
         <ProCard
@@ -650,34 +747,8 @@ export default function BlogDetailMobile({
             width: "100%",
           }}
         >
-          {/* Title block */}
-          <div style={{ padding: "0 12px" }}>
-            <Card
-              bordered={false}
-              style={{
-                margin: 0,
-                padding: 0,
-                background: "transparent",
-                width: "100%",
-              }}
-              bodyStyle={{ padding: 0 }}
-            >
-              <Title
-                level={4}
-                style={{
-                  margin: 0,
-                  lineHeight: 1.25,
-                  letterSpacing: 0.2,
-                  color: "#111827",
-                }}
-              >
-                {blog.title}
-              </Title>
-              <Text type="secondary" style={{ display: "block", marginTop: 6 }}>
-                {blog.author} ・ {blog.date}
-              </Text>
-            </Card>
-
+          {/* Content - Title moved to author section */}
+          <div style={{ padding: "12px" }}>
             {/* Nội dung */}
             <div
               className="jp-prose"

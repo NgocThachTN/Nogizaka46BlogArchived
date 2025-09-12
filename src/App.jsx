@@ -61,30 +61,7 @@ function App() {
     >
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-          {/* Mobile Header */}
-          {isMobile && (
-            <div
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 56,
-                background: "#ffffff",
-                borderBottom: "1px solid #f0f0f0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 700,
-                fontSize: 18,
-                letterSpacing: 0.3,
-                zIndex: 1000,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              }}
-            >
-              Nogizaka46 Blog Translate
-            </div>
-          )}
+          {/* Mobile Header - Removed title text */}
           <ProLayout
             layout="side"
             title={
@@ -119,10 +96,7 @@ function App() {
             }}
             menuHeaderRender={false}
           >
-            <div
-              className="min-h-screen"
-              style={{ paddingTop: isMobile ? 56 : 0 }}
-            >
+            <div className="min-h-screen" style={{ paddingTop: 0 }}>
               <Routes>
                 <Route path="/" element={<Navigate to="/members" replace />} />
                 <Route path="/members" element={<MemberList />} />
