@@ -125,6 +125,7 @@ export default function BlogDetail() {
   const [_IS_PENDING, startTransition] = useTransition();
 
   const contentRef = useRef(null);
+  const currentBlogIdRef = useRef(id); // Track current blog ID for translation cancellation
 
   // cleanup helpers
   const cleanDisplayText = (text) =>
@@ -139,6 +140,17 @@ export default function BlogDetail() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Reset translation state when blog changes
+  useEffect(() => {
+    if (currentBlogIdRef.current !== id) {
+      // Blog changed - reset all translation state
+      setTranslating(false);
+      setTrHtml({ en: "", vi: "" });
+      setTrTitle({ en: "", vi: "" });
+      currentBlogIdRef.current = id;
+    }
+  }, [id]);
 
   // Back
   const onBack = () => {
@@ -261,21 +273,35 @@ export default function BlogDetail() {
     (async () => {
       if (!blog?.content || language === "ja") return;
 
+      // Check if blog ID changed during translation
+      const currentBlogId = id;
+
       const keyHtml =
-        (language === "en" ? LS_KEY_TR_EN : LS_KEY_TR_VI) + `:${id}`;
+        (language === "en" ? LS_KEY_TR_EN : LS_KEY_TR_VI) + `:${currentBlogId}`;
       const keyTtl =
-        (language === "en" ? LS_KEY_TTL_EN : LS_KEY_TTL_VI) + `:${id}`;
+        (language === "en" ? LS_KEY_TTL_EN : LS_KEY_TTL_VI) +
+        `:${currentBlogId}`;
       const cachedHtml = localStorage.getItem(keyHtml);
       const cachedTtl = localStorage.getItem(keyTtl);
 
       if (cachedHtml && cachedTtl) {
-        setTrHtml((s) => ({ ...s, [language]: cachedHtml }));
-        setTrTitle((s) => ({ ...s, [language]: cachedTtl }));
+        // Check if blog ID is still the same before setting cached content
+        if (currentBlogId === id) {
+          setTrHtml((s) => ({ ...s, [language]: cachedHtml }));
+          setTrTitle((s) => ({ ...s, [language]: cachedTtl }));
+        }
         return;
       }
 
       try {
         setTranslating(true);
+
+        // Check if blog ID changed before starting translation
+        if (currentBlogId !== id) {
+          setTranslating(false);
+          return;
+        }
+
         // Translate title
         let titleOut = "";
         if (language === "en") {
@@ -284,17 +310,27 @@ export default function BlogDetail() {
           titleOut = await translateJapaneseToVietnamese(blog.title || "");
         }
 
+        // Check if blog ID changed after title translation
+        if (currentBlogId !== id) {
+          setTranslating(false);
+          return;
+        }
+
         // Chunk callback
         let translatedContent = "";
         const updateProgress = (translatedChunk, isLast) => {
           if (!translatedChunk) return;
+
+          // Check if blog ID changed during translation
+          if (currentBlogId !== id) return;
+
           const cleaned = translatedChunk
             .replace(/```html/g, "")
             .replace(/```/g, "")
             .trim();
           translatedContent += cleaned;
 
-          if (isLast) {
+          if (isLast && currentBlogId === id) {
             setTrHtml((prev) => ({ ...prev, [language]: translatedContent }));
             localStorage.setItem(keyHtml, translatedContent);
           }
@@ -307,17 +343,24 @@ export default function BlogDetail() {
           await translateJapaneseToVietnamese(blog.content, updateProgress);
         }
 
-        const safeTtl = (titleOut || "").trim();
-        if (safeTtl) {
-          setTrTitle((s) => ({ ...s, [language]: safeTtl }));
-          localStorage.setItem(keyTtl, safeTtl);
+        // Final check before setting results
+        if (currentBlogId === id) {
+          const safeTtl = (titleOut || "").trim();
+          if (safeTtl) {
+            setTrTitle((s) => ({ ...s, [language]: safeTtl }));
+            localStorage.setItem(keyTtl, safeTtl);
+          }
+          message.success("Dịch thành công!");
         }
-        message.success("Dịch thành công!");
       } catch (err) {
         console.error("Translation failed:", err);
-        message.error("Lỗi dịch. Vui lòng thử lại sau.");
+        if (currentBlogId === id) {
+          message.error("Lỗi dịch. Vui lòng thử lại sau.");
+        }
       } finally {
-        setTranslating(false);
+        if (currentBlogId === id) {
+          setTranslating(false);
+        }
       }
     })();
   }, [language, blog?.content, blog?.title, id]);
