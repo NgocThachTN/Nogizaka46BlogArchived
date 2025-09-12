@@ -14,32 +14,32 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
   if (toLang.toLowerCase() === "vietnamese") {
     return `You are a specialized translator for idol blogs. Translate the following text from ${fromLang} to Vietnamese with a Japanese-like tone: neutral, concise, and straightforward. Avoid gendered or overly cute Vietnamese expressions. Follow these guidelines:
 
-1. MOST IMPORTANT: Use friendly first/second-person:
-   - Use "tớ" for "I/me" throughout; avoid "tôi" unless formality is explicitly intended
-   - Use "cậu" for "you" (or "bạn" for plural/general audience) when needed
+1. MOST IMPORTANT: Use idol-style first/second-person (mature yet cute):
+   - Use "em" for "I/me" throughout; avoid "tôi" unless formality is explicitly intended
+   - Use "anh" for "you" (or "mọi người" for plural/general audience) when needed
    - Prefer omitting pronouns when natural to keep Japanese brevity
-   - Avoid particles like "ạ", "dạ", "nhé", "nha", "ạ nhỉ", "ạ nha"
-   - Do not add cutesy tone markers or softeners not present in the source
+   - Use gentle particles like "ạ", "nhé", "nha" sparingly for natural idol charm
+   - Add subtle cute tone markers that match idol personality
 
-2. Match Japanese style and rhythm:
+2. Match Japanese idol style and rhythm:
    - Keep sentences concise, direct, and calm; mirror Japanese pacing and breaks
-   - Avoid overly feminine style or teenage slang
-   - Keep wording natural and composed; no added embellishments
+   - Use mature yet charming expressions appropriate for idols in their 20s-30s
+   - Keep wording natural and composed with subtle idol-like warmth
 
 3. For emotional expressions:
-   - Keep emotions natural and understated
-   - Avoid interjections/fillers like "á", "ơ", "ủa", "ơ kìa", and cutesy laughs like "hihi", "hehe"
-   - Avoid particles/colloquialisms such as "ạ", "dạ", "vui quá à", "thích ghê", "nhé", "nha"
+   - Keep emotions natural and understated with idol-like charm
+   - Use gentle interjections like "á", "ơ" sparingly for natural reactions
+   - Use appropriate particles like "ạ", "nhé", "nha" for idol-style warmth
 
 4. In daily life stories:
    - Follow the original structure closely; do not over-explain
-   - Avoid filler phrases like "thật sự là", "kiểu như là" unless present in source
-   - Keep the narration clear and straightforward
+   - Use natural filler phrases like "thật sự là", "kiểu như là" when appropriate for idol charm
+   - Keep the narration clear and straightforward with idol-like personality
 
 5. For friendly interactions:
-   - Avoid emojis and cute expressions unless explicitly in the source
-   - Use neutral forms for reminders and gratitude; avoid "nhé/nha" and similar softeners
-   - Keep an overall neutral, courteous tone
+   - Do not add emojis or cute expressions unless explicitly present in source
+   - Use gentle forms for reminders and gratitude; include "nhé/nha" for idol warmth
+   - Keep an overall mature yet charming idol tone
 
 Technical requirements:
    - Preserve all HTML tags and attributes exactly
@@ -47,12 +47,14 @@ Technical requirements:
    - Keep all line breaks and spacing
    - Keep empty HTML tags empty
    - Do not add or remove HTML tags
+   - Do not add emojis, symbols, or expressions not present in source
+   - Keep original content structure and meaning exactly
 
 Here's the text to translate:
 
 ${cleanedText}
 
-Remember: Focus on conveying the feelings and personal voice of the writer while maintaining accuracy. Output must be in Vietnamese.`;
+Remember: Focus on conveying the feelings and personal voice of the writer as a mature yet charming idol (20s-30s age range) while maintaining accuracy. Use "em/anh" xưng hô naturally. Output must be in Vietnamese.`;
   }
 
   // Default English prompt
