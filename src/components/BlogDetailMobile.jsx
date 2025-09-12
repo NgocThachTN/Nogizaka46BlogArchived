@@ -149,20 +149,32 @@ export default function BlogDetailMobile({
   // Handle content updates
   useEffect(() => {
     if (displayContent && !translating) {
-      // Reset read progress immediately
       setReadPct(0);
 
-      // Wait for images to start rendering before scroll to top
+      // Scroll to top after DOM update and images start loading
       const scrollToTop = () => {
         if (scrollWrapRef.current) {
           scrollWrapRef.current.scrollTop = 0;
         }
       };
 
-      // Wait for next paint, then scroll to top
-      setTimeout(() => {
-        requestAnimationFrame(scrollToTop);
-      }, 120);
+      // Use MutationObserver to detect when images are present
+      const wrap = scrollWrapRef.current;
+      if (wrap) {
+        const observer = new MutationObserver(() => {
+          const imgs = wrap.getElementsByTagName('img');
+          if (imgs.length > 0) {
+            scrollToTop();
+            observer.disconnect();
+          }
+        });
+        observer.observe(wrap, { childList: true, subtree: true });
+        // Fallback: scroll after short delay if no images
+        setTimeout(() => {
+          scrollToTop();
+          observer.disconnect();
+        }, 300);
+      }
     }
   }, [displayContent, translating]);
 
@@ -452,6 +464,7 @@ export default function BlogDetailMobile({
         ref={scrollWrapRef}
         style={{
           height: "100dvh",
+          minHeight: "100dvh",
           overflow: "auto",
           background: "#fff",
           WebkitOverflowScrolling: "touch",
@@ -462,12 +475,9 @@ export default function BlogDetailMobile({
           position: "relative",
           display: "flex",
           flexDirection: "column",
-          /* Optimize for mobile scrolling */
           scrollBehavior: "auto",
-          /* Hardware acceleration */
           transform: "translateZ(0)",
           willChange: "scroll-position",
-          /* Prevent scroll jank */
           backfaceVisibility: "hidden",
           perspective: "1000px",
         }}
