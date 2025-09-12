@@ -8,6 +8,7 @@ import { ProLayout } from "@ant-design/pro-components";
 import { ConfigProvider, theme } from "antd";
 import { useEffect, useState } from "react";
 import BlogList from "./components/BlogList";
+import BlogListMobile from "./components/BlogListMobile";
 import BlogDetail from "./components/BlogDetail";
 import MemberProfile from "./components/MemberProfile";
 import MemberList from "./components/MemberList";
@@ -100,7 +101,10 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/members" replace />} />
                 <Route path="/members" element={<MemberList />} />
-                <Route path="/blogs/:memberCode" element={<BlogList />} />
+                <Route
+                  path="/blogs/:memberCode"
+                  element={isMobile ? <BlogListMobile /> : <BlogList />}
+                />
                 <Route path="/blog/:id" element={<BlogDetail />} />
               </Routes>
             </div>
