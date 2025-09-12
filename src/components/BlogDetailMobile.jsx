@@ -595,12 +595,6 @@ export default function BlogDetailMobile({
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
 
-    console.log("handleScroll called:", {
-      currentScrollY,
-      isScrolling,
-      isHeaderVisible,
-    });
-
     // Debounce scroll events
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
@@ -621,7 +615,7 @@ export default function BlogDetailMobile({
 
     const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-    if (Math.abs(scrollDifference) > 2) {
+    if (Math.abs(scrollDifference) > 5) {
       console.log("Scroll detected:", {
         currentScrollY,
         lastScrollY: lastScrollY.current,
@@ -630,42 +624,26 @@ export default function BlogDetailMobile({
       });
 
       if (scrollDifference > 0) {
-        // Scroll down (kéo xuống) - ẩn header
-        console.log("Hiding header - scrolling down");
-        setIsHeaderVisible(false);
-      } else {
-        // Scroll up (kéo lên) - hiện header
-        console.log("Showing header - scrolling up");
+        // Scroll down (kéo xuống) - hiện header
+        console.log("Showing header - scrolling down");
         setIsHeaderVisible(true);
+      } else {
+        // Scroll up (kéo lên) - ẩn header
+        console.log("Hiding header - scrolling up");
+        setIsHeaderVisible(false);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling, isHeaderVisible]);
+  }, [isScrolling]);
 
   // Setup scroll handlers for Android
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Debounce scroll position saving
-    let saveTimeout = null;
-    const debouncedSave = () => {
-      if (saveTimeout) clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => {
-        if (wrap && blog?.id) {
-          const cached = _mobileCache.blogContent.get(blog.id);
-          if (cached && cached.language === language) {
-            _mobileCache.scrollPosition.set(blog.id, wrap.scrollTop);
-          }
-        }
-      }, 500);
-    };
-
     // Combined scroll handler for both progress and header
     const combinedScrollHandler = () => {
-      console.log("combinedScrollHandler called");
-
       // Update progress
       if (throttledUpdateRef.current) {
         throttledUpdateRef.current();
@@ -673,9 +651,6 @@ export default function BlogDetailMobile({
 
       // Update header visibility
       handleScroll();
-
-      // Save scroll position
-      debouncedSave();
     };
 
     // Setup scroll handler
@@ -695,7 +670,7 @@ export default function BlogDetailMobile({
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll, blog?.id, language]);
+  }, [handleScroll]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
