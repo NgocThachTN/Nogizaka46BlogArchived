@@ -1,21 +1,25 @@
-Nogizaka46 Blog Archived
+# Nogizaka46 Blog Archived
 
-This project aims to archive Nogizaka46 members’ blogs and provide automatic translation from Japanese → English & Vietnamese.
+A web app that fetches and preserves Nogizaka46 members’ blogs from the official site, with automatic multilingual translation powered by **Gemini API**.  
 
-🎯 Purpose
+## 🎯 Purpose
 
-Preserve Nogizaka46 blog content for fans.
+- Archive and preserve Nogizaka46 blog content for fans.  
+- Provide **Japanese → English & Vietnamese** translations for global accessibility.  
+- Deliver a smooth, modern browsing experience with a fast frontend stack.  
 
-Integrate multilingual translation for better accessibility.
+## ⚙️ Tech Stack
 
-Built with React + Vite for fast development and hot reload.
+- **React + Vite** – frontend framework & build tool with hot reload.  
+- **Ant Design Pro Components** – clean, modern UI.  
+- **Axios + Cheerio** – crawl and parse official blog data.  
+- **i18n** – multilingual support (Japanese, English, Vietnamese).  
+- **Gemini API** – automatic translation service.  
 
-⚙️ Tech Stack
+## 🚀 Installation
 
-React + Vite: frontend framework & build tool.
+1. Clone the repo:  
+   ```bash
+   git clone https://github.com/your-username/nogizaka46-blog-archived.git
+   cd nogizaka46-blog-archived
 
-Ant Design Pro Components: modern UI.
-
-Axios + Cheerio: crawl & parse blogs.
-
-i18n: multilingual translation support.
