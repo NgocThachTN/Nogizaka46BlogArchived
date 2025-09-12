@@ -116,35 +116,11 @@ export default function BlogDetailMobile({
   // Track previous blog ID to detect blog changes
   const prevBlogIdRef = useRef(blog?.id);
 
-  const goBack = useCallback(() => {
-    if (prevId) {
-      navigate(`/blog/${prevId}`);
-    } else {
-      const backTo = blog?.memberCode
-        ? `/blogs/${blog.memberCode}`
-        : "/members";
-      navigate(backTo);
-    }
-  }, [navigate, blog?.memberCode, prevId]);
-
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
 
-  // Styled nav buttons (Ant Design Pro vibe)
-  const navFabStyle = useMemo(
-    () => ({
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      background: "#fff",
-      color: "#111",
-      border: "1px solid rgba(0,0,0,0.06)",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-    }),
-    []
-  );
   const navTopBtnStyle = useMemo(
     () => ({
       width: 32,
@@ -175,7 +151,7 @@ export default function BlogDetailMobile({
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
-  const scrollThreshold = 10; // Minimum scroll distance to trigger hide/show
+  const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -601,14 +577,17 @@ export default function BlogDetailMobile({
 
       // Handle header visibility based on scroll direction
       const currentScrollY = scrolled;
-      const scrollDifference = Math.abs(currentScrollY - lastScrollY.current);
+      const scrollDifference = currentScrollY - lastScrollY.current;
 
-      if (scrollDifference > scrollThreshold) {
-        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-          // Scrolling down and past 50px - hide header
+      // Only update if there's significant scroll movement
+      if (Math.abs(scrollDifference) > scrollThreshold) {
+        if (scrollDifference > 0 && currentScrollY > 100) {
+          // Scrolling down and past 100px - hide header
+          console.log("Hiding header - scrolling down:", currentScrollY);
           setIsHeaderVisible(false);
-        } else if (currentScrollY < lastScrollY.current) {
+        } else if (scrollDifference < 0) {
           // Scrolling up - show header
+          console.log("Showing header - scrolling up:", currentScrollY);
           setIsHeaderVisible(true);
         }
         lastScrollY.current = currentScrollY;
