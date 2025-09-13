@@ -309,9 +309,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
             bordered
             style={{
               borderRadius: 16,
-              background: screens.xs
-                ? "#fff" // đơn giản cho mobile
-                : "linear-gradient(180deg, #ffffff 0%, #faf7ff 100%)",
+              background: "rgba(253, 246, 227, 0.8)",
               marginTop: 0,
             }}
             bodyStyle={{ padding: screens.xs ? 12 : 18 }}
@@ -408,7 +406,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
           {/* FILTER ROW */}
           <ProCard
             bordered
-            style={{ borderRadius: 14 }}
+            style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
             bodyStyle={{ padding: 12 }}
           >
             <Space
@@ -448,6 +446,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                background: "rgba(253, 246, 227, 0.8)",
               }}
             >
               <Empty
@@ -472,6 +471,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
                     height: "100%", // Đảm bảo tất cả card có cùng chiều cao
                     display: "flex",
                     flexDirection: "column",
+                    background: "rgba(253, 246, 227, 0.9)",
                   }}
                   bodyStyle={{
                     padding: 12,
@@ -489,7 +489,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
                       position: "relative",
                       height: screens.xs ? 148 : 190,
                       overflow: "hidden",
-                      borderRadius: 10,
+                      borderRadius: "12px", // Bo cả 4 góc đồng đều
                       background: "#f5f6fa",
                       marginBottom: 12,
                       flexShrink: 0, // Không cho phép thu nhỏ
@@ -688,6 +688,10 @@ export default function BlogList({ language = "ja", setLanguage }) {
       <style>{`
         @media (hover:hover) {
           .blog-card:hover img { transform: scale(1.03); }
+        }
+        
+        .blog-card img {
+          border-radius: 12px;
         }
         
         /* Đảm bảo card layout không bị tràn */

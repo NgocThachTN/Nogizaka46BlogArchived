@@ -167,7 +167,7 @@ export default function BlogCalendar({
             )}
           </Space>
         }
-        style={{ borderRadius: 16 }}
+        style={{ borderRadius: 16, background: "rgba(253, 246, 227, 0.8)" }}
         bodyStyle={{ padding: isMobile ? 12 : 16 }}
       >
         <div style={{ textAlign: "center", padding: "20px 0" }}>
@@ -190,7 +190,7 @@ export default function BlogCalendar({
           )}
         </Space>
       }
-      style={{ borderRadius: 16 }}
+      style={{ borderRadius: 16, background: "rgba(253, 246, 227, 0.8)" }}
       bodyStyle={{ padding: isMobile ? 12 : 16 }}
       extra={
         <Button
@@ -266,6 +266,7 @@ export default function BlogCalendar({
           style={{
             borderRadius: 12,
             marginTop: 12,
+            background: "rgba(253, 246, 227, 0.9)",
           }}
           bodyStyle={{ padding: isMobile ? 8 : 12 }}
         >
@@ -279,7 +280,8 @@ export default function BlogCalendar({
                 style={{
                   borderRadius: 8,
                   cursor: "pointer",
-                  border: "1px solid #f0f0f0",
+                  border: "1px solid rgba(139, 69, 19, 0.2)",
+                  background: "rgba(253, 246, 227, 0.95)",
                 }}
                 bodyStyle={{ padding: isMobile ? 8 : 12 }}
               >
@@ -291,7 +293,7 @@ export default function BlogCalendar({
                     style={{
                       width: isMobile ? 40 : 48,
                       height: isMobile ? 40 : 48,
-                      borderRadius: 6,
+                      borderRadius: 8,
                       overflow: "hidden",
                       background: "#f5f6fa",
                       flexShrink: 0,
@@ -358,6 +360,7 @@ export default function BlogCalendar({
             borderRadius: 12,
             marginTop: 12,
             textAlign: "center",
+            background: "rgba(253, 246, 227, 0.9)",
           }}
           bodyStyle={{ padding: isMobile ? 16 : 24 }}
         >

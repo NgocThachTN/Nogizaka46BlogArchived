@@ -2,10 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Book-like background styling */
+.book-background {
+  background: linear-gradient(135deg, #fdf6e3 0%, #f4f1e8 50%, #f0e6d2 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+.book-background::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      circle at 20% 50%,
+      rgba(139, 69, 19, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(160, 82, 45, 0.02) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 80%,
+      rgba(139, 69, 19, 0.02) 0%,
+      transparent 50%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.book-background > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Paper texture effect */
+.paper-texture {
+  background-image: linear-gradient(
+      90deg,
+      transparent 98%,
+      rgba(139, 69, 19, 0.03) 100%
+    ),
+    linear-gradient(0deg, transparent 98%, rgba(139, 69, 19, 0.03) 100%);
+  background-size: 20px 20px;
+}
+
 /* Blog content styles */
 .blog-content {
   font-size: 16px;
   line-height: 1.8;
+  color: #3c2415;
+  background: rgba(253, 246, 227, 0.7);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.1);
 }
 
 .blog-content img {
@@ -46,16 +100,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f4f1e8;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #9c27b0;
+  background: #8b4513;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #7b1fa2;
+  background: #a0522d;
 }
 
 /* Utility classes for Tailwind */
@@ -75,21 +129,202 @@
 
 /* Prose styling for blog content */
 .prose {
-  color: #374151;
+  color: #3c2415;
   max-width: none;
+  background: rgba(253, 246, 227, 0.8);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.1);
+}
+
+/* Ant Design component overrides for book theme */
+.ant-select-selector,
+.ant-input,
+.ant-segmented-item,
+.ant-segmented-item-selected {
+  background-color: rgba(253, 246, 227, 0.9) !important;
+  border-color: rgba(139, 69, 19, 0.3) !important;
+  color: #3c2415 !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+}
+
+.ant-select-dropdown,
+.ant-select-item {
+  background-color: rgba(253, 246, 227, 0.95) !important;
+  color: #3c2415 !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+}
+
+.ant-select-item:hover,
+.ant-select-item-option-selected {
+  background-color: rgba(139, 69, 19, 0.1) !important;
+}
+
+.ant-segmented-item-selected {
+  background-color: rgba(139, 69, 19, 0.15) !important;
+  color: #2d1b0e !important;
+}
+
+.ant-card {
+  background-color: rgba(253, 246, 227, 0.8) !important;
+  border-color: rgba(139, 69, 19, 0.2) !important;
+}
+
+.ant-card-head {
+  background-color: transparent !important;
+  border-bottom-color: rgba(139, 69, 19, 0.2) !important;
+}
+
+.ant-typography {
+  color: #3c2415 !important;
+}
+
+.ant-typography.ant-typography-secondary {
+  color: #5d4e37 !important;
+}
+
+/* Additional component styling for book theme */
+.ant-picker-calendar {
+  background: rgba(253, 246, 227, 0.8) !important;
+  border-color: rgba(139, 69, 19, 0.2) !important;
+}
+
+.ant-picker-calendar-header {
+  background: transparent !important;
+  border-bottom-color: rgba(139, 69, 19, 0.2) !important;
+}
+
+.ant-picker-calendar-date {
+  background: rgba(253, 246, 227, 0.9) !important;
+  border-color: rgba(139, 69, 19, 0.1) !important;
+}
+
+.ant-picker-calendar-date:hover {
+  background: rgba(139, 69, 19, 0.1) !important;
+}
+
+.ant-picker-calendar-date-selected {
+  background: rgba(139, 69, 19, 0.2) !important;
+  border-color: #8b4513 !important;
+}
+
+.ant-picker-calendar-date-today {
+  background: rgba(139, 69, 19, 0.15) !important;
+  border-color: #8b4513 !important;
+}
+
+.ant-badge {
+  background: rgba(139, 69, 19, 0.8) !important;
+  color: #fdf6e3 !important;
+}
+
+.ant-empty {
+  color: #5d4e37 !important;
+}
+
+.ant-empty-description {
+  color: #5d4e37 !important;
+}
+
+.ant-pagination-item {
+  background: rgba(253, 246, 227, 0.9) !important;
+  border-color: rgba(139, 69, 19, 0.3) !important;
+}
+
+.ant-pagination-item:hover {
+  background: rgba(139, 69, 19, 0.1) !important;
+}
+
+.ant-pagination-item-active {
+  background: rgba(139, 69, 19, 0.2) !important;
+  border-color: #8b4513 !important;
+}
+
+.ant-pagination-prev,
+.ant-pagination-next {
+  background: rgba(253, 246, 227, 0.9) !important;
+  border-color: rgba(139, 69, 19, 0.3) !important;
+}
+
+.ant-pagination-prev:hover,
+.ant-pagination-next:hover {
+  background: rgba(139, 69, 19, 0.1) !important;
+}
+
+/* Vietnamese text rendering fix */
+.ant-select-item-option-content,
+.ant-select-selection-item {
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+  font-feature-settings: "liga" 1, "kern" 1 !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Specific fix for Vietnamese diacritics */
+.ant-select-item-option-content span,
+.ant-select-selection-item span {
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+  font-variant-ligatures: normal !important;
+  font-feature-settings: "liga" 1, "kern" 1, "calt" 1 !important;
 }
 
 .prose p {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
+  color: #3c2415;
 }
 
-.prose h1, .prose h2, .prose h3 {
-  color: #1f2937;
+.prose h1,
+.prose h2,
+.prose h3 {
+  color: #2d1b0e;
   font-weight: 600;
 }
 
 .prose img {
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15),
+    0 2px 4px rgba(139, 69, 19, 0.1);
+}
+
+/* Consistent image border radius across all components */
+.ant-card img,
+.member-card img,
+.blog-card img,
+.thumb img {
+  border-radius: 12px !important;
+}
+
+/* For small thumbnails in calendar */
+.ant-picker-calendar img {
+  border-radius: 8px !important;
+}
+
+/* Global serif font for all text */
+body,
+html,
+#root {
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+}
+
+/* Typography components */
+.ant-typography,
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4,
+.ant-typography h5,
+.ant-typography h6,
+.ant-typography p,
+.ant-typography span {
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+}
+
+/* Buttons and form elements */
+.ant-btn,
+.ant-input,
+.ant-select,
+.ant-tag {
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
 }

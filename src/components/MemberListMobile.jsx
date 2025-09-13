@@ -84,7 +84,7 @@ const t = {
     en: "Nogizaka46 Blog",
     vi: "Blog Nogizaka46",
   },
-  totalBlogs: { ja: "総ブログ数", en: "Total Blogs", vi: "Tổng số Blog" },
+  totalBlogs: { ja: "総メンバー数", en: "Total Members", vi: "Tổng Số Thành Viên " },
 };
 
 /** JP font */
@@ -254,7 +254,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         style={{
           borderRadius: 12,
           overflow: "hidden",
-          background: "#fff",
+          background: "rgba(253, 246, 227, 0.8)",
           boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
           marginBottom: 8,
           contain: "layout paint style",
@@ -397,7 +397,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         paddingInlinePageContainer: 0,
       }}
       style={{
-        background: "#fff",
+        background: "rgba(253, 246, 227, 0.8)",
         padding: 0,
         margin: 0,
         minHeight: "100dvh",
@@ -410,7 +410,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
       <Affix offsetTop={0}>
         <div
           style={{
-            background: "#fff",
+            background: "rgba(253, 246, 227, 0.8)",
             borderBottom: "1px solid #f2f2f5",
             width: "100%",
             zIndex: 998,
@@ -554,7 +554,8 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                 size="middle"
                 style={{
                   borderRadius: 12,
-                  background: "#fafafa",
+                  background: "rgba(253, 246, 227, 0.9)",
+                  border: "1px solid rgba(139, 69, 19, 0.2)",
                   width: "100%",
                 }}
               />
@@ -669,7 +670,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                   marginBottom: 8,
                   borderRadius: 12,
                   border: "1px solid #f1f1f5",
-                  background: "#fff",
+                  background: "rgba(253, 246, 227, 0.8)",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                 },
                 forceRender: false,
@@ -746,7 +747,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
           height: 100%; 
           min-height: 100vh;
           min-height: 100dvh;
-          background: #fff;
+            background: #fdf6e3;
           margin: 0;
           padding: 0;
           width: 100%;
@@ -801,7 +802,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
           border: 1px solid #f1f1f5 !important; 
           border-radius: 12px !important; 
           margin-bottom: 8px !important; 
-          background: #fff !important; 
+          background: rgba(253, 246, 227, 0.8) !important; 
           box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important; 
           overflow: hidden !important; 
           width: 100% !important;
@@ -811,7 +812,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         }
         .ant-collapse-header { 
           padding: 12px 16px !important; 
-          background: linear-gradient(135deg, #ffffff, #fafafc) !important; 
+          background: linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9)) !important; 
           border: none !important; 
           border-radius: 12px !important; 
           cursor: pointer !important; 
@@ -822,7 +823,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         }
         .ant-collapse-content { 
           border: none !important; 
-          background: #fff !important; 
+          background: rgba(253, 246, 227, 0.8) !important; 
           border-radius: 0 0 12px 12px !important; 
         }
         .ant-collapse-content-box { 

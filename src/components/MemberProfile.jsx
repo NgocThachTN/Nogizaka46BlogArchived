@@ -26,7 +26,11 @@ const MemberProfile = ({ memberInfo, className }) => {
   return (
     <div className={className}>
       <Card
-        style={{ borderRadius: 16, overflow: "hidden" }}
+        style={{
+          borderRadius: 16,
+          overflow: "hidden",
+          background: "rgba(253, 246, 227, 0.8)",
+        }}
         bodyStyle={{ padding: 0 }}
       >
         {/* Avatar + Name */}

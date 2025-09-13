@@ -656,7 +656,11 @@ export default function BlogDetail({
         {/* Main content */}
         <ProCard colSpan={{ xs: 24, md: 16, xl: 17 }} ghost>
           <Card
-            style={{ borderRadius: 16, ...jpFont }}
+            style={{
+              borderRadius: 16,
+              background: "rgba(253, 246, 227, 0.8)",
+              ...jpFont,
+            }}
             bodyStyle={{ padding: readingMode ? 32 : 24, position: "relative" }}
           >
             {/* Overlay translating */}
@@ -871,26 +875,27 @@ export default function BlogDetail({
                 <span>{t.readTime[language]}</span>
               </Space>
             }
-            style={{ borderRadius: 16 }}
+            style={{ borderRadius: 16, background: "rgba(253, 246, 227, 0.8)" }}
             bodyStyle={{ padding: isMobile ? 12 : 16 }}
           >
             <div
               style={{
                 textAlign: "center",
                 padding: isMobile ? "16px 0" : "20px 0",
-                background: "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)",
+                background:
+                  "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)",
                 borderRadius: 12,
-                border: "1px solid #f0f0f0",
-                boxShadow: "0 2px 8px rgba(109, 40, 217, 0.05)",
+                border: "1px solid rgba(139, 69, 19, 0.2)",
+                boxShadow: "0 2px 8px rgba(139, 69, 19, 0.1)",
               }}
             >
               <div
                 style={{
                   fontSize: isMobile ? 24 : 28,
                   fontWeight: 700,
-                  color: "#6d28d9",
+                  color: "#8b4513",
                   marginBottom: 4,
-                  textShadow: "0 1px 2px rgba(109, 40, 217, 0.1)",
+                  textShadow: "0 1px 2px rgba(139, 69, 19, 0.1)",
                 }}
               >
                 {readMinutes}
@@ -898,7 +903,7 @@ export default function BlogDetail({
               <div
                 style={{
                   fontSize: isMobile ? 12 : 14,
-                  color: "#666",
+                  color: "#5d4e37",
                   fontWeight: 500,
                   letterSpacing: 0.5,
                 }}
@@ -909,7 +914,13 @@ export default function BlogDetail({
           </ProCard>
 
           {toc.length > 0 && (
-            <Card title={t.toc[language]} style={{ borderRadius: 16 }}>
+            <Card
+              title={t.toc[language]}
+              style={{
+                borderRadius: 16,
+                background: "rgba(253, 246, 227, 0.8)",
+              }}
+            >
               <Space direction="vertical" style={{ width: "100%" }} size={6}>
                 {toc.map((h) => (
                   <Button

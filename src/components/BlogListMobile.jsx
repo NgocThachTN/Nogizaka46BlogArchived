@@ -88,19 +88,19 @@ const t = {
 
 /** Japanese color palette - Purple theme */
 const colors = {
-  primary: "#9c27b0", // Purple
-  secondary: "#7b1fa2", // Dark purple
-  accent: "#e91e63", // Pink accent
+  primary: "#8b4513", // Brown (book theme)
+  secondary: "#a0522d", // Dark brown
+  accent: "#d2691e", // Orange accent
   success: "#4caf50", // Green
   warning: "#ff9800", // Amber
   error: "#f44336", // Red
   info: "#2196f3", // Blue
-  text: "#212121", // Dark gray
-  textSecondary: "#757575", // Medium gray
-  background: "#fafafa", // Light gray
-  surface: "#ffffff", // White
-  border: "#e0e0e0", // Light border
-  shadow: "rgba(156,39,176,0.08)", // Purple shadow
+  text: "#3c2415", // Dark brown text
+  textSecondary: "#5d4e37", // Medium brown
+  background: "#fdf6e3", // Cream background
+  surface: "rgba(253, 246, 227, 0.8)", // Cream surface
+  border: "rgba(139, 69, 19, 0.2)", // Brown border
+  shadow: "rgba(139, 69, 19, 0.1)", // Brown shadow
 };
 
 /** JP font - Japanese style */
@@ -887,7 +887,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           height: 100%; 
           min-height: 100vh;
           min-height: 100dvh;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+          background: linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%);
           margin: 0;
           padding: 0;
           width: 100%;

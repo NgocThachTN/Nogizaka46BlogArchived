@@ -215,7 +215,7 @@ const MemberList = ({ language = "ja", setLanguage }) => {
 
   return (
     <PageContainer
-      style={{ background: "#fff", paddingTop: 0, marginTop: 0 }}
+      style={{ background: "transparent", paddingTop: 0, marginTop: 0 }}
       token={{
         paddingInlinePageContainerContent: 0,
         paddingBlockPageContainerContent: 0,
@@ -229,7 +229,10 @@ const MemberList = ({ language = "ja", setLanguage }) => {
         style={{ marginTop: 0, paddingTop: 0 }}
       >
         {/* Header với title và language selector */}
-        <ProCard bordered style={{ borderRadius: 14 }}>
+        <ProCard
+          bordered
+          style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
+        >
           <Space
             style={{ width: "100%", justifyContent: "space-between" }}
             align="center"
@@ -307,7 +310,10 @@ const MemberList = ({ language = "ja", setLanguage }) => {
         </ProCard>
 
         {/* Bộ lọc */}
-        <ProCard bordered style={{ borderRadius: 14 }}>
+        <ProCard
+          bordered
+          style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
+        >
           <Space
             wrap
             size="middle"
@@ -363,7 +369,10 @@ const MemberList = ({ language = "ja", setLanguage }) => {
             <Spin size="large" />
           </div>
         ) : grouped.length === 0 ? (
-          <ProCard bordered style={{ borderRadius: 14 }}>
+          <ProCard
+            bordered
+            style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
+          >
             <Empty description={t.noMembers[currentLanguage]} />
           </ProCard>
         ) : (
@@ -397,7 +406,10 @@ const MemberList = ({ language = "ja", setLanguage }) => {
               }
               bordered
               headerBordered
-              style={{ borderRadius: 14 }}
+              style={{
+                borderRadius: 14,
+                background: "rgba(253, 246, 227, 0.8)",
+              }}
               bodyStyle={{ paddingTop: 16 }}
             >
               {/* List với grid 5 cột trên desktop */}
@@ -424,8 +436,8 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                         style={{
                           borderRadius: 16,
                           overflow: "hidden",
-                          background: "#fff",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                          background: "rgba(253, 246, 227, 0.9)",
+                          boxShadow: "0 4px 12px rgba(139, 69, 19, 0.1)",
                           transition: "all 0.3s ease",
                         }}
                       >
@@ -436,6 +448,7 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                             paddingBottom: "120%", // Tăng chiều cao ảnh
                             overflow: "hidden",
                             background: "#f7f7f9",
+                            borderRadius: "12px", // Bo cả 4 góc
                           }}
                         >
                           <img
@@ -584,6 +597,7 @@ const MemberList = ({ language = "ja", setLanguage }) => {
 
         .member-card .thumb img {
           transition: transform 0.5s ease;
+          border-radius: 12px;
         }
 
         .member-card:hover .thumb img {

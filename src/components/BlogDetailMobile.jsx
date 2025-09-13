@@ -127,7 +127,7 @@ export default function BlogDetailMobile({
       width: 32,
       height: 32,
       borderRadius: 10,
-      background: "#fff",
+      background: "rgba(253, 246, 227, 0.8)",
       color: "#111",
       border: "1px solid rgba(0,0,0,0.06)",
       boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
@@ -325,7 +325,7 @@ export default function BlogDetailMobile({
         <div
           style={{
             ...jpFont,
-            background: "#fff",
+            background: "rgba(253, 246, 227, 0.8)",
             borderBottom: "1px solid rgba(0,0,0,0.06)",
             zIndex: 999,
             position: "fixed",
@@ -413,9 +413,9 @@ export default function BlogDetailMobile({
                   value={cachedLanguage}
                   onChange={(val) => setLanguage(val)}
                   options={[
-                    { label: "🌏 日", value: "ja" },
-                    { label: "🌍 EN", value: "en" },
-                    { label: "🌎 VI", value: "vi" },
+                    { label: "日", value: "ja" },
+                    { label: "EN", value: "en" },
+                    { label: "VI", value: "vi" },
                   ]}
                 />
                 <Button
@@ -453,11 +453,11 @@ export default function BlogDetailMobile({
           style={{
             ...jpFont,
             background: isHeaderVisible
-              ? "linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)"
-              : "linear-gradient(135deg, rgba(250,250,250,0) 0%, rgba(245,245,245,0) 100%)",
+              ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
             borderBottom: isHeaderVisible
-              ? "1px solid rgba(0,0,0,0.06)"
-              : "1px solid rgba(0,0,0,0)",
+              ? "1px solid rgba(139, 69, 19, 0.2)"
+              : "1px solid rgba(139, 69, 19, 0)",
             zIndex: 998,
             position: "fixed",
             top: 48,
@@ -507,12 +507,12 @@ export default function BlogDetailMobile({
                   }}
                 />
                 <div>
-                  <Text strong style={{ color: "#111827", fontSize: "13px" }}>
+                  <Text strong style={{ color: "#3c2415", fontSize: "13px" }}>
                     {memberInfo?.name || blog.author}
                   </Text>
                   <div
                     style={{
-                      color: "#666",
+                      color: "#5d4e37",
                       marginTop: 1,
                       fontSize: "11px",
                       display: "flex",
@@ -540,7 +540,7 @@ export default function BlogDetailMobile({
                 <Text
                   strong
                   style={{
-                    color: "#111827",
+                    color: "#3c2415",
                     fontSize: "12px",
                     lineHeight: 1.2,
                     display: "block",
@@ -560,7 +560,7 @@ export default function BlogDetailMobile({
                 icon={<InfoCircleOutlined />}
                 onClick={() => setDrawerVisible(true)}
                 style={{
-                  color: "#666",
+                  color: "#5d4e37",
                   flexShrink: 0,
                   padding: "4px 6px",
                   height: "auto",
@@ -717,7 +717,11 @@ export default function BlogDetailMobile({
           paddingBlockPageContainerContent: 0,
           paddingInlinePageContainer: 0,
         }}
-        style={{ padding: 0, margin: 0, background: "#fff" }}
+        style={{
+          padding: 0,
+          margin: 0,
+          background: "rgba(253, 246, 227, 0.8)",
+        }}
       >
         {NavigationBar}
         {AuthorBar}
@@ -725,7 +729,7 @@ export default function BlogDetailMobile({
           ghost
           style={{
             minHeight: "100dvh",
-            background: "#fff",
+            background: "rgba(253, 246, 227, 0.8)",
             padding: 0,
             ...jpFont,
           }}
@@ -747,7 +751,11 @@ export default function BlogDetailMobile({
           paddingBlockPageContainerContent: 0,
           paddingInlinePageContainer: 0,
         }}
-        style={{ padding: 0, margin: 0, background: "#fff" }}
+        style={{
+          padding: 0,
+          margin: 0,
+          background: "rgba(253, 246, 227, 0.8)",
+        }}
       >
         {NavigationBar}
         {AuthorBar}
@@ -755,7 +763,7 @@ export default function BlogDetailMobile({
           ghost
           style={{
             minHeight: "100dvh",
-            background: "#fff",
+            background: "rgba(253, 246, 227, 0.8)",
             padding: 0,
             ...jpFont,
           }}
@@ -791,7 +799,7 @@ export default function BlogDetailMobile({
       style={{
         padding: 0,
         margin: 0,
-        background: "#fff",
+        background: "rgba(253, 246, 227, 0.8)",
         minHeight: "100dvh",
         width: "100vw",
         maxWidth: "100%",
@@ -807,7 +815,7 @@ export default function BlogDetailMobile({
         style={{
           height: "100dvh",
           overflow: "auto",
-          background: "#fff",
+          background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "contain",
           scrollbarWidth: "none",
@@ -825,7 +833,7 @@ export default function BlogDetailMobile({
         <ProCard
           ghost
           style={{
-            background: "#fff",
+            background: "rgba(253, 246, 227, 0.8)",
             padding: 0,
             flex: 1,
             width: "100%",
@@ -845,7 +853,7 @@ export default function BlogDetailMobile({
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "rgba(255,255,255,0.95)",
+                background: "rgba(253, 246, 227, 0.95)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -858,9 +866,9 @@ export default function BlogDetailMobile({
                   textAlign: "center",
                   borderRadius: 16,
                   boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
-                  border: "1px solid rgba(109, 40, 217, 0.15)",
+                  border: "1px solid rgba(139, 69, 19, 0.2)",
                   background:
-                    "linear-gradient(135deg, #ffffff 0%, #faf7ff 100%)",
+                    "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
                   margin: "0 16px",
                   maxWidth: 280,
                   width: "90%",
@@ -877,7 +885,7 @@ export default function BlogDetailMobile({
                     }}
                   >
                     <LoadingOutlined
-                      style={{ fontSize: 24, color: "#6d28d9" }}
+                      style={{ fontSize: 24, color: "#8b4513" }}
                       spin
                     />
                   </div>
@@ -886,7 +894,7 @@ export default function BlogDetailMobile({
                     <div
                       style={{
                         fontSize: 16,
-                        color: "#6d28d9",
+                        color: "#8b4513",
                         fontWeight: 600,
                         marginBottom: 8,
                       }}
@@ -947,9 +955,9 @@ export default function BlogDetailMobile({
               value={cachedLanguage}
               onChange={(val) => setLanguage(val)}
               options={[
-                { label: "🌏 Nhật", value: "ja" },
-                { label: "🌍 English", value: "en" },
-                { label: "🌎 Tiếng Việt", value: "vi" },
+                { label: "Nhật", value: "ja" },
+                { label: "English", value: "en" },
+                { label: "Tiếng Việt", value: "vi" },
               ]}
             />
             <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
@@ -1001,7 +1009,7 @@ export default function BlogDetailMobile({
           style={{
             height: 3,
             width: "100%",
-            background: "rgba(0,0,0,0.06)",
+            background: "rgba(139, 69, 19, 0.1)",
             willChange: "transform",
             transform: "translateZ(0)",
           }}
@@ -1010,7 +1018,7 @@ export default function BlogDetailMobile({
             style={{
               height: "100%",
               width: "100%",
-              background: "#1677ff",
+              background: "#8b4513",
               transform: `translateX(${readPct - 100}%)`,
               willChange: "transform",
               transition: "transform 0.1s ease-out",
@@ -1041,7 +1049,7 @@ export default function BlogDetailMobile({
             height: 100%; 
             min-height: 100vh;
             min-height: 100dvh;
-            background: #fff;
+            background: #fdf6e3;
             margin: 0;
             padding: 0;
             width: 100%;
@@ -1080,7 +1088,7 @@ export default function BlogDetailMobile({
             width: 100% !important;
           }
           .ant-card { 
-            background: #fff;
+            background: #fdf6e3;
             width: 100% !important;
           }
           .jp-prose img {

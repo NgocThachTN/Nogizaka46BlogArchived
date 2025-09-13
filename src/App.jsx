@@ -34,35 +34,44 @@ function App() {
       theme={{
         algorithm: theme.defaultAlgorithm,
         token: {
-          colorPrimary: "#9C27B0",
-          colorBgContainer: "#ffffff",
-          borderRadius: 12,
-          borderRadiusLG: 16,
+          colorPrimary: "#8B4513",
+          colorBgContainer: "#FDF6E3",
+          colorBgLayout: "#F4F1E8",
+          colorBgElevated: "#FDF6E3",
+          colorText: "#3C2415",
+          colorTextSecondary: "#5D4E37",
+          borderRadius: 8,
+          borderRadiusLG: 12,
           boxShadow:
-            "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+            "0 2px 8px rgba(139, 69, 19, 0.1), 0 1px 3px rgba(139, 69, 19, 0.15)",
           fontFamily:
-            "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            "'Playfair Display', 'Times New Roman', 'Georgia', 'serif'",
         },
         components: {
           Layout: {
-            siderBg: "#ffffff",
-            headerBg: "#ffffff",
-            bodyBg: "#f8fafc",
+            siderBg: "#F4F1E8",
+            headerBg: "#F4F1E8",
+            bodyBg: "#FDF6E3",
           },
           Card: {
-            borderRadiusLG: 16,
+            borderRadiusLG: 12,
             boxShadowTertiary:
-              "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+              "0 2px 8px rgba(139, 69, 19, 0.1), 0 1px 3px rgba(139, 69, 19, 0.15)",
+            colorBgContainer: "#FDF6E3",
           },
           Button: {
-            borderRadius: 8,
-            borderRadiusLG: 12,
+            borderRadius: 6,
+            borderRadiusLG: 8,
+          },
+          Typography: {
+            colorText: "#3C2415",
+            colorTextSecondary: "#5D4E37",
           },
         },
       }}
     >
       <Router>
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <div className="min-h-screen book-background">
           {/* Mobile Header - Removed title text */}
           <ProLayout
             layout="side"
