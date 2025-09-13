@@ -10,28 +10,81 @@ const cleanTextForTranslation = (text) => {
 
 const cleanTranslationResult = (text) => {
   // Clean up translation result while preserving Vietnamese content
-  return text
-    .replace(/```html/g, "")
-    .replace(/```/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-};
-
-const cleanTitleTranslation = (text) => {
-  // Special cleaning for title translations
-  // Remove any potential Japanese text that might be included
   let cleaned = text
     .replace(/```html/g, "")
     .replace(/```/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
+  // Remove any instruction text that might be included
+  const lines = cleaned.split("\n").filter((line) => {
+    const trimmed = line.trim();
+    // Remove lines that contain instruction keywords
+    return (
+      !trimmed.includes("IMPORTANT INSTRUCTIONS") &&
+      !trimmed.includes("Translate ONLY") &&
+      !trimmed.includes("Do NOT include") &&
+      !trimmed.includes("Return ONLY") &&
+      !trimmed.includes("Text to translate") &&
+      !trimmed.includes("Title to translate") &&
+      !trimmed.includes("CRITICAL:") &&
+      !trimmed.includes("ブログ記事") &&
+      !trimmed.includes("Dịch từ tiếng Nhật") &&
+      !trimmed.includes("Văn bản cần dịch") &&
+      !trimmed.includes('Dùng "mình" cho I/me') &&
+      !trimmed.includes("Dùng cách xưng hô phù hợp") &&
+      !trimmed.includes("Giữ giọng văn thân mật") &&
+      !trimmed.includes("Giữ nguyên các thẻ HTML") &&
+      !trimmed.includes("Giữ nguyên cấu trúc") &&
+      !trimmed.includes("Duy trì văn phong") &&
+      !trimmed.includes("Ưu tiên ngữ cảnh") &&
+      trimmed.length > 0
+    );
+  });
+
+  return lines.join("\n").trim();
+};
+
+const cleanTitleTranslation = (text) => {
+  // Special cleaning for title translations
+  let cleaned = text
+    .replace(/```html/g, "")
+    .replace(/```/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Remove instruction text
+  const lines = cleaned.split("\n").filter((line) => {
+    const trimmed = line.trim();
+    return (
+      !trimmed.includes("IMPORTANT INSTRUCTIONS") &&
+      !trimmed.includes("Translate ONLY") &&
+      !trimmed.includes("Do NOT include") &&
+      !trimmed.includes("Return ONLY") &&
+      !trimmed.includes("Title to translate") &&
+      !trimmed.includes("CRITICAL:") &&
+      !trimmed.includes("ブログ記事") &&
+      !trimmed.includes("Dịch từ tiếng Nhật") &&
+      !trimmed.includes("Văn bản cần dịch") &&
+      !trimmed.includes('Dùng "mình" cho I/me') &&
+      !trimmed.includes("Dùng cách xưng hô phù hợp") &&
+      !trimmed.includes("Giữ giọng văn thân mật") &&
+      !trimmed.includes("Giữ nguyên các thẻ HTML") &&
+      !trimmed.includes("Giữ nguyên cấu trúc") &&
+      !trimmed.includes("Duy trì văn phong") &&
+      !trimmed.includes("Ưu tiên ngữ cảnh") &&
+      trimmed.length > 0
+    );
+  });
+
+  cleaned = lines.join("\n").trim();
+
   // If the text contains both Japanese and Vietnamese, try to extract only Vietnamese
   // Look for patterns like "Japanese text Vietnamese text" and keep only Vietnamese
-  const lines = cleaned.split("\n").filter((line) => line.trim());
-  if (lines.length > 1) {
+  const finalLines = cleaned.split("\n").filter((line) => line.trim());
+  if (finalLines.length > 1) {
     // If multiple lines, take the last non-empty line (likely Vietnamese)
-    cleaned = lines[lines.length - 1].trim();
+    cleaned = finalLines[finalLines.length - 1].trim();
   }
 
   return cleaned;
