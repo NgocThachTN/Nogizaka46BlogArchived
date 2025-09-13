@@ -536,9 +536,9 @@ export default function BlogDetailMobile({
                     fontSize: "12px",
                     lineHeight: 1.2,
                     display: "block",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    wordWrap: "break-word",
+                    wordBreak: "break-word",
+                    whiteSpace: "normal",
                   }}
                 >
                   {displayTitle || blog?.title || "Không có title"}

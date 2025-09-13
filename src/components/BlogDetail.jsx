@@ -658,9 +658,9 @@ export default function BlogDetail() {
                       margin: 0,
                       lineHeight: 1.25,
                       fontSize: window.innerWidth < 768 ? 16 : 18,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      wordWrap: "break-word",
+                      wordBreak: "break-word",
+                      whiteSpace: "normal",
                     }}
                   >
                     {displayTitle}
