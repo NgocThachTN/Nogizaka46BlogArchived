@@ -28,7 +28,7 @@ import {
   ProCard,
   ProSkeleton,
 } from "@ant-design/pro-components";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   useCallback,
   useEffect,
@@ -38,11 +38,7 @@ import {
   useLayoutEffect,
   useTransition,
 } from "react";
-import {
-  getCachedBlogDetail,
-  getImageUrl,
-  fetchBlogDetail,
-} from "../services/blogService";
+import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 import { isIOS } from "../utils/deviceDetection";
 
 // Utility function for throttle
@@ -106,7 +102,7 @@ function optimizeHtmlForMobile(html) {
 
 export default function BlogDetailMobile({
   blog,
-  // loading, // Removed - using mobileLoading instead
+  loading,
   translating,
   language,
   setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
@@ -120,16 +116,12 @@ export default function BlogDetailMobile({
   memberInfo, // Add memberInfo prop
 }) {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get blog ID from URL
 
   // Mobile-optimized state management
   const [isPending] = useTransition();
   const [cachedDisplayContent, setCachedDisplayContent] =
     useState(displayContent);
   const [cachedLanguage, setCachedLanguage] = useState(language);
-
-  // Mobile-specific loading state - override parent loading when we have content
-  const [mobileLoading, setMobileLoading] = useState(true);
 
   // Track previous blog ID to detect blog changes
   const prevBlogIdRef = useRef(blog?.id);
@@ -184,7 +176,6 @@ export default function BlogDetailMobile({
         // Blog changed - clear everything immediately
         setCachedDisplayContent(null);
         setCachedLanguage(language);
-        setMobileLoading(true); // Reset loading state
         prevBlogIdRef.current = blog.id;
 
         // Reset scroll position when switching blogs
@@ -198,7 +189,6 @@ export default function BlogDetailMobile({
         // Show original content immediately - don't wait for translation
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
-          setMobileLoading(false); // Content is ready
         }
 
         // Force reset read progress
@@ -214,232 +204,98 @@ export default function BlogDetailMobile({
           // Use cached content
           setCachedDisplayContent(cached.displayContent);
           setCachedLanguage(cached.language);
-          setMobileLoading(false); // Content is ready
         } else {
           // Clear cache and show original content
           _mobileCache.blogContent.delete(blog.id);
           if (blog?.content) {
             setCachedDisplayContent(blog.content);
-            setMobileLoading(false); // Content is ready
           }
         }
       }
     }
   }, [blog?.id, language, blog?.content]);
-
-  // ---- iOS-specific delay and content loading optimization ----
-  useEffect(() => {
-    if (!blog?.id) return;
-
-    const loadContent = async () => {
-      try {
-        // iOS-specific delay to prevent race conditions
-        if (isIOS()) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-
-        // Check if we have fresh cache
-        const now = Date.now();
-        const cached = _mobileCache.blogContent.get(blog.id);
-        const isFresh = cached && now - cached.ts < CACHE_STALE_MS;
-
-        if (isFresh && cached.language === language) {
-          // Use cached content immediately
-          setCachedDisplayContent(cached.displayContent);
-          setCachedLanguage(cached.language);
-          setMobileLoading(false); // Content is ready
-          return;
-        }
-
-        // If no fresh cache, show original content immediately
-        if (blog?.content) {
-          setCachedDisplayContent(blog.content);
-          setCachedLanguage(language);
-          setMobileLoading(false); // Content is ready
-        }
-      } catch (e) {
-        console.error("Error loading content:", e);
-        // Fallback to original content
-        if (blog?.content) {
-          setCachedDisplayContent(blog.content);
-          setMobileLoading(false); // Content is ready
-        }
-      }
-    };
-
-    loadContent();
-  }, [blog?.id, language, blog?.content]);
-
-  // ---- Force show content when blog is available, even if parent is still loading ----
-  useEffect(() => {
-    if (blog?.id && blog?.content && !cachedDisplayContent) {
-      // iOS-specific delay for immediate content display
-      const showContent = async () => {
-        try {
-          if (isIOS()) {
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
-
-          console.log("iOS: Force showing content", {
-            blogId: blog.id,
-            hasContent: !!blog.content,
-          });
-          setCachedDisplayContent(blog.content);
-          setCachedLanguage(language);
-          setMobileLoading(false); // Content is ready
-        } catch (e) {
-          console.error("Error showing content:", e);
-          setCachedDisplayContent(blog.content);
-          setMobileLoading(false); // Content is ready
-        }
-      };
-
-      showContent();
-    }
-  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
-
-  // ---- Emergency fallback: Force show content immediately if blog exists ----
-  useEffect(() => {
-    if (blog?.id && blog?.content && !cachedDisplayContent) {
-      console.log("iOS: Emergency fallback - showing content immediately");
-      setCachedDisplayContent(blog.content);
-      setCachedLanguage(language);
-      setMobileLoading(false);
-    }
-  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
-
-  // ---- iOS-specific immediate content display ----
-  useLayoutEffect(() => {
-    if (blog?.id && blog?.content && !cachedDisplayContent) {
-      console.log("iOS: useLayoutEffect - showing content immediately");
-      setCachedDisplayContent(blog.content);
-      setCachedLanguage(language);
-      setMobileLoading(false);
-    }
-  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
 
   // ---- Cache management và smooth updates ----
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
-      // iOS-specific delay for content updates
-      const updateContent = async () => {
-        try {
-          // iOS delay to prevent race conditions
-          if (isIOS()) {
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
+      // Clear any existing cache for this blog first to prevent stale content
+      _mobileCache.blogContent.delete(blog.id);
 
-          // Clear any existing cache for this blog first to prevent stale content
-          _mobileCache.blogContent.delete(blog.id);
+      // Cache new content với timestamp
+      _mobileCache.blogContent.set(blog.id, {
+        content: blog.content,
+        displayContent,
+        language,
+        ts: Date.now(),
+      });
 
-          // Cache new content với timestamp
-          _mobileCache.blogContent.set(blog.id, {
-            content: blog.content,
-            displayContent,
-            language,
-            ts: Date.now(),
-          });
+      // Update cached state immediately (not in transition) to prevent flicker
+      setCachedDisplayContent(displayContent);
+      setCachedLanguage(language);
 
-          // Update cached state immediately (not in transition) to prevent flicker
-          setCachedDisplayContent(displayContent);
-          setCachedLanguage(language);
-          setMobileLoading(false); // Content is ready
+      // Reset read progress
+      setReadPct(0);
 
-          // Reset read progress
-          setReadPct(0);
+      // Force scroll to top immediately for new content
+      if (scrollWrapRef.current) {
+        // Disable smooth scrolling temporarily
+        scrollWrapRef.current.style.scrollBehavior = "auto";
+        scrollWrapRef.current.scrollTop = 0;
 
-          // Force scroll to top immediately for new content
+        // Re-enable smooth scrolling after scroll
+        requestAnimationFrame(() => {
           if (scrollWrapRef.current) {
-            // Disable smooth scrolling temporarily
-            scrollWrapRef.current.style.scrollBehavior = "auto";
-            scrollWrapRef.current.scrollTop = 0;
-
-            // Re-enable smooth scrolling after scroll
-            requestAnimationFrame(() => {
-              if (scrollWrapRef.current) {
-                scrollWrapRef.current.style.scrollBehavior = "smooth";
-              }
-            });
+            scrollWrapRef.current.style.scrollBehavior = "smooth";
           }
+        });
+      }
 
-          // Simple image handling - no delays or complex logic
-          if (scrollWrapRef.current) {
-            const images = scrollWrapRef.current.getElementsByTagName("img");
-            Array.from(images).forEach((img) => {
-              img.style.opacity = "1";
-              img.style.transition = "none";
-            });
-          }
-        } catch (e) {
-          console.error("Error updating content:", e);
-          // Fallback to immediate update
-          setCachedDisplayContent(displayContent);
-          setCachedLanguage(language);
-          setMobileLoading(false); // Content is ready
-        }
-      };
-
-      updateContent();
+      // Simple image handling - no delays or complex logic
+      if (scrollWrapRef.current) {
+        const images = scrollWrapRef.current.getElementsByTagName("img");
+        Array.from(images).forEach((img) => {
+          img.style.opacity = "1";
+          img.style.transition = "none";
+        });
+      }
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
 
   // ---- Force clear content when displayContent changes from parent ----
   useEffect(() => {
     if (displayContent && blog?.id) {
-      // iOS-specific delay for content clearing
-      const clearAndSetContent = async () => {
-        try {
-          // iOS delay to prevent race conditions
-          if (isIOS()) {
-            await new Promise((resolve) => setTimeout(resolve, 30));
-          }
+      // This ensures that when parent provides new displayContent,
+      // we immediately show it instead of cached content
+      setCachedDisplayContent(displayContent);
+      setCachedLanguage(language);
 
-          // This ensures that when parent provides new displayContent,
-          // we immediately show it instead of cached content
-          setCachedDisplayContent(displayContent);
-          setCachedLanguage(language);
-          setMobileLoading(false); // Content is ready
-
-          // Clear any existing cache for this blog to prevent conflicts
-          _mobileCache.blogContent.delete(blog.id);
-        } catch (e) {
-          console.error("Error clearing and setting content:", e);
-          // Fallback to immediate update
-          setCachedDisplayContent(displayContent);
-          setCachedLanguage(language);
-          setMobileLoading(false); // Content is ready
-        }
-      };
-
-      clearAndSetContent();
+      // Clear any existing cache for this blog to prevent conflicts
+      _mobileCache.blogContent.delete(blog.id);
     }
   }, [displayContent, language, blog?.id]);
 
   // Lưu vị trí cuộn trước khi rời trang (chỉ khi không phải content mới)
   useEffect(() => {
-    const blogId = blog?.id || id;
-    if (!blogId) return;
+    if (!blog?.id) return;
 
     const onStore = () => {
       if (scrollWrapRef.current) {
         // Chỉ lưu scroll position nếu content đã ổn định
-        const cached = _mobileCache.blogContent.get(blogId);
+        const cached = _mobileCache.blogContent.get(blog.id);
         if (cached && cached.language === language) {
           _mobileCache.scrollPosition.set(
-            blogId,
+            blog.id,
             scrollWrapRef.current.scrollTop
           );
         }
       }
     };
 
-    // iOS-optimized debounce scroll position saving
+    // Debounce scroll position saving
     let saveTimeout = null;
     const debouncedSave = () => {
       if (saveTimeout) clearTimeout(saveTimeout);
-      // iOS needs longer debounce time
-      const delay = isIOS() ? 800 : 500;
-      saveTimeout = setTimeout(onStore, delay);
+      saveTimeout = setTimeout(onStore, 500);
     };
 
     const wrap = scrollWrapRef.current;
@@ -459,37 +315,15 @@ export default function BlogDetailMobile({
       window.removeEventListener("pagehide", onStore);
       window.removeEventListener("beforeunload", onStore);
     };
-  }, [blog?.id, id, language]);
+  }, [blog?.id, language]);
 
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 30));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
 
   // Optimized HTML with lazy images - sử dụng cached content
-  // const optimizedHtml = useMemo(() => {
-  //   const content = cachedDisplayContent || blog?.content || "";
-  //   console.log("iOS: optimizedHtml useMemo", {
-  //     hasCachedContent: !!cachedDisplayContent,
-  //     hasBlogContent: !!blog?.content,
-  //     contentLength: content.length
-  //   });
-  //   return optimizeHtmlForMobile(content);
-  // }, [cachedDisplayContent, blog?.content]);
-
-  // Force content display for iOS
-  const finalDisplayContent = useMemo(() => {
-    const blogId = blog?.id || id;
-    if (blogId && blog?.content) {
-      console.log("iOS: finalDisplayContent useMemo - blog content available");
-      if (!cachedDisplayContent) {
-        // Force set content immediately
-        setCachedDisplayContent(blog.content);
-        setCachedLanguage(language);
-        setMobileLoading(false);
-      }
-      return blog.content;
-    }
-    return cachedDisplayContent || "";
-  }, [blog?.id, blog?.content, cachedDisplayContent, language, id]);
+  const optimizedHtml = useMemo(() => {
+    return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
+  }, [cachedDisplayContent, blog?.content]);
 
   // Debug logging removed for performance
 
@@ -661,7 +495,7 @@ export default function BlogDetailMobile({
             fontSize: "13px",
           }}
         >
-          {(blog || cachedDisplayContent) && (
+          {blog && (
             <>
               {/* Author Info - Left Side */}
               <Space
@@ -683,7 +517,7 @@ export default function BlogDetailMobile({
                 />
                 <div>
                   <Text strong style={{ color: "#3c2415", fontSize: "13px" }}>
-                    {memberInfo?.name || blog?.author || "Loading..."}
+                    {memberInfo?.name || blog.author}
                   </Text>
                   <div
                     style={{
@@ -697,7 +531,7 @@ export default function BlogDetailMobile({
                     <CalendarOutlined
                       style={{ marginRight: 4, fontSize: "10px" }}
                     />
-                    <Text>{blog?.date || "Loading..."}</Text>
+                    <Text>{blog.date}</Text>
                   </div>
                 </div>
               </Space>
@@ -724,7 +558,7 @@ export default function BlogDetailMobile({
                     whiteSpace: "normal",
                   }}
                 >
-                  {displayTitle || blog?.title || "Loading..."}
+                  {displayTitle || blog?.title || "Không có title"}
                 </Text>
               </div>
 
@@ -746,14 +580,7 @@ export default function BlogDetailMobile({
         </ProCard>
       </Affix>
     ),
-    [
-      blog,
-      displayTitle,
-      memberInfo,
-      isHeaderVisible,
-      setDrawerVisible,
-      cachedDisplayContent,
-    ]
+    [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
   );
 
   // Create a single throttled updater for scroll progress and header visibility
@@ -785,7 +612,7 @@ export default function BlogDetailMobile({
     }, 100);
   }, [scrollThreshold]);
 
-  // iOS/Android-optimized scroll handler
+  // Android-optimized scroll handler
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
@@ -798,16 +625,14 @@ export default function BlogDetailMobile({
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
 
-    // iOS-optimized debounce scroll events
+    // Debounce scroll events
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
 
-    // iOS needs longer debounce time
-    const debounceTime = isIOS() ? 200 : 150;
     scrollTimeout.current = setTimeout(() => {
       setIsScrolling(false);
-    }, debounceTime);
+    }, 150);
 
     if (!isScrolling) {
       setIsScrolling(true);
@@ -815,28 +640,34 @@ export default function BlogDetailMobile({
       return;
     }
 
-    // iOS needs longer processing interval
-    const processingInterval = isIOS() ? 80 : 50;
-    if (currentTime - lastScrollTime.current < processingInterval) return;
+    // Only process if enough time has passed
+    if (currentTime - lastScrollTime.current < 50) return;
 
     const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-    // iOS needs larger scroll threshold
-    const scrollThreshold = isIOS() ? 8 : 5;
-    if (Math.abs(scrollDifference) > scrollThreshold) {
+    if (Math.abs(scrollDifference) > 5) {
+      console.log("Scroll detected:", {
+        currentScrollY,
+        lastScrollY: lastScrollY.current,
+        scrollDifference,
+        isHeaderVisible,
+      });
+
       if (scrollDifference > 0) {
         // Scroll down (kéo xuống) - hiện header
+        console.log("Showing header - scrolling down");
         setIsHeaderVisible(true);
       } else {
         // Scroll up (kéo lên) - ẩn header
+        console.log("Hiding header - scrolling up");
         setIsHeaderVisible(false);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling]);
+  }, [isScrolling, isHeaderVisible]);
 
-  // Setup scroll handlers for iOS/Android
+  // Setup scroll handlers for Android
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
@@ -852,174 +683,40 @@ export default function BlogDetailMobile({
       handleScroll();
     };
 
-    // iOS-optimized scroll handler setup
-    const scrollOptions = {
-      passive: true,
-      // iOS needs capture phase for better performance
-      capture: isIOS(),
-    };
-
     // Setup scroll handler
-    wrap.addEventListener("scroll", combinedScrollHandler, scrollOptions);
+    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
 
-    // Setup wheel events for better support
-    wrap.addEventListener("wheel", combinedScrollHandler, scrollOptions);
+    // Setup wheel events for better Android support
+    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
 
-    // iOS-specific touch events
-    if (isIOS()) {
-      wrap.addEventListener("touchstart", combinedScrollHandler, scrollOptions);
-      wrap.addEventListener("touchend", combinedScrollHandler, scrollOptions);
-    }
-
-    // Initialize with delay for iOS
-    if (isIOS()) {
-      setTimeout(combinedScrollHandler, 100);
-    } else {
-      combinedScrollHandler();
-    }
+    // Initialize
+    combinedScrollHandler();
 
     // Cleanup
     return () => {
-      wrap.removeEventListener("scroll", combinedScrollHandler, scrollOptions);
-      wrap.removeEventListener("wheel", combinedScrollHandler, scrollOptions);
-      if (isIOS()) {
-        wrap.removeEventListener(
-          "touchstart",
-          combinedScrollHandler,
-          scrollOptions
-        );
-        wrap.removeEventListener(
-          "touchend",
-          combinedScrollHandler,
-          scrollOptions
-        );
-      }
+      wrap.removeEventListener("scroll", combinedScrollHandler);
+      wrap.removeEventListener("wheel", combinedScrollHandler);
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
     };
   }, [handleScroll]);
 
-  // iOS-optimized image handling
+  // Simple image handling - no complex logic
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap || !cachedDisplayContent) return;
 
-    // iOS-optimized image handling
-    const handleImages = async () => {
-      try {
-        // iOS delay for image processing
-        if (isIOS()) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
-        }
-
-        const images = wrap.getElementsByTagName("img");
-        Array.from(images).forEach((img) => {
-          // iOS-specific image optimizations
-          if (isIOS()) {
-            img.style.webkitTransform = "translateZ(0)";
-            img.style.webkitBackfaceVisibility = "hidden";
-            img.style.webkitPerspective = "1000";
-          }
-
-          img.style.opacity = "1";
-          img.style.transition = "none"; // Disable transitions
-          img.style.pointerEvents = "none"; // Prevent iOS zoom
-          img.style.touchAction = "manipulation"; // Prevent iOS zoom
-        });
-      } catch (e) {
-        console.error("Error handling images:", e);
-        // Fallback to simple handling
-        const images = wrap.getElementsByTagName("img");
-        Array.from(images).forEach((img) => {
-          img.style.opacity = "1";
-          img.style.transition = "none";
-        });
-      }
-    };
-
-    handleImages();
+    // Simple image visibility - no transitions or complex logic
+    const images = wrap.getElementsByTagName("img");
+    Array.from(images).forEach((img) => {
+      img.style.opacity = "1";
+      img.style.transition = "none"; // Disable transitions
+    });
   }, [cachedDisplayContent]);
 
-  // Debug logging for iOS
-  useEffect(() => {
-    if (isIOS()) {
-      console.log("BlogDetailMobile iOS Debug:", {
-        blogId: blog?.id || id,
-        hasBlog: !!blog,
-        hasContent: !!blog?.content,
-        mobileLoading,
-        cachedDisplayContent: !!cachedDisplayContent,
-        displayContent: !!displayContent,
-        translating,
-        userAgent: navigator.userAgent,
-        isIOS: isIOS(),
-        urlId: id,
-      });
-    }
-  }, [
-    blog?.id,
-    blog?.content,
-    mobileLoading,
-    cachedDisplayContent,
-    displayContent,
-    translating,
-    blog,
-    id,
-  ]);
-
-  // iOS Emergency fallback 3: Force fetch blog content if we have blog ID but no content
-  useEffect(() => {
-    const blogId = blog?.id || id;
-    if (blogId && !blog?.content && isIOS()) {
-      console.log("iOS: Emergency fallback 3 - force fetching blog content");
-      const forceFetch = async () => {
-        try {
-          const data = await fetchBlogDetail(blogId);
-          if (data?.content) {
-            console.log("iOS: Successfully fetched blog content");
-            setCachedDisplayContent(data.content);
-            setCachedLanguage(language);
-            setMobileLoading(false);
-          }
-        } catch (error) {
-          console.error("iOS: Failed to force fetch blog content:", error);
-        }
-      };
-      forceFetch();
-    }
-  }, [blog?.id, blog?.content, language, id]);
-
-  // iOS Emergency fallback 4: If no blog prop but we have ID from URL, fetch it directly
-  useEffect(() => {
-    if (!blog && id && isIOS()) {
-      console.log(
-        "iOS: Emergency fallback 4 - no blog prop, fetching from URL ID"
-      );
-      const fetchFromUrl = async () => {
-        try {
-          setMobileLoading(true);
-          const data = await fetchBlogDetail(id);
-          if (data?.content) {
-            console.log("iOS: Successfully fetched blog content from URL ID");
-            setCachedDisplayContent(data.content);
-            setCachedLanguage(language);
-            setMobileLoading(false);
-          }
-        } catch (error) {
-          console.error(
-            "iOS: Failed to fetch blog content from URL ID:",
-            error
-          );
-          setMobileLoading(false);
-        }
-      };
-      fetchFromUrl();
-    }
-  }, [blog, id, language]);
-
-  // Loading skeleton (ngon hơn Spin) - chỉ hiển thị khi không có content
-  if (!cachedDisplayContent && !blog?.content && !mobileLoading) {
+  // Loading skeleton (ngon hơn Spin)
+  if (loading) {
     return (
       <PageContainer
         header={false}
@@ -1053,30 +750,7 @@ export default function BlogDetailMobile({
     );
   }
 
-  // iOS Emergency fallback: Force show content if blog exists but no cached content
-  const blogId = blog?.id || id;
-  if (blogId && blog?.content && !cachedDisplayContent) {
-    console.log("iOS: Render fallback - forcing content display");
-    // Force update state immediately
-    setCachedDisplayContent(blog.content);
-    setCachedLanguage(language);
-    setMobileLoading(false);
-  }
-
-  // iOS Emergency fallback 2: If we have blog but no content, try to get it from cache
-  if (blogId && !blog?.content && !cachedDisplayContent) {
-    console.log("iOS: Emergency fallback 2 - trying to get content from cache");
-    const cached = _mobileCache.blogContent.get(blogId);
-    if (cached?.content) {
-      console.log("iOS: Found cached content, using it");
-      setCachedDisplayContent(cached.content);
-      setCachedLanguage(cached.language || language);
-      setMobileLoading(false);
-    }
-  }
-
-  // Only show "not found" if we don't have blog AND no content AND not loading
-  if (!blog && !cachedDisplayContent && !mobileLoading) {
+  if (!blog) {
     return (
       <PageContainer
         header={false}
@@ -1262,7 +936,7 @@ export default function BlogDetailMobile({
                 hyphens: "auto",
               }}
               dangerouslySetInnerHTML={{
-                __html: optimizeHtmlForMobile(finalDisplayContent),
+                __html: optimizedHtml,
               }}
             />
           </div>
@@ -1380,23 +1054,16 @@ export default function BlogDetailMobile({
             -webkit-overflow-scrolling: touch;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            /* iOS-specific fixes */
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
           }
           
           /* Prevent iOS zoom on double tap */
           * {
             touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
           }
 
-          /* iOS scroll optimization */
-          .ant-pro-page-container-children-container {
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
+          /* Minimal touch optimization */
+          * {
+            -webkit-tap-highlight-color: transparent;
           }
 
           html, body, #root { 
@@ -1453,27 +1120,22 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* iOS-optimized CSS */
+            /* Minimal CSS to prevent jank */
             pointer-events: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-user-drag: none;
             user-select: none;
-            /* iOS hardware acceleration */
+            /* Simple hardware acceleration */
             transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            -webkit-backface-visibility: hidden;
-            -webkit-perspective: 1000;
-            /* iOS-specific optimizations */
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            /* Prevent iOS zoom and improve performance */
-            touch-action: manipulation;
             /* No transitions or complex properties */
             opacity: 1;
             background: rgba(0,0,0,0.05);
-            /* iOS scroll optimization */
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
+            /* iOS-specific optimizations */
+            -webkit-backface-visibility: hidden;
+            -webkit-transform: translateZ(0);
+            -webkit-perspective: 1000;
+            /* Prevent iOS zoom on double tap */
+            touch-action: manipulation;
           }
           .jp-prose p {
             margin: 0.85em 0;
