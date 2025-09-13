@@ -777,26 +777,30 @@ export default function BlogDetailMobile({
       <div
         ref={scrollWrapRef}
         style={{
-          height: isIOS() ? '-webkit-fill-available' : '100dvh',
-          minHeight: isIOS() ? '-webkit-fill-available' : '100dvh',
+          height: 'calc(100dvh - 48px)', // Trừ đi chiều cao của NavigationBar
+          minHeight: 'calc(100dvh - 48px)',
+          maxHeight: 'calc(100dvh - 48px)',
           overflow: 'auto',
           background: 'rgba(253, 246, 227, 0.8)',
           WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: isIOS() ? 'none' : 'contain', // Prevent bounce effect on iOS
+          overscrollBehavior: 'none', // Prevent bounce effect on all platforms
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           width: '100%',
           position: 'relative',
           display: 'flex', 
           flexDirection: 'column',
-          touchAction: isIOS() ? 'manipulation' : 'pan-y', // Better touch handling on iOS
-          paddingTop: isHeaderVisible ? '88px' : '48px',
+          flexGrow: 1,
+          touchAction: 'pan-y', // Better touch handling
+          paddingTop: isHeaderVisible ? '40px' : '0', // Adjust padding for AuthorBar
           transition: 'padding-top 0.3s ease',
-          WebkitBackfaceVisibility: 'hidden', // Reduce flickering on iOS
-          WebkitTransform: 'translate3d(0,0,0)', // Force GPU acceleration
+          WebkitBackfaceVisibility: 'hidden',
+          WebkitTransform: 'translate3d(0,0,0)',
           transform: 'translate3d(0,0,0)',
-          willChange: 'transform', // Optimize animations
-          contain: 'paint layout style', // Reduce paint area
+          willChange: 'transform',
+          contain: 'paint layout style',
+          marginBottom: 0,
+          paddingBottom: 0
         }}
       >
         <ProCard
@@ -1007,24 +1011,33 @@ export default function BlogDetailMobile({
           }
 
           html, body, #root { 
-            height: 100%; 
-            min-height: 100vh;
+            height: 100dvh;
             min-height: 100dvh;
+            max-height: 100dvh;
             background: #fdf6e3;
             margin: 0;
             padding: 0;
             width: 100%;
             max-width: 100vw;
-            overflow-x: hidden;
+            overflow: hidden;
+            position: fixed;
+            inset: 0;
           }
           body { 
             margin: 0; 
             padding: 0;
             overscroll-behavior: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
           }
           #root {
             display: flex;
             flex-direction: column;
+            height: 100dvh;
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
           }
           .ant-pro-page-container { 
             padding: 0 !important;
