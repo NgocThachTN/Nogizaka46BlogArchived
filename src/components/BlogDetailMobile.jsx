@@ -1,11 +1,9 @@
 // BlogDetailMobile.jsx — Full-bleed mobile reader (Ant Design Pro)
-// Giữ nguyên bố cục, nâng UX: ProSkeleton, progress đọc, ngôn ngữ JP/EN/VI, A-/A+, Drawer info.
-// Thêm: Auto-hide AuthorBar + Title trên Android (kéo xuống ẩn, kéo lên hiện) + nút ẩn/hiện thủ công + nút bật/tắt auto-hide.
+// Auto-hide AuthorBar trên Android + nút ẩn/hiện thủ công. Đã fix jank khi ẩn thủ công.
 
 import {
   Typography,
   Space,
-  FloatButton,
   Drawer,
   Segmented,
   Affix,
@@ -16,24 +14,16 @@ import {
 } from "antd";
 import {
   LoadingOutlined,
-  TranslationOutlined,
-  ArrowUpOutlined,
-  LeftOutlined,
   HomeOutlined,
   InfoCircleOutlined,
   CalendarOutlined,
   FontSizeOutlined,
-  GlobalOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
   PushpinOutlined,
   PushpinFilled,
 } from "@ant-design/icons";
-import {
-  PageContainer,
-  ProCard,
-  ProSkeleton,
-} from "@ant-design/pro-components";
+import { PageContainer, ProCard, ProSkeleton } from "@ant-design/pro-components";
 import { useNavigate } from "react-router-dom";
 import {
   useCallback,
@@ -47,12 +37,11 @@ import {
 import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 import { isIOS } from "../utils/deviceDetection";
 
-// Android detection (nhẹ, đủ xài)
+// Android detection
 const isAndroid = () =>
-  typeof navigator !== "undefined" &&
-  /Android/i.test(navigator.userAgent || "");
+  typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent || "");
 
-// Utility function for throttle
+// throttle helper
 function throttle(func, limit) {
   let inThrottle;
   let lastRan;
@@ -82,15 +71,12 @@ const jpFont = {
 
 const LS_FONT = "mblog:fontSize";
 
-/** ---------- Simple in-memory cache for mobile optimization ---------- **/
 const _mobileCache = {
-  blogContent: new Map(), // key: blogId -> { content, displayContent, language, ts }
-  scrollPosition: new Map(), // key: blogId -> number
-  imageCache: new Map(), // key: src -> { loaded: boolean, ts }
+  blogContent: new Map(),
+  scrollPosition: new Map(),
+  imageCache: new Map(),
 };
-const CACHE_STALE_MS = 1000 * 60 * 5; // 5 phút
 
-// Inject performance attributes into HTML for mobile rendering
 function optimizeHtmlForMobile(html) {
   if (!html) return html;
   return html.replace(/<img\b([^>]*?)>/gi, (match, attrs) => {
@@ -99,14 +85,9 @@ function optimizeHtmlForMobile(html) {
     if (!/\bdecoding=/.test(newAttrs)) newAttrs += ' decoding="async"';
     if (!/\breferrerpolicy=/.test(newAttrs))
       newAttrs += ' referrerpolicy="no-referrer"';
-
-    // iOS-specific optimizations
-    if (isIOS()) {
-      if (!/\bstyle=/.test(newAttrs)) {
-        newAttrs += ' style="max-width: 100%; height: auto;"';
-      }
+    if (isIOS() && !/\bstyle=/.test(newAttrs)) {
+      newAttrs += ' style="max-width: 100%; height: auto;"';
     }
-
     return `<img${newAttrs}>`;
   });
 }
@@ -116,25 +97,22 @@ export default function BlogDetailMobile({
   loading,
   translating,
   language,
-  setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
-  displayTitle, // Title (JP/EN/VI) render ra
-  displayContent, // HTML (JP/EN/VI) render ra
+  setLanguage,
+  displayTitle,
+  displayContent,
   prevId,
   nextId,
   fastGo,
   pendingNavId,
   navLock,
-  memberInfo, // Add memberInfo prop
+  memberInfo,
 }) {
   const navigate = useNavigate();
 
-  // Mobile-optimized state management
   const [isPending] = useTransition();
-  const [cachedDisplayContent, setCachedDisplayContent] =
-    useState(displayContent);
+  const [cachedDisplayContent, setCachedDisplayContent] = useState(displayContent);
   const [cachedLanguage, setCachedLanguage] = useState(language);
 
-  // Track previous blog ID to detect blog changes
   const prevBlogIdRef = useRef(blog?.id);
 
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -161,7 +139,7 @@ export default function BlogDetailMobile({
     []
   );
 
-  // progress đọc (%)
+  // đọc %
   const [readPct, setReadPct] = useState(0);
   const scrollWrapRef = useRef(null);
   const lastTotalRef = useRef(0);
@@ -169,11 +147,10 @@ export default function BlogDetailMobile({
   const lastPctRef = useRef(0);
   const throttledUpdateRef = useRef(null);
 
-  // Header visibility state for scroll-based hiding
+  // header state
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
-  // Auto-hide khi cuộn (Android), và ẩn thủ công
+  // Auto-hide và ẩn thủ công
   const [autoHideHeader, setAutoHideHeader] = useState(true);
   const [manuallyHidden, setManuallyHidden] = useState(false);
 
@@ -181,62 +158,52 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // ---- Clear old content immediately when blog changes ----
+  // Blog change → reset, không giật
   useLayoutEffect(() => {
-    if (blog?.id) {
-      // Detect if blog ID changed
-      const blogChanged = prevBlogIdRef.current !== blog.id;
+    if (!blog?.id) return;
+    const blogChanged = prevBlogIdRef.current !== blog.id;
 
-      if (blogChanged) {
-        // Blog changed - clear everything immediately
-        setCachedDisplayContent(null);
-        setCachedLanguage(language);
-        prevBlogIdRef.current = blog.id;
+    if (blogChanged) {
+      setCachedDisplayContent(null);
+      setCachedLanguage(language);
+      prevBlogIdRef.current = blog.id;
 
-        // Reset scroll position when switching blogs
-        if (scrollWrapRef.current) {
-          scrollWrapRef.current.scrollTop = 0;
-        }
+      if (scrollWrapRef.current) {
+        const el = scrollWrapRef.current;
+        el.style.scrollBehavior = "auto";
+        el.scrollTop = 0;
+        requestAnimationFrame(() => {
+          if (el) el.style.scrollBehavior = "smooth";
+        });
+      }
 
-        // Clear ALL cache to prevent showing old content
-        _mobileCache.blogContent.clear();
+      _mobileCache.blogContent.clear();
 
-        // Show original content immediately - don't wait for translation
-        if (blog?.content) {
-          setCachedDisplayContent(blog.content);
-        }
+      if (blog?.content) setCachedDisplayContent(blog.content);
+      setReadPct(0);
 
-        // Force reset read progress
-        setReadPct(0);
+      // Giữ trạng thái header ổn định theo manualHidden
+      setIsHeaderVisible(!manuallyHidden);
+    } else {
+      const cached = _mobileCache.blogContent.get(blog.id);
+      if (
+        cached?.displayContent &&
+        cached?.language === language &&
+        cached?.content === blog?.content
+      ) {
+        setCachedDisplayContent(cached.displayContent);
+        setCachedLanguage(cached.language);
       } else {
-        // Same blog - check if we have valid cache
-        const cached = _mobileCache.blogContent.get(blog.id);
-        if (
-          cached?.displayContent &&
-          cached?.language === language &&
-          cached?.content === blog?.content
-        ) {
-          // Use cached content
-          setCachedDisplayContent(cached.displayContent);
-          setCachedLanguage(cached.language);
-        } else {
-          // Clear cache and show original content
-          _mobileCache.blogContent.delete(blog.id);
-          if (blog?.content) {
-            setCachedDisplayContent(blog.content);
-          }
-        }
+        _mobileCache.blogContent.delete(blog.id);
+        if (blog?.content) setCachedDisplayContent(blog.content);
       }
     }
-  }, [blog?.id, language, blog?.content]);
+  }, [blog?.id, language, blog?.content, manuallyHidden]);
 
-  // ---- Cache management và smooth updates ----
+  // Cache + smooth update
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
-      // Clear any existing cache for this blog first to prevent stale content
       _mobileCache.blogContent.delete(blog.id);
-
-      // Cache new content với timestamp
       _mobileCache.blogContent.set(blog.id, {
         content: blog.content,
         displayContent,
@@ -244,28 +211,19 @@ export default function BlogDetailMobile({
         ts: Date.now(),
       });
 
-      // Update cached state immediately (not in transition) to prevent flicker
       setCachedDisplayContent(displayContent);
       setCachedLanguage(language);
-
-      // Reset read progress
       setReadPct(0);
 
-      // Force scroll to top immediately for new content
       if (scrollWrapRef.current) {
-        // Disable smooth scrolling temporarily
-        scrollWrapRef.current.style.scrollBehavior = "auto";
-        scrollWrapRef.current.scrollTop = 0;
-
-        // Re-enable smooth scrolling after scroll
+        const el = scrollWrapRef.current;
+        el.style.scrollBehavior = "auto";
+        el.scrollTop = 0;
         requestAnimationFrame(() => {
-          if (scrollWrapRef.current) {
-            scrollWrapRef.current.style.scrollBehavior = "smooth";
-          }
+          if (el) el.style.scrollBehavior = "smooth";
         });
       }
 
-      // Simple image handling - no delays or complex logic
       if (scrollWrapRef.current) {
         const images = scrollWrapRef.current.getElementsByTagName("img");
         Array.from(images).forEach((img) => {
@@ -276,37 +234,27 @@ export default function BlogDetailMobile({
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
 
-  // ---- Force clear content when displayContent changes from parent ----
+  // Force show parent displayContent ngay khi tới
   useEffect(() => {
     if (displayContent && blog?.id) {
-      // This ensures that when parent provides new displayContent,
-      // we immediately show it instead of cached content
       setCachedDisplayContent(displayContent);
       setCachedLanguage(language);
-
-      // Clear any existing cache for this blog to prevent conflicts
       _mobileCache.blogContent.delete(blog.id);
     }
   }, [displayContent, language, blog?.id]);
 
-  // Lưu vị trí cuộn trước khi rời trang (chỉ khi không phải content mới)
+  // Lưu scroll pos (nhẹ)
   useEffect(() => {
     if (!blog?.id) return;
 
     const onStore = () => {
-      if (scrollWrapRef.current) {
-        // Chỉ lưu scroll position nếu content đã ổn định
-        const cached = _mobileCache.blogContent.get(blog.id);
-        if (cached && cached.language === language) {
-          _mobileCache.scrollPosition.set(
-            blog.id,
-            scrollWrapRef.current.scrollTop
-          );
-        }
+      if (!scrollWrapRef.current) return;
+      const cached = _mobileCache.blogContent.get(blog.id);
+      if (cached && cached.language === language) {
+        _mobileCache.scrollPosition.set(blog.id, scrollWrapRef.current.scrollTop);
       }
     };
 
-    // Debounce scroll position saving
     let saveTimeout = null;
     const debouncedSave = () => {
       if (saveTimeout) clearTimeout(saveTimeout);
@@ -314,18 +262,14 @@ export default function BlogDetailMobile({
     };
 
     const wrap = scrollWrapRef.current;
-    if (wrap) {
-      wrap.addEventListener("scroll", debouncedSave, { passive: true });
-    }
+    if (wrap) wrap.addEventListener("scroll", debouncedSave, { passive: true });
 
     window.addEventListener("pagehide", onStore);
     window.addEventListener("beforeunload", onStore);
 
     return () => {
       if (saveTimeout) clearTimeout(saveTimeout);
-      if (wrap) {
-        wrap.removeEventListener("scroll", debouncedSave);
-      }
+      if (wrap) wrap.removeEventListener("scroll", debouncedSave);
       onStore();
       window.removeEventListener("pagehide", onStore);
       window.removeEventListener("beforeunload", onStore);
@@ -335,12 +279,11 @@ export default function BlogDetailMobile({
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 30));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
 
-  // Optimized HTML with lazy images - sử dụng cached content
   const optimizedHtml = useMemo(() => {
     return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
   }, [cachedDisplayContent, blog?.content]);
 
-  // Fixed Navigation Bar (always visible)
+  // Nav bar (có nút ẩn thủ công + auto-hide toggle)
   const NavigationBar = useMemo(
     () => (
       <Affix offsetTop={0}>
@@ -403,8 +346,8 @@ export default function BlogDetailMobile({
                   </Button>
                 ) : null}
               </Space>
+
               <Space>
-                {/* trạng thái dịch */}
                 {translating || isPending ? (
                   <Tag
                     icon={<LoadingOutlined spin />}
@@ -447,21 +390,30 @@ export default function BlogDetailMobile({
                   onClick={() => setDrawerVisible(true)}
                 />
 
-                {/* Nút ẩn/hiện thủ công AuthorBar */}
+                {/* Ẩn/hiện thủ công: loại bỏ hoàn toàn AuthorBar để khỏi reflow */}
                 <Button
                   type="text"
-                  onClick={() => setManuallyHidden((v) => !v)}
+                  onClick={() => {
+                    setManuallyHidden((v) => !v);
+                    // Khi ẩn thủ công → header coi như “không hiện”
+                    setIsHeaderVisible((prev) => (prev ? false : prev));
+                  }}
                   title={manuallyHidden ? "Hiện thanh tác giả" : "Ẩn thanh tác giả"}
                   icon={manuallyHidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                 />
 
-                {/* Nút bật/tắt auto-hide khi cuộn (Android only) */}
+                {/* Auto-hide toggle (Android) */}
                 {isAndroid() && (
                   <Button
                     type="text"
                     onClick={() => setAutoHideHeader((v) => !v)}
-                    title={autoHideHeader ? "Tắt auto-hide khi cuộn" : "Bật auto-hide khi cuộn"}
+                    title={
+                      autoHideHeader
+                        ? "Tắt auto-hide khi cuộn"
+                        : "Bật auto-hide khi cuộn"
+                    }
                     icon={autoHideHeader ? <PushpinFilled /> : <PushpinOutlined />}
+                    disabled={manuallyHidden} // đang ẩn thủ công thì khoá toggle cho rõ ràng
                   />
                 )}
               </Space>
@@ -487,37 +439,34 @@ export default function BlogDetailMobile({
     ]
   );
 
-  // Author Bar (scroll-hideable) - Compact with Ant Design Pro
-  const AuthorBar = useMemo(
-    () => (
+  // AuthorBar — nếu manuallyHidden thì KHÔNG render (fix jank Affix)
+  const AuthorBar = useMemo(() => {
+    if (manuallyHidden) return null;
+    return (
       <Affix offsetTop={48}>
         <ProCard
           size="small"
           style={{
             ...jpFont,
-            background:
-              isHeaderVisible && !manuallyHidden
-                ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
-                : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
-            borderBottom:
-              isHeaderVisible && !manuallyHidden
-                ? "1px solid rgba(139, 69, 19, 0.2)"
-                : "1px solid rgba(139, 69, 19, 0)",
+            background: isHeaderVisible
+              ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
+            borderBottom: isHeaderVisible
+              ? "1px solid rgba(139, 69, 19, 0.2)"
+              : "1px solid rgba(139, 69, 19, 0)",
             zIndex: 998,
             position: "fixed",
             top: 48,
             left: 0,
             right: 0,
             width: "100%",
-            transform:
-              isHeaderVisible && !manuallyHidden ? "translateY(0)" : "translateY(-100%)",
-            transition:
-              isHeaderVisible && !manuallyHidden
-                ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
-                : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
+            transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
+            transition: isHeaderVisible
+              ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
+              : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
             willChange: "transform, opacity, background, border-color",
-            visibility: isHeaderVisible && !manuallyHidden ? "visible" : "hidden",
-            opacity: isHeaderVisible && !manuallyHidden ? 1 : 0,
+            visibility: isHeaderVisible ? "visible" : "hidden",
+            opacity: isHeaderVisible ? 1 : 0,
             margin: 0,
             borderRadius: 0,
             boxShadow: "none",
@@ -533,7 +482,6 @@ export default function BlogDetailMobile({
         >
           {blog && (
             <>
-              {/* Author Info - Left Side */}
               <Space
                 align="center"
                 style={{ flex: "0 0 auto", maxWidth: "50%" }}
@@ -570,7 +518,6 @@ export default function BlogDetailMobile({
                 </div>
               </Space>
 
-              {/* Blog Title - Center/Right Side */}
               <div
                 style={{
                   flex: 1,
@@ -596,7 +543,6 @@ export default function BlogDetailMobile({
                 </Text>
               </div>
 
-              {/* Info Button - Right Side */}
               <Button
                 type="text"
                 size="small"
@@ -613,11 +559,10 @@ export default function BlogDetailMobile({
           )}
         </ProCard>
       </Affix>
-    ),
-    [blog, displayTitle, memberInfo, isHeaderVisible, manuallyHidden]
-  );
+    );
+  }, [blog, displayTitle, memberInfo, isHeaderVisible, manuallyHidden]);
 
-  // Create a single throttled updater for scroll progress
+  // progress
   useEffect(() => {
     throttledUpdateRef.current = throttle(() => {
       const wrap = scrollWrapRef.current;
@@ -627,10 +572,7 @@ export default function BlogDetailMobile({
       const lastTotal = lastTotalRef.current;
       const lastScrolled = lastScrolledRef.current;
 
-      if (
-        Math.abs(total - lastTotal) > 1 ||
-        Math.abs(scrolled - lastScrolled) > 1
-      ) {
+      if (Math.abs(total - lastTotal) > 1 || Math.abs(scrolled - lastScrolled) > 1) {
         const pct =
           total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
         if (Math.abs(pct - lastPctRef.current) > 0.5) {
@@ -641,9 +583,9 @@ export default function BlogDetailMobile({
         lastScrolledRef.current = scrolled;
       }
     }, 100);
-  }, [scrollThreshold]);
+  }, []);
 
-  // Android-optimized scroll handler
+  // Android auto-hide scroll
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
@@ -653,114 +595,70 @@ export default function BlogDetailMobile({
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Chỉ auto-hide trên Android, khi bật autoHideHeader và không bị ẩn thủ công
+    // Không auto-hide nếu: không Android / tắt auto-hide / đang ẩn thủ công
     if (!isAndroid() || !autoHideHeader || manuallyHidden) return;
 
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
 
-    // Debounce scroll events
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
-
-    scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false);
-    }, 150);
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => setIsScrolling(false), 150);
 
     if (!isScrolling) {
       setIsScrolling(true);
       lastScrollTime.current = currentTime;
       return;
     }
-
-    // Only process if enough time has passed
     if (currentTime - lastScrollTime.current < 50) return;
 
-    const scrollDifference = currentScrollY - (lastScrollY.current || 0);
-
-    if (Math.abs(scrollDifference) > 5) {
-      // Kéo xuống → ẨN, Kéo lên → HIỆN
-      if (scrollDifference > 0) {
-        setIsHeaderVisible(false);
-      } else {
-        setIsHeaderVisible(true);
-      }
+    const dy = currentScrollY - (lastScrollY.current || 0);
+    if (Math.abs(dy) > 5) {
+      // xuống → ẩn, lên → hiện
+      setIsHeaderVisible(dy <= 0);
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
   }, [isScrolling, autoHideHeader, manuallyHidden]);
 
-  // Setup scroll handlers
+  // listeners
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    const combinedScrollHandler = () => {
-      // Update progress
-      if (throttledUpdateRef.current) {
-        throttledUpdateRef.current();
-      }
-      // Update header visibility (Android)
+    const combined = () => {
+      if (throttledUpdateRef.current) throttledUpdateRef.current();
       handleScroll();
     };
 
-    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
-    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
+    wrap.addEventListener("scroll", combined, { passive: true });
+    wrap.addEventListener("wheel", combined, { passive: true });
 
-    // Initialize once
-    combinedScrollHandler();
+    combined();
 
     return () => {
-      wrap.removeEventListener("scroll", combinedScrollHandler);
-      wrap.removeEventListener("wheel", combinedScrollHandler);
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-      }
+      wrap.removeEventListener("scroll", combined);
+      wrap.removeEventListener("wheel", combined);
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
   }, [handleScroll]);
 
-  // Simple image handling - no complex logic
+  // đảm bảo ảnh ko transition
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap || !cachedDisplayContent) return;
-
     const images = wrap.getElementsByTagName("img");
     Array.from(images).forEach((img) => {
       img.style.opacity = "1";
-      img.style.transition = "none"; // Disable transitions
+      img.style.transition = "none";
     });
   }, [cachedDisplayContent]);
 
-  // Loading skeleton
   if (loading) {
     return (
-      <PageContainer
-        header={false}
-        ghost
-        token={{
-          paddingInlinePageContainerContent: 0,
-          paddingBlockPageContainerContent: 0,
-          paddingInlinePageContainer: 0,
-        }}
-        style={{
-          padding: 0,
-          margin: 0,
-          background: "rgba(253, 246, 227, 0.8)",
-        }}
-      >
+      <PageContainer header={false} ghost token={{ paddingInlinePageContainer: 0 }} style={{ padding: 0, margin: 0, background: "rgba(253, 246, 227, 0.8)" }}>
         {NavigationBar}
         {AuthorBar}
-        <ProCard
-          ghost
-          style={{
-            minHeight: "100dvh",
-            background: "rgba(253, 246, 227, 0.8)",
-            padding: 0,
-            ...jpFont,
-          }}
-          bodyStyle={{ padding: 12, margin: 0 }}
-        >
+        <ProCard ghost style={{ minHeight: "100dvh", background: "rgba(253, 246, 227, 0.8)", padding: 0, ...jpFont }} bodyStyle={{ padding: 12, margin: 0 }}>
           <ProSkeleton type="list" />
         </ProCard>
       </PageContainer>
@@ -769,39 +667,13 @@ export default function BlogDetailMobile({
 
   if (!blog) {
     return (
-      <PageContainer
-        header={false}
-        ghost
-        token={{
-          paddingInlinePageContainerContent: 0,
-          paddingBlockPageContainerContent: 0,
-          paddingInlinePageContainer: 0,
-        }}
-        style={{
-          padding: 0,
-          margin: 0,
-          background: "rgba(253, 246, 227, 0.8)",
-        }}
-      >
+      <PageContainer header={false} ghost token={{ paddingInlinePageContainer: 0 }} style={{ padding: 0, margin: 0, background: "rgba(253, 246, 227, 0.8)" }}>
         {NavigationBar}
         {AuthorBar}
-        <ProCard
-          ghost
-          style={{
-            minHeight: "100dvh",
-            background: "rgba(253, 246, 227, 0.8)",
-            padding: 0,
-            ...jpFont,
-          }}
-          bodyStyle={{ padding: 16, margin: 0 }}
-        >
+        <ProCard ghost style={{ minHeight: "100dvh", background: "rgba(253, 246, 227, 0.8)", padding: 0, ...jpFont }} bodyStyle={{ padding: 16, margin: 0 }}>
           <Card bordered={false} style={{ textAlign: "center" }}>
             <Title level={4}>
-              {language === "vi"
-                ? "Không tìm thấy bài viết"
-                : language === "en"
-                ? "Blog post not found"
-                : "ブログが見つかりません"}
+              {language === "vi" ? "Không tìm thấy bài viết" : language === "en" ? "Blog post not found" : "ブログが見つかりません"}
             </Title>
           </Card>
         </ProCard>
@@ -817,29 +689,18 @@ export default function BlogDetailMobile({
         paddingInlinePageContainerContent: 0,
         paddingBlockPageContainerContent: 0,
         paddingInlinePageContainer: 0,
-        pageContainer: {
-          paddingBlock: 0,
-          paddingInline: 0,
-        },
+        pageContainer: { paddingBlock: 0, paddingInline: 0 },
       }}
-      style={{
-        padding: 0,
-        margin: 0,
-        background: "rgba(253, 246, 227, 0.8)",
-        minHeight: "100dvh",
-        width: "100vw",
-        maxWidth: "100%",
-        overflow: "hidden",
-      }}
+      style={{ padding: 0, margin: 0, background: "rgba(253, 246, 227, 0.8)", minHeight: "100dvh", width: "100vw", maxWidth: "100%", overflow: "hidden" }}
     >
       {NavigationBar}
       {AuthorBar}
 
-      {/* scroll container để bắt progress */}
+      {/* scroll container */}
       <div
         ref={scrollWrapRef}
         style={{
-          height: "calc(100dvh - 3px)", // Subtract progress bar height
+          height: "calc(100dvh - 3px)",
           overflow: "auto",
           background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
@@ -851,9 +712,8 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          // Nếu bị ẩn thủ công thì 48px. Nếu auto-hide thì theo isHeaderVisible.
           paddingTop: manuallyHidden ? "48px" : isHeaderVisible ? "88px" : "48px",
-          transition: "padding-top 0.3s ease",
+          transition: manuallyHidden ? "none" : "padding-top 0.2s ease",
         }}
       >
         <ProCard
@@ -867,76 +727,35 @@ export default function BlogDetailMobile({
             ...jpFont,
             position: "relative",
           }}
-          bodyStyle={{
-            padding: "0 0 0",
-            margin: 0,
-            width: "100%",
-          }}
+          bodyStyle={{ padding: "0 0 0", margin: 0, width: "100%" }}
         >
-          {/* Translation Loading Overlay */}
+          {/* overlay dịch */}
           {translating && (
-            <div
+            <ProCard
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "rgba(253, 246, 227, 0.95)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                textAlign: "center",
+                borderRadius: 0,
+                boxShadow: "none",
+                border: "none",
+                background:
+                  "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
                 zIndex: 10,
-                backdropFilter: "blur(3px)",
               }}
+              bodyStyle={{ padding: "24px 20px", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
-              <ProCard
-                style={{
-                  textAlign: "center",
-                  borderRadius: 16,
-                  boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
-                  border: "1px solid rgba(139, 69, 19, 0.2)",
-                  background:
-                    "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
-                  margin: "0 16px",
-                  maxWidth: 280,
-                  width: "90%",
-                }}
-                bodyStyle={{ padding: "24px 20px" }}
-              >
-                <Space direction="vertical" align="center" size={16}>
-                  <div
-                    style={{
-                      position: "relative",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} spin />
-                  </div>
-
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 16,
-                        color: "#8b4513",
-                        fontWeight: 600,
-                        marginBottom: 8,
-                      }}
-                    >
-                      {cachedLanguage === "vi"
-                        ? "Đang xử lý..."
-                        : cachedLanguage === "en"
-                        ? "Processing..."
-                        : "処理中..."}
-                    </div>
-                  </div>
-                </Space>
-              </ProCard>
-            </div>
+              <Space direction="vertical" align="center" size={16}>
+                <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} spin />
+                <div style={{ fontSize: 16, color: "#8b4513", fontWeight: 600 }}>
+                  {cachedLanguage === "vi" ? "Đang xử lý..." : cachedLanguage === "en" ? "Processing..." : "処理中..."}
+                </div>
+              </Space>
+            </ProCard>
           )}
 
-          {/* Content - Title moved to author section */}
+          {/* content */}
           <div style={{ padding: "12px 12px 0 12px" }}>
-            {/* Nội dung */}
             <div
               className="jp-prose"
               style={{
@@ -950,15 +769,13 @@ export default function BlogDetailMobile({
                 hyphens: "auto",
                 paddingBottom: "20px",
               }}
-              dangerouslySetInnerHTML={{
-                __html: optimizedHtml,
-              }}
+              dangerouslySetInnerHTML={{ __html: optimizedHtml }}
             />
           </div>
         </ProCard>
       </div>
 
-      {/* Drawer thông tin & cài đặt */}
+      {/* Drawer */}
       <Drawer
         title={
           <Space>
@@ -972,10 +789,7 @@ export default function BlogDetailMobile({
         width={320}
         styles={{ body: { paddingTop: 8 } }}
         afterOpenChange={(open) => {
-          // Khi mở Drawer, giữ hiện Header; đóng lại thì để logic cuộn lo.
-          if (open) {
-            setIsHeaderVisible(true);
-          }
+          if (open) setIsHeaderVisible(true);
         }}
       >
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
@@ -997,9 +811,7 @@ export default function BlogDetailMobile({
 
           <Card title="Cỡ chữ" size="small" bordered>
             <Space direction="vertical" style={{ width: "100%" }}>
-              <div style={{ textAlign: "center", fontSize: 16 }}>
-                Hiện tại: {fontSize}px
-              </div>
+              <div style={{ textAlign: "center", fontSize: 16 }}>Hiện tại: {fontSize}px</div>
               <Space style={{ width: "100%", justifyContent: "center" }}>
                 <Button onClick={decreaseFontSize}>A-</Button>
                 <Button type="primary" onClick={increaseFontSize}>
@@ -1033,7 +845,7 @@ export default function BlogDetailMobile({
         </Space>
       </Drawer>
 
-      {/* Progress đọc ở mép dưới màn hình */}
+      {/* progress dưới */}
       <Affix offsetBottom={0}>
         <div
           style={{
@@ -1057,136 +869,35 @@ export default function BlogDetailMobile({
         </div>
       </Affix>
 
-      {/* Full-bleed overrides */}
       <style>{`
-          /* Hide scrollbar for Chrome, Safari and Opera */
-          *::-webkit-scrollbar {
-            display: none;
-          }
-          
-          /* Hide scrollbar for IE, Edge and Firefox */
-          * {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-          }
-          
-          /* iOS-specific optimizations */
-          body {
-            -webkit-overflow-scrolling: touch;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-          }
-          
-          /* Prevent iOS zoom on double tap */
-          * {
-            touch-action: manipulation;
-          }
-
-          /* Minimal touch optimization */
-          * {
-            -webkit-tap-highlight-color: transparent;
-          }
-
-          html, body, #root { 
-            height: 100%; 
-            min-height: 100vh;
-            min-height: 100dvh;
-            background: #fdf6e3;
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            max-width: 100vw;
-            overflow-x: hidden;
-          }
-          body { 
-            margin: 0; 
-            padding: 0;
-            overscroll-behavior: none;
-          }
-          #root {
-            display: flex;
-            flex-direction: column;
-          }
-          .ant-pro-page-container { 
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-            max-width: 100vw !important;
-            min-height: 100vh !important;
-            min-height: 100dvh !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-          .ant-pro-page-container-children-container {
-            flex: 1 !important;
-            margin: 0 !important; 
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: 100vw !important;
-          }
-          .ant-pro-grid-content { 
-            margin: 0 !important; 
-            padding: 0 !important;
-            width: 100% !important;
-          }
-          .ant-card { 
-            background: #fdf6e3;
-            width: 100% !important;
-          }
-          .ant-pro-card {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .ant-pro-card-body {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .jp-prose img {
-            border-radius: 12px;
-            margin: 14px auto;
-            max-width: 100%;
-            height: auto;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0,0,0,0.06);
-            display: block;
-            /* Minimal CSS to prevent jank */
-            pointer-events: none;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-user-drag: none;
-            user-select: none;
-            /* Simple hardware acceleration */
-            transform: translateZ(0);
-            /* No transitions or complex properties */
-            opacity: 1;
-            background: rgba(0,0,0,0.05);
-            /* iOS-specific optimizations */
-            -webkit-backface-visibility: hidden;
-            -webkit-transform: translateZ(0);
-            -webkit-perspective: 1000;
-            /* Prevent iOS zoom on double tap */
-            touch-action: manipulation;
-          }
-          .jp-prose p {
-            margin: 0.85em 0;
-            text-align: justify;
-            line-height: 1.9;
-            font-size: 20px;
-            color: #1f2937;
-          }
-          .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: #111827; }
-          .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: #111827; }
-          .jp-prose h3 { font-size: 1.25em; margin: 0.8em 0 0.3em; font-weight: 600; color: #111827; }
-          .jp-prose blockquote {
-            border-left: 4px solid #e9d5ff; background: #faf5ff;
-            padding: 12px 16px; border-radius: 8px; margin: 1em 0;
-            font-size: 1.05em; color: #4b5563;
-          }
-          .jp-prose a { color: #9333ea; text-decoration: none; }
-          .jp-prose a:hover { text-decoration: underline; }
-          .jp-prose ul, .jp-prose ol { padding-left: 1.2em; margin: 0.8em 0; }
-          .jp-prose li { margin: 0.4em 0; color: #374151; }
-          .jp-prose strong { color: #111827; font-weight: 600; }
-        `}</style>
+        *::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        body { -webkit-overflow-scrolling: touch; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; margin:0; padding:0; overscroll-behavior:none; }
+        html, body, #root { height:100%; min-height:100dvh; background:#fdf6e3; margin:0; padding:0; width:100%; max-width:100vw; overflow-x:hidden; }
+        #root { display:flex; flex-direction:column; }
+        .ant-pro-page-container, .ant-pro-grid-content { padding:0 !important; margin:0 !important; width:100% !important; }
+        .ant-pro-page-container { min-height:100dvh !important; display:flex !important; flex-direction:column !important; }
+        .ant-pro-page-container-children-container { flex:1 !important; margin:0 !important; padding:0 !important; width:100% !important; max-width:100vw !important; }
+        .ant-card { background:#fdf6e3; width:100% !important; }
+        .ant-pro-card, .ant-pro-card-body { margin:0 !important; padding:0 !important; }
+        .jp-prose img {
+          border-radius:12px; margin:14px auto; max-width:100%; height:auto;
+          box-shadow:0 4px 12px rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.06);
+          display:block; pointer-events:none; -webkit-user-drag:none; user-select:none;
+          transform:translateZ(0); opacity:1; background:rgba(0,0,0,0.05);
+          -webkit-backface-visibility:hidden; -webkit-transform:translateZ(0); -webkit-perspective:1000;
+        }
+        .jp-prose p { margin:0.85em 0; text-align:justify; line-height:1.9; font-size:20px; color:#1f2937; }
+        .jp-prose h1 { font-size:1.6em; margin:0.9em 0 0.45em; font-weight:700; color:#111827; }
+        .jp-prose h2 { font-size:1.4em; margin:0.85em 0 0.4em; font-weight:700; color:#111827; }
+        .jp-prose h3 { font-size:1.25em; margin:0.8em 0 0.3em; font-weight:600; color:#111827; }
+        .jp-prose blockquote { border-left:4px solid #e9d5ff; background:#faf5ff; padding:12px 16px; border-radius:8px; margin:1em 0; font-size:1.05em; color:#4b5563; }
+        .jp-prose a { color:#9333ea; text-decoration:none; }
+        .jp-prose a:hover { text-decoration:underline; }
+        .jp-prose ul, .jp-prose ol { padding-left:1.2em; margin:0.8em 0; }
+        .jp-prose li { margin:0.4em 0; color:#374151; }
+        .jp-prose strong { color:#111827; font-weight:600; }
+      `}</style>
     </PageContainer>
   );
 }
