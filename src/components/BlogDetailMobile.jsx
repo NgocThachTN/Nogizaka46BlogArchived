@@ -717,10 +717,18 @@ export default function BlogDetailMobile({
         padding: 0,
         margin: 0,
         background: "rgba(253, 246, 227, 0.8)",
-        minHeight: "100dvh",
+        height: "100dvh",
+        maxHeight: "100dvh",
         width: "100vw",
         maxWidth: "100%",
         overflow: "hidden",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        flexDirection: "column"
       }}
     >
       {NavigationBar}
@@ -730,19 +738,28 @@ export default function BlogDetailMobile({
       <div
         ref={scrollWrapRef}
         style={{
-          height: "100dvh",
-          overflow: "auto",
-          background: "rgba(253, 246, 227, 0.8)",
-          WebkitOverflowScrolling: "touch",
-          overscrollBehavior: "contain",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-          width: "100%",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          touchAction: "pan-y",
-          paddingTop: "84px",
+          height: 'calc(100dvh - 84px)', // Trừ đi chiều cao của cả NavigationBar và AuthorBar
+          maxHeight: 'calc(100dvh - 84px)',
+          overflow: 'auto',
+          background: 'rgba(253, 246, 227, 0.8)',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'none',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          width: '100%',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          touchAction: 'pan-y',
+          paddingTop: 0, // Đã tính trong height
+          marginTop: '84px',
+          marginBottom: 0,
+          flexShrink: 1,
+          WebkitBackfaceVisibility: 'hidden',
+          WebkitTransform: 'translate3d(0,0,0)',
+          transform: 'translate3d(0,0,0)',
+          willChange: 'transform',
+          contain: 'paint layout style'
         }}
       >
         <ProCard
