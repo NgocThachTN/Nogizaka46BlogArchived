@@ -13,6 +13,7 @@ import {
   List,
   Tooltip,
   message,
+  Button,
 } from "antd";
 import { ProCard, PageContainer } from "@ant-design/pro-components";
 import {
@@ -277,20 +278,7 @@ const MemberList = () => {
                                 "https://via.placeholder.com/300x300?text=No+Image";
                             }}
                           />
-                          <div className="member-overlay">
-                            <Tag
-                              color="purple"
-                              style={{
-                                position: "absolute",
-                                top: 8,
-                                right: 8,
-                                opacity: 0.9,
-                                backdropFilter: "blur(4px)",
-                              }}
-                            >
-                              {getGen(m)}
-                            </Tag>
-                          </div>
+                          <div className="member-overlay"></div>
                         </div>
 
                         <div style={{ padding: "16px 12px" }}>
@@ -363,24 +351,30 @@ const MemberList = () => {
                             </Space>
 
                             {m.link && (
-                              <a
-                                href={m.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="official-link"
+                              <Button
+                                type="link"
+                                size="small"
+                                icon={<LinkOutlined />}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(
+                                    m.link,
+                                    "_blank",
+                                    "noopener,noreferrer"
+                                  );
+                                }}
                                 style={{
                                   color: "#9333ea",
                                   fontSize: 12,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 4,
+                                  padding: 0,
+                                  height: "auto",
                                   marginTop: 4,
                                   transition: "all 0.2s ease",
                                 }}
+                                className="official-button"
                               >
-                                <LinkOutlined />
                                 Official Page
-                              </a>
+                              </Button>
                             )}
                           </Space>
                         </div>
@@ -413,9 +407,12 @@ const MemberList = () => {
           transform: scale(1.05);
         }
 
-        .member-card .official-link:hover {
+        .member-card .official-button:hover {
           color: #7c28ea !important;
-          gap: 8px !important;
+        }
+        
+        .member-card .official-button:hover .anticon {
+          transform: translateX(2px);
         }
 
         .member-overlay {
