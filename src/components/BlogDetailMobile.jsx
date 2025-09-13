@@ -386,9 +386,9 @@ export default function BlogDetailMobile({
                   value={cachedLanguage}
                   onChange={(val) => setLanguage(val)}
                   options={[
-                    { label: "日本語", value: "ja" },
-                    { label: "English", value: "en" },
-                    { label: "Tiếng Việt", value: "vi" },
+                    { label: "JPN", value: "ja" },
+                    { label: "ENG", value: "en" },
+                    { label: "VN", value: "vi" },
                   ]}
                 />
 
