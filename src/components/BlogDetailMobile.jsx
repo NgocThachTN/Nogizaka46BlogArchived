@@ -236,39 +236,63 @@ export default function BlogDetailMobile({
 
   // ---- Cache management và smooth updates ----
   useEffect(() => {
-    if (displayContent && !translating && blog?.id) {
-      _mobileCache.blogContent.delete(blog.id);
-
-      _mobileCache.blogContent.set(blog.id, {
-        content: blog.content,
-        displayContent,
-        language,
-        ts: Date.now(),
-      });
-
-      setCachedDisplayContent(displayContent);
-      setCachedLanguage(language);
-
-      // Force scroll to top immediately for new content
-      if (scrollWrapRef.current) {
-        scrollWrapRef.current.style.scrollBehavior = "auto";
-        scrollWrapRef.current.scrollTop = 0;
-        requestAnimationFrame(() => {
-          if (scrollWrapRef.current) {
-            scrollWrapRef.current.style.scrollBehavior = "smooth";
+    const updateCache = async () => {
+      if (displayContent && !translating && blog?.id) {
+        try {
+          // Add delay for iOS Safari
+          if (isIOS()) {
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
-        });
-      }
+          
+          // First get existing cache
+          const existingCache = _mobileCache.blogContent.get(blog.id);
+          
+          // Only update if content changed
+          if (!existingCache || 
+              existingCache.content !== blog.content ||
+              existingCache.language !== language) {
 
-      // Simple image handling - no delays or complex logic
-      if (scrollWrapRef.current) {
-        const images = scrollWrapRef.current.getElementsByTagName("img");
-        Array.from(images).forEach((img) => {
-          img.style.opacity = "1";
-          img.style.transition = "none";
-        });
+            _mobileCache.blogContent.set(blog.id, {
+              content: blog.content,
+              displayContent,
+              language,
+              ts: Date.now(),
+            });
+
+            setCachedDisplayContent(displayContent);
+            setCachedLanguage(language);
+
+            // Force scroll to top immediately for new content
+            if (scrollWrapRef.current) {
+              scrollWrapRef.current.style.scrollBehavior = "auto";
+              scrollWrapRef.current.scrollTop = 0;
+              requestAnimationFrame(() => {
+                if (scrollWrapRef.current) {
+                  scrollWrapRef.current.style.scrollBehavior = "smooth";
+                }
+              });
+            }
+
+            // Enhanced image handling for iOS
+            if (scrollWrapRef.current) {
+              const images = scrollWrapRef.current.getElementsByTagName("img");
+              Array.from(images).forEach((img) => {
+                img.style.opacity = "1";
+                img.style.transition = "none";
+                if (isIOS()) {
+                  img.style.webkitBackfaceVisibility = "hidden";
+                  img.style.transform = "translate3d(0,0,0)";
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.warn("Error updating mobile cache:", error);
+        }
       }
-    }
+    };
+
+    updateCache();
   }, [displayContent, translating, language, blog?.id, blog?.content]);
 
   // ---- Force clear content when displayContent changes from parent ----
