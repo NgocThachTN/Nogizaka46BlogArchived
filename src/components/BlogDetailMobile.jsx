@@ -1,6 +1,5 @@
 // BlogDetailMobile.jsx — Full-bleed mobile reader (Ant Design Pro)
-// Đã xoá: nút ẩn/hiện thủ công AuthorBar + progress bar dưới cùng.
-// Giữ: Auto-hide AuthorBar trên Android (kéo xuống ẩn, kéo lên hiện) + nút bật/tắt auto-hide.
+// Clean Android design with always-visible navigation and author bars
 
 import {
   Typography,
@@ -24,8 +23,6 @@ import {
   CalendarOutlined,
   FontSizeOutlined,
   GlobalOutlined,
-  PushpinOutlined,
-  PushpinFilled,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -44,11 +41,6 @@ import {
 } from "react";
 import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 import { isIOS } from "../utils/deviceDetection";
-
-// Android detection (nhẹ, đủ xài)
-const isAndroid = () =>
-  typeof navigator !== "undefined" &&
-  /Android/i.test(navigator.userAgent || "");
 
 const { Title, Text } = Typography;
 
@@ -141,9 +133,6 @@ export default function BlogDetailMobile({
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollWrapRef = useRef(null);
-
-  // Auto-hide khi cuộn (Android)
-  const [autoHideHeader, setAutoHideHeader] = useState(true);
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -291,96 +280,104 @@ export default function BlogDetailMobile({
     return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
   }, [cachedDisplayContent, blog?.content]);
 
-  // Fixed Navigation Bar (always visible)
+  // Fixed Navigation Bar (always visible) - Clean Android design
   const NavigationBar = useMemo(
     () => (
       <Affix offsetTop={0}>
         <div
           style={{
             ...jpFont,
-            background: "rgba(253, 246, 227, 0.8)",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            background: "rgba(253, 246, 227, 0.95)",
+            borderBottom: "1px solid rgba(0,0,0,0.08)",
             zIndex: 999,
             position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             width: "100%",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
           }}
         >
-          <div style={{ padding: "8px 12px" }}>
+          <div style={{ padding: "6px 8px" }}>
             <Space
               align="center"
               style={{ width: "100%", justifyContent: "space-between" }}
             >
-              <Space>
+              {/* Left side - Navigation */}
+              <Space size="small">
                 <Button
                   type="text"
+                  size="small"
                   icon={<HomeOutlined />}
                   onClick={() => navigate("/members")}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: "rgba(255, 255, 255, 0.6)",
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    color: "#8b4513",
+                  }}
                 />
-                {prevId ? (
+                {prevId && (
                   <Button
-                    type="default"
+                    type="text"
                     size="small"
-                    style={navTopBtnStyle}
                     disabled={!prevId || navLock}
                     onClick={() => fastGo && fastGo(prevId)}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      background: "rgba(255, 255, 255, 0.6)",
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      color: "#8b4513",
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
                   >
                     {pendingNavId &&
                     pendingNavId === prevId &&
                     !getCachedBlogDetail(prevId) ? (
-                      <LoadingOutlined />
+                      <LoadingOutlined style={{ fontSize: 12 }} />
                     ) : (
-                      "<"
+                      "‹"
                     )}
                   </Button>
-                ) : null}
-                {nextId ? (
+                )}
+                {nextId && (
                   <Button
-                    type="primary"
+                    type="text"
                     size="small"
-                    style={navTopBtnStyle}
                     disabled={!nextId || navLock}
                     onClick={() => fastGo && fastGo(nextId)}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      background: "rgba(139, 69, 19, 0.1)",
+                      border: "1px solid rgba(139, 69, 19, 0.2)",
+                      color: "#8b4513",
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
                   >
                     {pendingNavId &&
                     pendingNavId === nextId &&
                     !getCachedBlogDetail(nextId) ? (
-                      <LoadingOutlined />
+                      <LoadingOutlined style={{ fontSize: 12 }} />
                     ) : (
-                      ">"
+                      "›"
                     )}
                   </Button>
-                ) : null}
-              </Space>
-              <Space>
-                {/* trạng thái dịch */}
-                {translating || isPending ? (
-                  <Tag
-                    icon={<LoadingOutlined spin />}
-                    color="processing"
-                    style={{
-                      marginRight: 6,
-                      background:
-                        "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
-                      border: "none",
-                      color: "white",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {cachedLanguage === "vi"
-                      ? "Dịch"
-                      : cachedLanguage === "en"
-                      ? "Trans"
-                      : "翻訳"}
-                  </Tag>
-                ) : (
-                  <Tag color="default" style={{ marginRight: 6 }}>
-                    {cachedLanguage?.toUpperCase?.() || "JA"}
-                  </Tag>
                 )}
+              </Space>
 
+              {/* Center - Language selection */}
+              <div
+                style={{ flex: 1, display: "flex", justifyContent: "center" }}
+              >
                 <Segmented
                   size="small"
                   value={cachedLanguage}
@@ -390,29 +387,71 @@ export default function BlogDetailMobile({
                     { label: "ENG", value: "en" },
                     { label: "VN", value: "vi" },
                   ]}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.6)",
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    borderRadius: 8,
+                  }}
                 />
+              </div>
+
+              {/* Right side - Settings */}
+              <Space size="small">
+                {/* Translation status */}
+                {translating || isPending ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "4px 8px",
+                      background:
+                        "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
+                      borderRadius: 6,
+                      color: "white",
+                      fontSize: 11,
+                      fontWeight: 500,
+                    }}
+                  >
+                    <LoadingOutlined
+                      spin
+                      style={{ marginRight: 4, fontSize: 10 }}
+                    />
+                    {cachedLanguage === "vi"
+                      ? "Dịch"
+                      : cachedLanguage === "en"
+                      ? "Trans"
+                      : "翻訳"}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: "4px 8px",
+                      background: "rgba(255, 255, 255, 0.6)",
+                      borderRadius: 6,
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      color: "#8b4513",
+                      fontSize: 11,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {cachedLanguage?.toUpperCase?.() || "JA"}
+                  </div>
+                )}
 
                 <Button
                   type="text"
+                  size="small"
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: "rgba(255, 255, 255, 0.6)",
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    color: "#8b4513",
+                  }}
                 />
-
-                {/* Nút bật/tắt auto-hide khi cuộn (Android only) */}
-                {isAndroid() && (
-                  <Button
-                    type="text"
-                    onClick={() => setAutoHideHeader((v) => !v)}
-                    title={
-                      autoHideHeader
-                        ? "Tắt auto-hide khi cuộn"
-                        : "Bật auto-hide khi cuộn"
-                    }
-                    icon={
-                      autoHideHeader ? <PushpinFilled /> : <PushpinOutlined />
-                    }
-                  />
-                )}
               </Space>
             </Space>
           </div>
@@ -429,13 +468,11 @@ export default function BlogDetailMobile({
       fastGo,
       pendingNavId,
       navLock,
-      navTopBtnStyle,
       navigate,
-      autoHideHeader,
     ]
   );
 
-  // Author Bar (scroll-hideable)
+  // Author Bar (always visible - clean design)
   const AuthorBar = useMemo(
     () => (
       <Affix offsetTop={48}>
@@ -443,28 +480,20 @@ export default function BlogDetailMobile({
           size="small"
           style={{
             ...jpFont,
-            background: isHeaderVisible
-              ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
-              : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
-            borderBottom: isHeaderVisible
-              ? "1px solid rgba(139, 69, 19, 0.2)"
-              : "1px solid rgba(139, 69, 19, 0)",
+            background:
+              "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
+            borderBottom: "1px solid rgba(139, 69, 19, 0.15)",
             zIndex: 998,
             position: "fixed",
             top: 48,
             left: 0,
             right: 0,
             width: "100%",
-            transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
-            transition: isHeaderVisible
-              ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
-              : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
-            willChange: "transform, opacity, background, border-color",
-            visibility: isHeaderVisible ? "visible" : "hidden",
-            opacity: isHeaderVisible ? 1 : 0,
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
             margin: 0,
             borderRadius: 0,
-            boxShadow: "none",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
           }}
           bodyStyle={{
             padding: "6px 12px",
@@ -560,79 +589,25 @@ export default function BlogDetailMobile({
         </ProCard>
       </Affix>
     ),
-    [blog, displayTitle, memberInfo, isHeaderVisible]
+    [blog, displayTitle, memberInfo]
   );
 
-  // Android-optimized scroll handler
-  const lastScrollTime = useRef(0);
-  const lastScrollY = useRef(0);
-  const scrollTimeout = useRef(null);
-  const [isScrolling, setIsScrolling] = useState(false);
-
+  // Simple scroll handler - keep header always visible
   const handleScroll = useCallback(() => {
-    const wrap = scrollWrapRef.current;
-    if (!wrap) return;
+    // Keep header always visible - no auto-hide functionality
+    setIsHeaderVisible(true);
+  }, []);
 
-    // Chỉ auto-hide trên Android, khi bật autoHideHeader
-    if (!isAndroid() || !autoHideHeader) return;
-
-    const currentScrollY = wrap.scrollTop;
-    const currentTime = Date.now();
-
-    // Debounce scroll events
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
-
-    scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false);
-    }, 150);
-
-    if (!isScrolling) {
-      setIsScrolling(true);
-      lastScrollTime.current = currentTime;
-      return;
-    }
-
-    // Only process if enough time has passed
-    if (currentTime - lastScrollTime.current < 50) return;
-
-    const scrollDifference = currentScrollY - (lastScrollY.current || 0);
-
-    if (Math.abs(scrollDifference) > 5) {
-      // Kéo xuống → ẨN, Kéo lên → HIỆN
-      if (scrollDifference > 0) {
-        setIsHeaderVisible(false);
-      } else {
-        setIsHeaderVisible(true);
-      }
-      lastScrollY.current = currentScrollY;
-      lastScrollTime.current = currentTime;
-    }
-  }, [isScrolling, autoHideHeader]);
-
-  // Setup scroll handlers
+  // Setup scroll handlers - simplified
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    const combinedScrollHandler = () => {
-      // Update header visibility (Android)
-      handleScroll();
-    };
-
-    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
-    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
-
-    // Initialize once
-    combinedScrollHandler();
+    // Keep header always visible
+    handleScroll();
 
     return () => {
-      wrap.removeEventListener("scroll", combinedScrollHandler);
-      wrap.removeEventListener("wheel", combinedScrollHandler);
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-      }
+      // Cleanup not needed for simple handler
     };
   }, [handleScroll]);
 
@@ -767,8 +742,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: isHeaderVisible ? "88px" : "48px",
-          transition: "padding-top 0.3s ease",
+          paddingTop: "88px",
         }}
       >
         <ProCard
@@ -890,10 +864,7 @@ export default function BlogDetailMobile({
         width={320}
         styles={{ body: { paddingTop: 8 } }}
         afterOpenChange={(open) => {
-          // Khi mở Drawer, giữ hiện Header; đóng lại thì để logic cuộn lo.
-          if (open) {
-            setIsHeaderVisible(true);
-          }
+          // Header is always visible now
         }}
       >
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
