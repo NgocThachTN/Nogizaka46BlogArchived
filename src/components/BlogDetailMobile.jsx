@@ -39,6 +39,7 @@ import {
   useTransition,
 } from "react";
 import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
+import { isIOS } from "../utils/deviceDetection";
 
 // Utility function for throttle
 function throttle(func, limit) {
@@ -87,6 +88,14 @@ function optimizeHtmlForMobile(html) {
     if (!/\bdecoding=/.test(newAttrs)) newAttrs += ' decoding="async"';
     if (!/\breferrerpolicy=/.test(newAttrs))
       newAttrs += ' referrerpolicy="no-referrer"';
+
+    // iOS-specific optimizations
+    if (isIOS()) {
+      if (!/\bstyle=/.test(newAttrs)) {
+        newAttrs += ' style="max-width: 100%; height: auto;"';
+      }
+    }
+
     return `<img${newAttrs}>`;
   });
 }
@@ -1039,6 +1048,18 @@ export default function BlogDetailMobile({
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
           }
+          
+          /* iOS-specific optimizations */
+          body {
+            -webkit-overflow-scrolling: touch;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+          }
+          
+          /* Prevent iOS zoom on double tap */
+          * {
+            touch-action: manipulation;
+          }
 
           /* Minimal touch optimization */
           * {
@@ -1109,6 +1130,12 @@ export default function BlogDetailMobile({
             /* No transitions or complex properties */
             opacity: 1;
             background: rgba(0,0,0,0.05);
+            /* iOS-specific optimizations */
+            -webkit-backface-visibility: hidden;
+            -webkit-transform: translateZ(0);
+            -webkit-perspective: 1000;
+            /* Prevent iOS zoom on double tap */
+            touch-action: manipulation;
           }
           .jp-prose p {
             margin: 0.85em 0;

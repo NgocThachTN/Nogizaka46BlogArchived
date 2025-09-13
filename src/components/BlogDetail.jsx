@@ -53,6 +53,7 @@ import {
   getCachedBlogDetail,
   prefetchBlogDetail,
 } from "../services/blogService";
+import { isIOS } from "../utils/deviceDetection";
 import BlogDetailMobile from "./BlogDetailMobile";
 import BlogCalendar from "./BlogCalendar";
 import {
@@ -191,7 +192,32 @@ export default function BlogDetail({
           setLoading(true);
         }
 
-        const data = await fetchBlogDetail(id);
+        // Thêm delay nhỏ cho iOS để tránh race condition
+        if (isIOS()) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        // Fetch blog detail với retry cho iOS
+        let data = null;
+        let retryCount = 0;
+        const maxRetries = isIOS() ? 3 : 1;
+
+        while (retryCount < maxRetries && !data) {
+          try {
+            data = await fetchBlogDetail(id);
+            if (data) break;
+          } catch (error) {
+            console.warn(`Fetch attempt ${retryCount + 1} failed:`, error);
+            retryCount++;
+            if (retryCount < maxRetries) {
+              // Exponential backoff cho iOS
+              await new Promise((resolve) =>
+                setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+              );
+            }
+          }
+        }
+
         if (!data) {
           notification.error({
             message: "Lỗi tải nội dung",
@@ -211,20 +237,26 @@ export default function BlogDetail({
         }
         setBlog(data);
 
-        // Member info
+        // Member info với error handling cho iOS
         let member = null;
-        if (data.memberCode) member = await fetchMemberInfo(data.memberCode);
-        if (!member && data.author)
-          member = await fetchMemberInfoByName(data.author);
+        try {
+          if (data.memberCode) member = await fetchMemberInfo(data.memberCode);
+          if (!member && data.author)
+            member = await fetchMemberInfoByName(data.author);
+        } catch (memberError) {
+          console.warn("Failed to fetch member info:", memberError);
+          // Không block UI nếu không fetch được member info
+        }
         setMemberInfo(member);
 
-        // Fetch member blogs for calendar
+        // Fetch member blogs for calendar với error handling
         if (member?.code) {
           try {
             const blogs = await fetchAllBlogs(member.code);
             setMemberBlogs(blogs || []);
           } catch (e) {
             console.error("Failed to fetch member blogs:", e);
+            // Không block UI nếu không fetch được member blogs
           }
         }
       } catch (e) {
