@@ -14,6 +14,7 @@ import {
   Badge,
   Grid,
   Tag,
+  Select,
 } from "antd";
 import {
   CalendarOutlined,
@@ -42,6 +43,37 @@ import BlogCalendar from "./BlogCalendar";
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
+// Translation keys
+const t = {
+  searchPlaceholder: {
+    ja: "ブログを検索...",
+    en: "Search blogs...",
+    vi: "Tìm kiếm blog...",
+  },
+  noBlogs: {
+    ja: "ブログが見つかりません",
+    en: "No blogs found",
+    vi: "Không tìm thấy blog",
+  },
+  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
+  error: {
+    ja: "エラーが発生しました",
+    en: "An error occurred",
+    vi: "Đã xảy ra lỗi",
+  },
+  retry: { ja: "再試行", en: "Retry", vi: "Thử lại" },
+  blogArticle: { ja: "ブログ記事", en: "Blog Article", vi: "Bài viết blog" },
+  readMore: { ja: "続きを読む", en: "Read More", vi: "Đọc thêm" },
+  totalPosts: { ja: "総投稿数", en: "Total Posts", vi: "Tổng số bài viết" },
+  memberBlogs: {
+    ja: "メンバーブログ",
+    en: "Member Blogs",
+    vi: "Blog thành viên",
+  },
+  calendar: { ja: "カレンダー", en: "Calendar", vi: "Lịch" },
+  list: { ja: "リスト", en: "List", vi: "Danh sách" },
+};
+
 /** ---------- Simple in-memory cache ---------- **/
 const _cache = {
   blogsByMember: new Map(), // key: memberCode -> { list, ts }
@@ -50,7 +82,11 @@ const _cache = {
 };
 const STALE_MS = 1000 * 60 * 3; // 3 phút coi là “fresh”
 
-export default function BlogList() {
+export default function BlogList({ language = "ja", setLanguage }) {
+  // Ensure language is valid, fallback to "ja"
+  const currentLanguage = ["ja", "en", "vi"].includes(language)
+    ? language
+    : "ja";
   const navigate = useNavigate();
   const { memberCode } = useParams();
   const screens = useBreakpoint();
@@ -152,7 +188,7 @@ export default function BlogList() {
       } catch (e) {
         if (e.name !== "AbortError") {
           console.error(e);
-          setError("データの読み込み中にエラーが発生しました。");
+          setError(t.error[currentLanguage]);
         }
       } finally {
         if (!abortRef.current?.signal.aborted) setLoading(false);
@@ -163,7 +199,7 @@ export default function BlogList() {
     load(hasCache);
 
     return () => controller.abort();
-  }, [memberCode, deferredQ]);
+  }, [memberCode, deferredQ, currentLanguage]);
 
   // Lưu vị trí cuộn trước khi rời trang
   useEffect(() => {
@@ -222,7 +258,7 @@ export default function BlogList() {
             justifyContent: "center",
           }}
         >
-          <Spin size="large" tip="読み込み中..." />
+          <Spin size="large" tip={t.loading[currentLanguage]} />
         </div>
       </PageContainer>
     );
@@ -244,7 +280,7 @@ export default function BlogList() {
             {error}
           </Title>
           <Button type="primary" onClick={() => window.location.reload()}>
-            再試行
+            {t.retry[currentLanguage]}
           </Button>
         </ProCard>
       </PageContainer>
@@ -297,11 +333,25 @@ export default function BlogList() {
               />
               <Space direction="vertical" align="center" size={2}>
                 <Title level={3} style={{ margin: 0, lineHeight: 1 }}>
-                  Blog
+                  {t.memberBlogs[currentLanguage]}
                 </Title>
                 <Text type="secondary" style={{ fontSize: 13 }}>
-                  {memberInfo?.name || "Loading..."} 公式ブログ
+                  {memberInfo?.name || t.loading[currentLanguage]}{" "}
+                  {t.blogArticle[currentLanguage]}
                 </Text>
+                {setLanguage && (
+                  <Select
+                    value={language}
+                    onChange={setLanguage}
+                    size="small"
+                    style={{ width: 120, marginTop: 8 }}
+                    options={[
+                      { value: "ja", label: "日本語" },
+                      { value: "en", label: "English" },
+                      { value: "vi", label: "Tiếng Việt" },
+                    ]}
+                  />
+                )}
               </Space>
             </Space>
           </ProCard>
@@ -320,7 +370,7 @@ export default function BlogList() {
                 allowClear
                 size={screens.xs ? "middle" : "large"}
                 prefix={<SearchOutlined />}
-                placeholder="検索タイトル・著者..."
+                placeholder={t.searchPlaceholder[currentLanguage]}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 style={{ maxWidth: 360, width: "100%" }}
@@ -333,7 +383,8 @@ export default function BlogList() {
                   alignItems: "center",
                 }}
               >
-                合計 {filtered.length} 件 {isPending ? "…" : ""}
+                {t.totalPosts[currentLanguage]} {filtered.length}{" "}
+                {isPending ? "…" : ""}
               </Tag>
             </Space>
           </ProCard>
@@ -352,7 +403,7 @@ export default function BlogList() {
             >
               <Empty
                 description={
-                  q ? "検索結果が見つかりません" : "まだブログ記事がありません"
+                  q ? t.noBlogs[currentLanguage] : t.noBlogs[currentLanguage]
                 }
               />
             </ProCard>
@@ -489,7 +540,7 @@ export default function BlogList() {
                           onOpen(blog.id);
                         }}
                       >
-                        読む
+                        {t.readMore[currentLanguage]}
                       </Button>
                     </Space>
                   </Space>
@@ -530,6 +581,7 @@ export default function BlogList() {
             memberInfo={memberInfo}
             onBlogClick={onOpen}
             isMobile={screens.xs}
+            language={language}
           />
         </ProCard>
       </ProCard>

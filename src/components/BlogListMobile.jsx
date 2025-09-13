@@ -18,6 +18,7 @@ import {
   Row,
   Col,
   Statistic,
+  Select,
 } from "antd";
 import {
   CalendarOutlined,
@@ -52,6 +53,37 @@ import {
 } from "../services/blogService";
 
 const { Title, Text } = Typography;
+
+// Translation keys
+const t = {
+  searchPlaceholder: {
+    ja: "ブログを検索...",
+    en: "Search blogs...",
+    vi: "Tìm kiếm blog...",
+  },
+  noBlogs: {
+    ja: "ブログが見つかりません",
+    en: "No blogs found",
+    vi: "Không tìm thấy blog",
+  },
+  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
+  error: {
+    ja: "エラーが発生しました",
+    en: "An error occurred",
+    vi: "Đã xảy ra lỗi",
+  },
+  retry: { ja: "再試行", en: "Retry", vi: "Thử lại" },
+  blogArticle: { ja: "ブログ記事", en: "Blog Article", vi: "Bài viết blog" },
+  readMore: { ja: "続きを読む", en: "Read More", vi: "Đọc thêm" },
+  totalPosts: { ja: "総投稿数", en: "Total Posts", vi: "Tổng số bài viết" },
+  memberBlogs: {
+    ja: "メンバーブログ",
+    en: "Member Blogs",
+    vi: "Blog thành viên",
+  },
+  calendar: { ja: "カレンダー", en: "Calendar", vi: "Lịch" },
+  list: { ja: "リスト", en: "List", vi: "Danh sách" },
+};
 
 /** Japanese color palette - Purple theme */
 const colors = {
@@ -88,7 +120,11 @@ const _cache = {
 const STALE_MS = 1000 * 60 * 5; // 5 phút coi là "fresh"
 const CACHE_LIMIT = 50; // Giới hạn cache để tránh memory leak
 
-export default function BlogListMobile() {
+export default function BlogListMobile({ language = "ja", setLanguage }) {
+  // Ensure language is valid, fallback to "ja"
+  const currentLanguage = ["ja", "en", "vi"].includes(language)
+    ? language
+    : "ja";
   const navigate = useNavigate();
   const { memberCode } = useParams();
 
@@ -225,7 +261,7 @@ export default function BlogListMobile() {
       } catch (e) {
         if (e.name !== "AbortError") {
           console.error(e);
-          setError("データの読み込み中にエラーが発生しました。");
+          setError(t.error[currentLanguage]);
         }
       } finally {
         if (!abortRef.current?.signal.aborted) setLoading(false);
@@ -236,7 +272,7 @@ export default function BlogListMobile() {
     load(hasCache);
 
     return () => controller.abort();
-  }, [memberCode, deferredQ]);
+  }, [memberCode, deferredQ, currentLanguage]);
 
   // Lưu vị trí cuộn trước khi rời trang
   useEffect(() => {
@@ -356,7 +392,7 @@ export default function BlogListMobile() {
             <Space direction="vertical" align="center" size={16}>
               <Spin size="large" />
               <Text style={{ ...jpFont, color: colors.textSecondary }}>
-                読み込み中...
+                {t.loading[currentLanguage]}
               </Text>
             </Space>
           </ProCard>
@@ -408,7 +444,7 @@ export default function BlogListMobile() {
                   borderRadius: 12,
                 }}
               >
-                再試行
+                {t.retry[currentLanguage]}
               </Button>
             </Space>
           </ProCard>
@@ -480,7 +516,7 @@ export default function BlogListMobile() {
                         fontWeight: 500,
                       }}
                     >
-                      公式ブログ
+                      {t.blogArticle[currentLanguage]}
                     </Text>
                     <Title
                       level={4}
@@ -493,7 +529,7 @@ export default function BlogListMobile() {
                         fontWeight: 700,
                       }}
                     >
-                      {memberInfo?.name || "Loading..."}
+                      {memberInfo?.name || t.loading[currentLanguage]}
                     </Title>
                   </Space>
                 </Space>
@@ -506,8 +542,21 @@ export default function BlogListMobile() {
                       fontWeight: 600,
                     }}
                     prefix={<BookOutlined />}
-                    suffix="件"
+                    suffix={language === "ja" ? "件" : ""}
                   />
+                  {setLanguage && (
+                    <Select
+                      value={language}
+                      onChange={setLanguage}
+                      size="small"
+                      style={{ width: 100 }}
+                      options={[
+                        { value: "ja", label: "日" },
+                        { value: "en", label: "EN" },
+                        { value: "vi", label: "VI" },
+                      ]}
+                    />
+                  )}
                 </Space>
               </Space>
             </div>
@@ -516,7 +565,7 @@ export default function BlogListMobile() {
             <Input
               allowClear
               prefix={<SearchOutlined style={{ color: colors.primary }} />}
-              placeholder="ブログを検索…"
+              placeholder={t.searchPlaceholder[currentLanguage]}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               size="large"
@@ -558,9 +607,7 @@ export default function BlogListMobile() {
             <Empty
               description={
                 <Text style={{ ...jpFont, color: colors.textSecondary }}>
-                  {q
-                    ? "検索結果が見つかりません"
-                    : "まだブログ記事がありません"}
+                  {t.noBlogs[currentLanguage]}
                 </Text>
               }
             />
@@ -715,9 +762,7 @@ export default function BlogListMobile() {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                         }}
-                      >
-                    
-                      </Text>
+                      ></Text>
                     </div>
 
                     <Space size={[4, 4]} wrap>

@@ -16,6 +16,7 @@ import "./App.css";
 
 function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [language, setLanguage] = useState("ja");
 
   useEffect(() => {
     document.title = "Nogizaka46 Blog Archive";
@@ -97,15 +98,37 @@ function App() {
             }}
             menuHeaderRender={false}
           >
-            <div className="min-h-screen" style={{ paddingTop: 0 }}>
+            <div
+              className="min-h-screen"
+              style={{ paddingTop: 0, marginTop: 0 }}
+            >
               <Routes>
                 <Route path="/" element={<Navigate to="/members" replace />} />
-                <Route path="/members" element={<MemberList />} />
+                <Route
+                  path="/members"
+                  element={
+                    <MemberList language={language} setLanguage={setLanguage} />
+                  }
+                />
                 <Route
                   path="/blogs/:memberCode"
-                  element={isMobile ? <BlogListMobile /> : <BlogList />}
+                  element={
+                    isMobile ? (
+                      <BlogListMobile
+                        language={language}
+                        setLanguage={setLanguage}
+                      />
+                    ) : (
+                      <BlogList language={language} setLanguage={setLanguage} />
+                    )
+                  }
                 />
-                <Route path="/blog/:id" element={<BlogDetail />} />
+                <Route
+                  path="/blog/:id"
+                  element={
+                    <BlogDetail language={language} setLanguage={setLanguage} />
+                  }
+                />
               </Routes>
             </div>
           </ProLayout>

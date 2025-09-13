@@ -14,6 +14,7 @@ import {
   Tooltip,
   message,
   Button,
+  Select,
 } from "antd";
 import { ProCard, PageContainer } from "@ant-design/pro-components";
 import {
@@ -25,6 +26,47 @@ import {
 import MemberListMobile from "./MemberListMobile";
 
 const { Title, Text } = Typography;
+
+// Translation keys
+const t = {
+  searchPlaceholder: {
+    ja: "メンバーを検索...",
+    en: "Search members...",
+    vi: "Tìm kiếm thành viên...",
+  },
+  noMembers: {
+    ja: "メンバーが見つかりません",
+    en: "No members found",
+    vi: "Không tìm thấy thành viên",
+  },
+  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
+  error: {
+    ja: "エラーが発生しました",
+    en: "An error occurred",
+    vi: "Đã xảy ra lỗi",
+  },
+  retry: { ja: "再試行", en: "Retry", vi: "Thử lại" },
+  members: { ja: "メンバー", en: "Members", vi: "Thành viên" },
+  nogizaka46: { ja: "乃木坂46", en: "Nogizaka46", vi: "Nogizaka46" },
+  officialSite: {
+    ja: "公式サイト",
+    en: "Official Site",
+    vi: "Trang chính thức",
+  },
+  blog: { ja: "ブログ", en: "Blog", vi: "Blog" },
+  generation: { ja: "期生", en: "Generation", vi: "Thế hệ" },
+  other: { ja: "その他", en: "Other", vi: "Khác" },
+  blogTitle: {
+    ja: "乃木坂46 ブログ",
+    en: "Nogizaka46 Blog",
+    vi: "Nogizaka46 Blog ",
+  },
+  totalBlogs: {
+    ja: "総ブログ数",
+    en: "Total Members",
+    vi: "Tổng Số Thành Viên",
+  },
+};
 
 const jpFont = {
   fontFamily:
@@ -67,7 +109,11 @@ const getAge = (birthday) => {
   return age;
 };
 
-const MemberList = () => {
+const MemberList = ({ language = "ja", setLanguage }) => {
+  // Ensure language is valid, fallback to "ja"
+  const currentLanguage = ["ja", "en", "vi"].includes(language)
+    ? language
+    : "ja";
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -157,15 +203,54 @@ const MemberList = () => {
 
   // Mobile view
   if (isMobile) {
-    return <MemberListMobile />;
+    return <MemberListMobile language={language} setLanguage={setLanguage} />;
   }
 
   return (
     <PageContainer
-      style={{ background: "#fff" }}
-      token={{ paddingInlinePageContainerContent: 0 }}
+      style={{ background: "#fff", paddingTop: 0, marginTop: 0 }}
+      token={{
+        paddingInlinePageContainerContent: 0,
+        paddingBlockPageContainerContent: 0,
+      }}
     >
-      <ProCard ghost direction="column" gutter={[16, 16]} wrap>
+      <ProCard
+        ghost
+        direction="column"
+        gutter={[16, 16]}
+        wrap
+        style={{ marginTop: 0, paddingTop: 0 }}
+      >
+        {/* Header với title và language selector */}
+        <ProCard bordered style={{ borderRadius: 14 }}>
+          <Space
+            style={{ width: "100%", justifyContent: "space-between" }}
+            align="center"
+          >
+            <Space direction="vertical" size={0}>
+              <Title level={2} style={{ margin: 0, color: "#9333ea" }}>
+                {t.blogTitle[currentLanguage]}
+              </Title>
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                {t.generation[currentLanguage]} •{" "}
+                {t.totalBlogs[currentLanguage]}: {members.length}
+              </Text>
+            </Space>
+            {setLanguage && (
+              <Select
+                value={language}
+                onChange={setLanguage}
+                style={{ width: 120 }}
+                options={[
+                  { value: "ja", label: "日本語" },
+                  { value: "en", label: "English" },
+                  { value: "vi", label: "Tiếng Việt" },
+                ]}
+              />
+            )}
+          </Space>
+        </ProCard>
+
         {/* Bộ lọc */}
         <ProCard bordered style={{ borderRadius: 14 }}>
           <Space
@@ -175,7 +260,26 @@ const MemberList = () => {
           >
             <Segmented
               options={genList.map((g) => ({
-                label: g === "ALL" ? "ALL" : g,
+                label:
+                  g === "ALL"
+                    ? currentLanguage === "ja"
+                      ? "すべて"
+                      : currentLanguage === "en"
+                      ? "All"
+                      : "Tất cả"
+                    : g
+                        .replace(
+                          "期生",
+                          currentLanguage === "ja"
+                            ? "期生"
+                            : currentLanguage === "en"
+                            ? " Gen"
+                            : " Thế hệ"
+                        )
+                        .replace(
+                          /^(\d+)\s*(Gen|Thế hệ)$/,
+                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                        ),
                 value: g,
               }))}
               value={genFilter}
@@ -184,7 +288,7 @@ const MemberList = () => {
             <Input
               allowClear
               prefix={<SearchOutlined />}
-              placeholder="Tìm theo tên / kana / English name..."
+              placeholder={t.searchPlaceholder[currentLanguage]}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               style={{ maxWidth: 340 }}
@@ -205,7 +309,7 @@ const MemberList = () => {
           </div>
         ) : grouped.length === 0 ? (
           <ProCard bordered style={{ borderRadius: 14 }}>
-            <Empty description="Không tìm thấy thành viên phù hợp" />
+            <Empty description={t.noMembers[currentLanguage]} />
           </ProCard>
         ) : (
           grouped.map(({ gen, items }) => (
@@ -214,7 +318,23 @@ const MemberList = () => {
               title={
                 <Space align="center">
                   <StarOutlined />
-                  <span style={{ ...jpFont, fontWeight: 700 }}>{gen}</span>
+                  <span style={{ ...jpFont, fontWeight: 700 }}>
+                    {gen === "その他"
+                      ? t.other[currentLanguage]
+                      : gen
+                          .replace(
+                            "期生",
+                            currentLanguage === "ja"
+                              ? "期生"
+                              : currentLanguage === "en"
+                              ? " Gen"
+                              : " Thế hệ"
+                          )
+                          .replace(
+                            /^(\d+)\s*(Gen|Thế hệ)$/,
+                            currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                          )}
+                  </span>
                   <Tag color="purple" style={{ marginLeft: 6 }}>
                     {items.length}
                   </Tag>
@@ -381,7 +501,7 @@ const MemberList = () => {
                                 }}
                                 className="official-button"
                               >
-                                Official Page
+                                {t.officialSite[currentLanguage]}
                               </Button>
                             )}
                           </Space>

@@ -102,7 +102,10 @@ const LS_KEY_TR_VI = "blog:tr:vi";
 const LS_KEY_TTL_EN = "blog:trttl:en";
 const LS_KEY_TTL_VI = "blog:trttl:vi";
 
-export default function BlogDetail() {
+export default function BlogDetail({
+  language: propLanguage,
+  setLanguage: propSetLanguage,
+}) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -111,7 +114,7 @@ export default function BlogDetail() {
   const [memberBlogs, setMemberBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [language, setLanguage] = useState("ja");
+  const [language, setLanguage] = useState(propLanguage || "ja");
   const [readingMode, _SET_READING_MODE] = useState(true);
   const [fontSizeKey, setFontSizeKey] = useState(
     () => localStorage.getItem(LS_KEY_SIZE) || "md"
@@ -520,7 +523,10 @@ export default function BlogDetail() {
           <Select
             key="lang"
             value={language}
-            onChange={setLanguage}
+            onChange={(value) => {
+              setLanguage(value);
+              if (propSetLanguage) propSetLanguage(value);
+            }}
             style={{ width: 120 }}
             options={[
               { value: "ja", label: "日本語" },
@@ -786,6 +792,7 @@ export default function BlogDetail() {
             memberInfo={memberInfo}
             onBlogClick={(blogId) => navigate(`/blog/${blogId}`)}
             isMobile={isMobile}
+            language={language}
           />
         </ProCard>
       </ProCard>

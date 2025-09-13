@@ -31,6 +31,7 @@ import {
   Collapse,
   Badge,
   Divider,
+  Select,
 } from "antd";
 import {
   PageContainer,
@@ -47,6 +48,43 @@ import {
 
 /** Typography */
 const { Title, Text } = Typography;
+
+// Translation keys
+const t = {
+  searchPlaceholder: {
+    ja: "メンバーを検索...",
+    en: "Search members...",
+    vi: "Tìm kiếm thành viên...",
+  },
+  noMembers: {
+    ja: "メンバーが見つかりません",
+    en: "No members found",
+    vi: "Không tìm thấy thành viên",
+  },
+  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
+  error: {
+    ja: "エラーが発生しました",
+    en: "An error occurred",
+    vi: "Đã xảy ra lỗi",
+  },
+  retry: { ja: "再試行", en: "Retry", vi: "Thử lại" },
+  members: { ja: "メンバー", en: "Members", vi: "Thành viên" },
+  nogizaka46: { ja: "乃木坂46", en: "Nogizaka46", vi: "Nogizaka46" },
+  officialSite: {
+    ja: "公式サイト",
+    en: "Official Site",
+    vi: "Trang chính thức",
+  },
+  blog: { ja: "ブログ", en: "Blog", vi: "Blog" },
+  generation: { ja: "期生", en: "Generation", vi: "Thế hệ" },
+  other: { ja: "その他", en: "Other", vi: "Khác" },
+  blogTitle: {
+    ja: "乃木坂46 ブログ",
+    en: "Nogizaka46 Blog",
+    vi: "Blog Nogizaka46",
+  },
+  totalBlogs: { ja: "総ブログ数", en: "Total Blogs", vi: "Tổng số Blog" },
+};
 
 /** JP font */
 const jpFont = {
@@ -105,7 +143,11 @@ const useRafDebounce = (fn, delay = 160) => {
   );
 };
 
-export default function MemberListMobile() {
+export default function MemberListMobile({ language = "ja", setLanguage }) {
+  // Ensure language is valid, fallback to "ja"
+  const currentLanguage = ["ja", "en", "vi"].includes(language)
+    ? language
+    : "ja";
   const navigate = useNavigate();
 
   /** State */
@@ -391,21 +433,36 @@ export default function MemberListMobile() {
                   type="secondary"
                   style={{ letterSpacing: 2, fontSize: 12 }}
                 >
-                  乃木坂46 メンバー
+                  {t.blogTitle[currentLanguage]}
                 </Text>
                 <Title
                   level={4}
                   style={{ margin: 0, lineHeight: 1.2, fontSize: 18 }}
                 >
-                  Members
+                  {t.totalBlogs[currentLanguage]}: {members.length}
                 </Title>
               </Space>
-              <Button
-                type="text"
-                icon={<FilterOutlined />}
-                onClick={() => setFilterDrawerVisible(true)}
-                style={{ borderRadius: 10, flexShrink: 0 }}
-              />
+              <Space>
+                {setLanguage && (
+                  <Select
+                    value={language}
+                    onChange={setLanguage}
+                    size="small"
+                    style={{ width: 100 }}
+                    options={[
+                      { value: "ja", label: "日" },
+                      { value: "en", label: "EN" },
+                      { value: "vi", label: "VI" },
+                    ]}
+                  />
+                )}
+                <Button
+                  type="text"
+                  icon={<FilterOutlined />}
+                  onClick={() => setFilterDrawerVisible(true)}
+                  style={{ borderRadius: 10, flexShrink: 0 }}
+                />
+              </Space>
             </Space>
 
             {/* Gen chips + Search */}
@@ -415,7 +472,25 @@ export default function MemberListMobile() {
                 onChange={setGenFilter}
                 options={genList.map((g) => ({
                   label:
-                    g === "ALL" ? "すべて" : g.length > 3 ? g.slice(0, 3) : g,
+                    g === "ALL"
+                      ? currentLanguage === "ja"
+                        ? "すべて"
+                        : currentLanguage === "en"
+                        ? "All"
+                        : "Tất cả"
+                      : g
+                          .replace(
+                            "期生",
+                            currentLanguage === "ja"
+                              ? "期生"
+                              : currentLanguage === "en"
+                              ? " Gen"
+                              : " Thế hệ"
+                          )
+                          .replace(
+                            /^(\d+)\s*(Gen|Thế hệ)$/,
+                            currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                          ),
                   value: g,
                 }))}
                 size="small"
@@ -425,7 +500,7 @@ export default function MemberListMobile() {
               <Input
                 allowClear
                 prefix={<SearchOutlined />}
-                placeholder="メンバーを検索…"
+                placeholder={t.searchPlaceholder[currentLanguage]}
                 onChange={onSearchChange}
                 size="middle"
                 style={{
@@ -455,7 +530,7 @@ export default function MemberListMobile() {
           </ProCard>
         ) : grouped.length === 0 ? (
           <Card style={{ borderRadius: 16, textAlign: "center" }}>
-            <Empty description="該当するメンバーが見つかりません" />
+            <Empty description={t.noMembers[currentLanguage]} />
           </Card>
         ) : (
           <Collapse
@@ -489,7 +564,23 @@ export default function MemberListMobile() {
                           color: "#18181b",
                         }}
                       >
-                        {gen}
+                        {gen === "その他"
+                          ? t.other[currentLanguage]
+                          : gen
+                              .replace(
+                                "期生",
+                                currentLanguage === "ja"
+                                  ? "期生"
+                                  : currentLanguage === "en"
+                                  ? " Gen"
+                                  : " Thế hệ"
+                              )
+                              .replace(
+                                /^(\d+)\s*(Gen|Thế hệ)$/,
+                                currentLanguage === "en"
+                                  ? "Gen $1"
+                                  : "Thế hệ $1"
+                              )}
                       </span>
                     </Space>
                     <Space>
@@ -564,12 +655,31 @@ export default function MemberListMobile() {
         <Space direction="vertical" style={{ width: "100%" }} size="large">
           <div>
             <Text strong style={{ display: "block", marginBottom: 10 }}>
-              期生
+              {t.generation[currentLanguage]}
             </Text>
             <Segmented
               block
               options={genList.map((g) => ({
-                label: g === "ALL" ? "すべて" : g,
+                label:
+                  g === "ALL"
+                    ? currentLanguage === "ja"
+                      ? "すべて"
+                      : currentLanguage === "en"
+                      ? "All"
+                      : "Tất cả"
+                    : g
+                        .replace(
+                          "期生",
+                          currentLanguage === "ja"
+                            ? "期生"
+                            : currentLanguage === "en"
+                            ? " Gen"
+                            : " Thế hệ"
+                        )
+                        .replace(
+                          /^(\d+)\s*(Gen|Thế hệ)$/,
+                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                        ),
                 value: g,
               }))}
               value={genFilter}

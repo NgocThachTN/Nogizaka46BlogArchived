@@ -19,11 +19,53 @@ import { getImageUrl } from "../services/blogService";
 const { Text } = Typography;
 dayjs.locale("ja");
 
+// Translation keys
+const t = {
+  calendar: { ja: "ブログカレンダー", en: "Blog Calendar", vi: "Lịch Blog" },
+  thisMonth: {
+    ja: "今月の投稿",
+    en: "This Month's Posts",
+    vi: "Bài viết tháng này",
+  },
+  totalPosts: { ja: "総投稿数", en: "Total Posts", vi: "Tổng số bài viết" },
+  yearView: { ja: "年表示", en: "Year View", vi: "Xem theo năm" },
+  monthView: { ja: "月表示", en: "Month View", vi: "Xem theo tháng" },
+  postsOn: { ja: "の投稿", en: "Posts on", vi: "Bài viết ngày" },
+  noPosts: {
+    ja: "には投稿がありません",
+    en: "No posts on this date",
+    vi: "Không có bài viết ngày này",
+  },
+  selectOtherDate: {
+    ja: "他の日付を選択してください",
+    en: "Please select another date",
+    vi: "Vui lòng chọn ngày khác",
+  },
+  loading: {
+    ja: "ブログデータを読み込み中...",
+    en: "Loading blog data...",
+    vi: "Đang tải dữ liệu blog...",
+  },
+  january: { ja: "1月", en: "January", vi: "Tháng 1" },
+  february: { ja: "2月", en: "February", vi: "Tháng 2" },
+  march: { ja: "3月", en: "March", vi: "Tháng 3" },
+  april: { ja: "4月", en: "April", vi: "Tháng 4" },
+  may: { ja: "5月", en: "May", vi: "Tháng 5" },
+  june: { ja: "6月", en: "June", vi: "Tháng 6" },
+  july: { ja: "7月", en: "July", vi: "Tháng 7" },
+  august: { ja: "8月", en: "August", vi: "Tháng 8" },
+  september: { ja: "9月", en: "September", vi: "Tháng 9" },
+  october: { ja: "10月", en: "October", vi: "Tháng 10" },
+  november: { ja: "11月", en: "November", vi: "Tháng 11" },
+  december: { ja: "12月", en: "December", vi: "Tháng 12" },
+};
+
 export default function BlogCalendar({
   blogs = [],
   memberInfo = null,
   onBlogClick = () => {},
   isMobile = false,
+  language = "ja",
 }) {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [viewMode, setViewMode] = useState("month"); // month, year
@@ -129,7 +171,7 @@ export default function BlogCalendar({
         bodyStyle={{ padding: isMobile ? 12 : 16 }}
       >
         <div style={{ textAlign: "center", padding: "20px 0" }}>
-          <Text type="secondary">ブログデータを読み込み中...</Text>
+          <Text type="secondary">{t.loading[language]}</Text>
         </div>
       </ProCard>
     );
@@ -140,7 +182,7 @@ export default function BlogCalendar({
       title={
         <Space>
           <CalendarOutlined />
-          <span>ブログカレンダー</span>
+          <span>{t.calendar[language]}</span>
           {memberInfo && (
             <Text type="secondary" style={{ fontSize: 12 }}>
               {memberInfo.name}
@@ -155,7 +197,7 @@ export default function BlogCalendar({
           size="small"
           onClick={() => setViewMode(viewMode === "month" ? "year" : "month")}
         >
-          {viewMode === "month" ? "年表示" : "月表示"}
+          {viewMode === "month" ? t.yearView[language] : t.monthView[language]}
         </Button>
       }
     >
@@ -189,7 +231,9 @@ export default function BlogCalendar({
                 ←
               </Button>
               <Text strong style={{ fontSize: isMobile ? 14 : 16 }}>
-                {value.format(viewMode === "month" ? "YYYY年M月" : "YYYY年")}
+                {viewMode === "month"
+                  ? value.format("YYYY年M月")
+                  : value.format("YYYY年")}
               </Text>
               <Button
                 size="small"
@@ -213,7 +257,9 @@ export default function BlogCalendar({
           title={
             <Space>
               <ReadOutlined />
-              <span>{selectedDate.format("YYYY年M月D日")} の投稿</span>
+              <span>
+                {selectedDate.format("YYYY年M月D日")} {t.postsOn[language]}
+              </span>
               <Badge count={selectedDateBlogs.length} />
             </Space>
           }
@@ -319,7 +365,7 @@ export default function BlogCalendar({
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
               <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>
-                {selectedDate.format("YYYY年M月D日")} には投稿がありません
+                {selectedDate.format("YYYY年M月D日")} {t.noPosts[language]}
               </Text>
             }
           />
