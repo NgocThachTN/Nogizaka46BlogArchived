@@ -314,6 +314,14 @@ const MemberList = () => {
                             </div>
 
                             <Space size={4} wrap style={{ marginTop: 4 }}>
+                              <Tag
+                                color="purple"
+                                style={{
+                                  borderRadius: 12,
+                                }}
+                              >
+                                {getGen(m)}
+                              </Tag>
                               {m.birthday && (
                                 <Tag
                                   style={{
