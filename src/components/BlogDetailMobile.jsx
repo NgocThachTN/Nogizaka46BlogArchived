@@ -450,7 +450,6 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
-      isHeaderVisible,
     ]
   );
 
@@ -760,7 +759,6 @@ export default function BlogDetailMobile({
         <ProCard
           ghost
           style={{
-            minHeight: "100dvh",
             background: "rgba(253, 246, 227, 0.8)",
             padding: 0,
             ...jpFont,
@@ -794,7 +792,6 @@ export default function BlogDetailMobile({
         <ProCard
           ghost
           style={{
-            minHeight: "100dvh",
             background: "rgba(253, 246, 227, 0.8)",
             padding: 0,
             ...jpFont,
@@ -832,7 +829,7 @@ export default function BlogDetailMobile({
         padding: 0,
         margin: 0,
         background: "rgba(253, 246, 227, 0.8)",
-        minHeight: "100dvh",
+        height: "100dvh",
         width: "100vw",
         maxWidth: "100%",
         overflow: "hidden",
@@ -845,7 +842,7 @@ export default function BlogDetailMobile({
       <div
         ref={scrollWrapRef}
         style={{
-          height: "calc(100dvh - 3px)", // Subtract progress bar height
+          height: "calc(100dvh - 48px)", // Subtract header height only
           overflow: "auto",
           background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
@@ -857,7 +854,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: isHeaderVisible ? "88px" : "48px",
+          paddingTop: isHeaderVisible ? "40px" : "0px", // Reduced padding
           // Smooth transition for mobile
           transition: "padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           // Optimize for touch
@@ -871,16 +868,17 @@ export default function BlogDetailMobile({
           style={{
             background: "rgba(253, 246, 227, 0.8)",
             padding: 0,
-            flex: 1,
             width: "100%",
             maxWidth: "100%",
             ...jpFont,
             position: "relative",
+            minHeight: "auto", // Remove minHeight to prevent extra space
           }}
           bodyStyle={{
             padding: "0 0 0",
             margin: 0,
             width: "100%",
+            minHeight: "auto", // Remove minHeight from body too
           }}
         >
           {/* Translation Loading Overlay */}
@@ -948,7 +946,7 @@ export default function BlogDetailMobile({
           )}
 
           {/* Content - Title moved to author section */}
-          <div style={{ padding: "12px 12px 0 12px" }}>
+          <div style={{ padding: "12px 12px 12px 12px" }}>
             {/* Nội dung */}
             <div
               className="jp-prose"
@@ -961,7 +959,8 @@ export default function BlogDetailMobile({
                 overflowWrap: "break-word",
                 wordWrap: "break-word",
                 hyphens: "auto",
-                paddingBottom: "20px",
+                paddingBottom: "0px", // Remove extra bottom padding
+                marginBottom: "0px", // Remove extra bottom margin
               }}
               dangerouslySetInnerHTML={{
                 __html: optimizedHtml,
@@ -1130,10 +1129,11 @@ export default function BlogDetailMobile({
             margin: 0 !important;
             width: 100% !important;
             max-width: 100vw !important;
-            min-height: 100vh !important;
-            min-height: 100dvh !important;
+            height: 100vh !important;
+            height: 100dvh !important;
             display: flex !important;
             flex-direction: column !important;
+            overflow: hidden !important;
           }
           .ant-pro-page-container-children-container {
             flex: 1 !important;
@@ -1141,11 +1141,14 @@ export default function BlogDetailMobile({
             padding: 0 !important;
             width: 100% !important;
             max-width: 100vw !important;
+            height: 100% !important;
+            overflow: hidden !important;
           }
           .ant-pro-grid-content { 
             margin: 0 !important; 
             padding: 0 !important;
             width: 100% !important;
+            height: 100% !important;
           }
           .ant-card { 
             background: #fdf6e3;
@@ -1154,10 +1157,12 @@ export default function BlogDetailMobile({
           .ant-pro-card {
             margin: 0 !important;
             padding: 0 !important;
+            min-height: auto !important;
           }
           .ant-pro-card-body {
             margin: 0 !important;
             padding: 0 !important;
+            min-height: auto !important;
           }
           .jp-prose img {
             border-radius: 12px;
