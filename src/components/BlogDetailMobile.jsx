@@ -150,7 +150,7 @@ export default function BlogDetailMobile({
     []
   );
 
-  // progress đọc (%)
+  // progress đọc (%) - currently not displayed but kept for future use
   const [readPct, setReadPct] = useState(0);
   const scrollWrapRef = useRef(null);
   const lastTotalRef = useRef(0);
@@ -842,7 +842,7 @@ export default function BlogDetailMobile({
       <div
         ref={scrollWrapRef}
         style={{
-          height: "calc(100dvh - 48px)", // Subtract header height only
+          height: "calc(100dvh - 88px)", // Subtract both header (48px) and author bar (40px)
           overflow: "auto",
           background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
@@ -852,7 +852,7 @@ export default function BlogDetailMobile({
           width: "100%",
           position: "relative",
           touchAction: "pan-y",
-          paddingTop: isHeaderVisible ? "40px" : "0px", // Reduced padding
+          paddingTop: isHeaderVisible ? "0px" : "0px", // Remove extra padding
           // Smooth transition for mobile
           transition: "padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           // Optimize for touch
@@ -936,7 +936,7 @@ export default function BlogDetailMobile({
           )}
 
           {/* Content - Title moved to author section */}
-          <div style={{ padding: "12px 12px 12px 12px" }}>
+          <div style={{ padding: "12px 12px 0px 12px" }}>
             {/* Nội dung */}
             <div
               className="jp-prose"
@@ -1029,7 +1029,6 @@ export default function BlogDetailMobile({
         </Space>
       </Drawer>
 
-     
       {/* Full-bleed overrides */}
       <style>{`
           /* Hide scrollbar for Chrome, Safari and Opera */
@@ -1168,6 +1167,10 @@ export default function BlogDetailMobile({
           }
           .jp-prose > *:last-child {
             margin-bottom: 0 !important;
+          }
+          .jp-prose {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
           }
           .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: #111827; }
           .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: #111827; }
