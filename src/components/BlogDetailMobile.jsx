@@ -475,27 +475,27 @@ export default function BlogDetailMobile({
   // Author Bar (always visible - clean design)
   const AuthorBar = useMemo(
     () => (
-      <Affix offsetTop={48}>
-        <ProCard
-          size="small"
+      <div
+        style={{
+          ...jpFont,
+          background:
+            "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
+          borderBottom: "1px solid rgba(139, 69, 19, 0.15)",
+          zIndex: 998,
+          position: "fixed",
+          top: 44,
+          left: 0,
+          right: 0,
+          width: "100%",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          margin: 0,
+          borderRadius: 0,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+        }}
+      >
+        <div
           style={{
-            ...jpFont,
-            background:
-              "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
-            borderBottom: "1px solid rgba(139, 69, 19, 0.15)",
-            zIndex: 998,
-            position: "fixed",
-            top: 48,
-            left: 0,
-            right: 0,
-            width: "100%",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            margin: 0,
-            borderRadius: 0,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-          }}
-          bodyStyle={{
             padding: "6px 12px",
             margin: 0,
             display: "flex",
@@ -586,8 +586,8 @@ export default function BlogDetailMobile({
               />
             </>
           )}
-        </ProCard>
-      </Affix>
+        </div>
+      </div>
     ),
     [blog, displayTitle, memberInfo]
   );
@@ -742,7 +742,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: "88px",
+          paddingTop: "84px",
         }}
       >
         <ProCard
