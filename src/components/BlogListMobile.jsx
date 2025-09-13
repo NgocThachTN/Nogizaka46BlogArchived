@@ -164,26 +164,56 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     return () => clearInterval(interval);
   }, []);
 
-  // ---- Render instantly from cache ----
+  // ---- Render instantly from cache with iOS optimizations ----
   useLayoutEffect(() => {
-    const b = _cache.blogsByMember.get(memberCode);
-    const m = _cache.memberByCode.get(memberCode);
+    const renderCachedContent = async () => {
+      const b = _cache.blogsByMember.get(memberCode);
+      const m = _cache.memberByCode.get(memberCode);
+      
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      if (isIOS) {
+        // iOS Safari: Delay render slightly to prevent layout issues
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
 
-    if (b?.list?.length) {
-      setBlogs(b.list);
-      setFiltered(b.list);
-      setLoading(false);
-    }
-    if (m?.info) setMemberInfo(m.info);
+      if (b?.list?.length) {
+        startTransition(() => {
+          setBlogs(b.list);
+          setFiltered(b.list);
+          setLoading(false);
+        });
+      }
+      
+      if (m?.info) {
+        if (isIOS) {
+          // iOS: Render member info after slight delay
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
+        setMemberInfo(m.info);
+      }
 
-    // Khôi phục vị trí cuộn
-    const y = _cache.scrollY.get(memberCode);
-    if (typeof y === "number") {
-      requestAnimationFrame(() => window.scrollTo(0, y));
-    }
+      // Restore scroll position with iOS optimization
+      const y = _cache.scrollY.get(memberCode);
+      if (typeof y === "number") {
+        if (isIOS) {
+          // iOS: Smooth scroll restoration
+          setTimeout(() => {
+            window.scrollTo({
+              top: y,
+              behavior: 'auto'
+            });
+          }, 50);
+        } else {
+          requestAnimationFrame(() => window.scrollTo(0, y));
+        }
+      }
+    };
+
+    renderCachedContent();
   }, [memberCode]);
 
-  // ---- Load + revalidate với tối ưu hóa ----
+  // ---- Load + revalidate với iOS optimizations ----
   useEffect(() => {
     const controller = new AbortController();
     abortRef.current = controller;
@@ -196,24 +226,40 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         const isFreshB = cachedB && now - cachedB.ts < STALE_MS;
         const isFreshM = cachedM && now - cachedM.ts < STALE_MS;
 
-        // Nếu có cache fresh, không cần loading
+        // Immediately set cached content if available
+        if (cachedB?.list?.length) {
+          startTransition(() => {
+            setBlogs(cachedB.list);
+            setFiltered(cachedB.list);
+          });
+        }
+        if (cachedM?.info) {
+          setMemberInfo(cachedM.info);
+        }
+
+        // If both caches are fresh, skip loading
         if (isFreshB && isFreshM) {
           setLoading(false);
           return;
         }
 
-        // Chỉ show loading nếu không có cache hoặc không phải revalidate
+        // Show loading only if no cache available
         if (!revalidateOnly && !cachedB?.list?.length) {
           setLoading(true);
         }
         setError(null);
 
-        // Thêm delay nhỏ cho iOS để tránh race condition
-        if (
-          navigator.userAgent.includes("iPhone") ||
-          navigator.userAgent.includes("iPad")
-        ) {
+        // iOS Safari specific delay and optimizations
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          // Add small delay for iOS to stabilize
           await new Promise((resolve) => setTimeout(resolve, 100));
+          
+          // Force layout recalc on iOS
+          document.body.style.willChange = 'transform';
+          requestAnimationFrame(() => {
+            document.body.style.willChange = 'auto';
+          });
         }
 
         // Fetch song song với timeout
