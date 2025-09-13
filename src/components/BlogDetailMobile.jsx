@@ -41,22 +41,23 @@ import {
 import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 import { isIOS } from "../utils/deviceDetection";
 
-// Optimized throttle function with better performance
+// Utility function for throttle
 function throttle(func, limit) {
-  let inThrottle = false;
-  let lastRan = 0;
+  let inThrottle;
+  let lastRan;
   return function (...args) {
-    const now = Date.now();
     if (!inThrottle) {
       func.apply(this, args);
-      lastRan = now;
+      lastRan = Date.now();
       inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    } else if (now - lastRan >= limit) {
-      func.apply(this, args);
-      lastRan = now;
+    } else {
+      clearTimeout(inThrottle);
+      inThrottle = setTimeout(() => {
+        if (Date.now() - lastRan >= limit) {
+          func.apply(this, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
     }
   };
 }
@@ -70,95 +71,32 @@ const jpFont = {
 
 const LS_FONT = "mblog:fontSize";
 
-/** ---------- Optimized in-memory cache for mobile ---------- **/
+/** ---------- Simple in-memory cache for mobile optimization ---------- **/
 const _mobileCache = {
   blogContent: new Map(), // key: blogId -> { content, displayContent, language, ts }
   scrollPosition: new Map(), // key: blogId -> number
   imageCache: new Map(), // key: src -> { loaded: boolean, ts }
-  // Add cache size limits to prevent memory leaks
-  maxCacheSize: 50,
-  maxImageCacheSize: 100,
 };
-
 const CACHE_STALE_MS = 1000 * 60 * 5; // 5 phút
 
-// Cache cleanup function
-function cleanupCache() {
-  const now = Date.now();
-
-  // Clean blog content cache
-  if (_mobileCache.blogContent.size > _mobileCache.maxCacheSize) {
-    const entries = Array.from(_mobileCache.blogContent.entries());
-    entries.sort((a, b) => a[1].ts - b[1].ts);
-    const toDelete = entries.slice(
-      0,
-      entries.length - _mobileCache.maxCacheSize
-    );
-    toDelete.forEach(([key]) => _mobileCache.blogContent.delete(key));
-  }
-
-  // Clean image cache
-  if (_mobileCache.imageCache.size > _mobileCache.maxImageCacheSize) {
-    const entries = Array.from(_mobileCache.imageCache.entries());
-    entries.sort((a, b) => a[1].ts - b[1].ts);
-    const toDelete = entries.slice(
-      0,
-      entries.length - _mobileCache.maxImageCacheSize
-    );
-    toDelete.forEach(([key]) => _mobileCache.imageCache.delete(key));
-  }
-
-  // Clean stale entries
-  for (const [key, value] of _mobileCache.blogContent.entries()) {
-    if (now - value.ts > CACHE_STALE_MS) {
-      _mobileCache.blogContent.delete(key);
-    }
-  }
-
-  for (const [key, value] of _mobileCache.imageCache.entries()) {
-    if (now - value.ts > CACHE_STALE_MS) {
-      _mobileCache.imageCache.delete(key);
-    }
-  }
-}
-
-// Optimized HTML processing for mobile rendering
+// Inject performance attributes into HTML for mobile rendering
 function optimizeHtmlForMobile(html) {
   if (!html) return html;
-
-  // Use a more efficient regex and processing
   return html.replace(/<img\b([^>]*?)>/gi, (match, attrs) => {
-    if (!attrs) return match;
-
-    const attrsMap = new Map();
-    const existingAttrs = attrs.match(/\w+="[^"]*"/g) || [];
-
-    // Parse existing attributes
-    existingAttrs.forEach((attr) => {
-      const [key, value] = attr.split("=");
-      attrsMap.set(key, value);
-    });
-
-    // Add performance attributes if not present
-    if (!attrsMap.has("loading")) attrsMap.set("loading", '"lazy"');
-    if (!attrsMap.has("decoding")) attrsMap.set("decoding", '"async"');
-    if (!attrsMap.has("referrerpolicy"))
-      attrsMap.set("referrerpolicy", '"no-referrer"');
+    let newAttrs = attrs || "";
+    if (!/\bloading=/.test(newAttrs)) newAttrs += ' loading="lazy"';
+    if (!/\bdecoding=/.test(newAttrs)) newAttrs += ' decoding="async"';
+    if (!/\breferrerpolicy=/.test(newAttrs))
+      newAttrs += ' referrerpolicy="no-referrer"';
 
     // iOS-specific optimizations
-    if (isIOS() && !attrsMap.has("style")) {
-      attrsMap.set(
-        "style",
-        '"max-width: 100%; height: auto; will-change: transform;"'
-      );
+    if (isIOS()) {
+      if (!/\bstyle=/.test(newAttrs)) {
+        newAttrs += ' style="max-width: 100%; height: auto;"';
+      }
     }
 
-    // Rebuild attributes string
-    const newAttrs = Array.from(attrsMap.entries())
-      .map(([key, value]) => `${key}=${value}`)
-      .join(" ");
-
-    return `<img ${newAttrs}>`;
+    return `<img${newAttrs}>`;
   });
 }
 
@@ -192,9 +130,6 @@ export default function BlogDetailMobile({
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
-  const [isHeaderPinned, setIsHeaderPinned] = useState(true); // Thêm state để control header
-  const [isHeaderManuallyHidden, setIsHeaderManuallyHidden] = useState(false); // Thêm state để control manual hide
-  const [isTransitioning, setIsTransitioning] = useState(false); // State để track transition
 
   const navTopBtnStyle = useMemo(
     () => ({
@@ -225,13 +160,7 @@ export default function BlogDetailMobile({
 
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-
-  // Combined header visibility - either pinned by user or auto-hide
-  const shouldShowHeader = isHeaderManuallyHidden
-    ? false
-    : isHeaderPinned
-    ? true
-    : isHeaderVisible;
+  const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -286,12 +215,9 @@ export default function BlogDetailMobile({
     }
   }, [blog?.id, language, blog?.content]);
 
-  // ---- Optimized cache management ----
+  // ---- Cache management và smooth updates ----
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
-      // Cleanup cache before adding new content
-      cleanupCache();
-
       // Clear any existing cache for this blog first to prevent stale content
       _mobileCache.blogContent.delete(blog.id);
 
@@ -324,15 +250,12 @@ export default function BlogDetailMobile({
         });
       }
 
-      // Optimized image handling
+      // Simple image handling - no delays or complex logic
       if (scrollWrapRef.current) {
         const images = scrollWrapRef.current.getElementsByTagName("img");
         Array.from(images).forEach((img) => {
           img.style.opacity = "1";
           img.style.transition = "none";
-          // Add performance optimizations
-          img.style.willChange = "transform";
-          img.style.transform = "translateZ(0)";
         });
       }
     }
@@ -509,50 +432,6 @@ export default function BlogDetailMobile({
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
                 />
-                <Button
-                  type="text"
-                  icon={
-                    shouldShowHeader ? (
-                      <ArrowUpOutlined />
-                    ) : (
-                      <ArrowUpOutlined
-                        style={{ transform: "rotate(180deg)" }}
-                      />
-                    )
-                  }
-                  onClick={() => {
-                    // Tránh multiple clicks trong lúc transition
-                    if (isTransitioning) return;
-
-                    setIsTransitioning(true);
-
-                    // Batch state updates để tránh multiple re-renders
-                    requestAnimationFrame(() => {
-                      if (isHeaderPinned) {
-                        // Nếu đang pin, chuyển sang ẩn hoàn toàn
-                        setIsHeaderPinned(false);
-                        setIsHeaderManuallyHidden(true);
-                      } else if (isHeaderManuallyHidden) {
-                        // Nếu đang ẩn hoàn toàn, chuyển sang auto-hide
-                        setIsHeaderManuallyHidden(false);
-                        setIsHeaderVisible(true);
-                      } else {
-                        // Nếu đang auto-hide, chuyển sang pin
-                        setIsHeaderPinned(true);
-                        setIsHeaderManuallyHidden(false);
-                      }
-
-                      // Reset transition state sau khi hoàn thành
-                      setTimeout(() => {
-                        setIsTransitioning(false);
-                      }, 200);
-                    });
-                  }}
-                  style={{
-                    color: shouldShowHeader ? "#1890ff" : "#8c8c8c",
-                    fontWeight: shouldShowHeader ? 600 : 400,
-                  }}
-                />
               </Space>
             </Space>
           </div>
@@ -571,12 +450,6 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
-      isHeaderPinned,
-      isHeaderManuallyHidden,
-      setIsHeaderPinned,
-      setIsHeaderManuallyHidden,
-      shouldShowHeader,
-      isTransitioning,
     ]
   );
 
@@ -588,10 +461,10 @@ export default function BlogDetailMobile({
           size="small"
           style={{
             ...jpFont,
-            background: shouldShowHeader
+            background: isHeaderVisible
               ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
               : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
-            borderBottom: shouldShowHeader
+            borderBottom: isHeaderVisible
               ? "1px solid rgba(139, 69, 19, 0.2)"
               : "1px solid rgba(139, 69, 19, 0)",
             zIndex: 998,
@@ -600,13 +473,15 @@ export default function BlogDetailMobile({
             left: 0,
             right: 0,
             width: "100%",
-            // Optimized transition - chỉ dùng transform để tránh jank
-            transform: shouldShowHeader ? "translateY(0)" : "translateY(-100%)",
-            transition: "transform 0.15s ease-out",
-            willChange: "transform",
-            // Hide completely when not visible - không dùng transition cho visibility/opacity
-            visibility: shouldShowHeader ? "visible" : "hidden",
-            opacity: shouldShowHeader ? 1 : 0,
+            // Add smooth transition for show/hide
+            transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
+            transition: isHeaderVisible
+              ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
+              : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
+            willChange: "transform, opacity, background, border-color",
+            // Hide completely when not visible
+            visibility: isHeaderVisible ? "visible" : "hidden",
+            opacity: isHeaderVisible ? 1 : 0,
             margin: 0,
             borderRadius: 0,
             boxShadow: "none",
@@ -705,10 +580,10 @@ export default function BlogDetailMobile({
         </ProCard>
       </Affix>
     ),
-    [blog, displayTitle, memberInfo, shouldShowHeader, setDrawerVisible]
+    [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
   );
 
-  // Optimized throttled updater - chỉ update progress, không touch header
+  // Create a single throttled updater for scroll progress and header visibility
   useEffect(() => {
     throttledUpdateRef.current = throttle(() => {
       const wrap = scrollWrapRef.current;
@@ -718,7 +593,7 @@ export default function BlogDetailMobile({
       const lastTotal = lastTotalRef.current;
       const lastScrolled = lastScrolledRef.current;
 
-      // Update read progress only
+      // Update read progress
       if (
         Math.abs(total - lastTotal) > 1 ||
         Math.abs(scrolled - lastScrolled) > 1
@@ -732,69 +607,17 @@ export default function BlogDetailMobile({
         lastTotalRef.current = total;
         lastScrolledRef.current = scrolled;
       }
-    }, 16); // 60fps throttle
-  }, []);
 
-  // Simplified scroll state - loại bỏ các state không cần thiết
+      // Header visibility is now handled by separate mobile-optimized effect
+    }, 100);
+  }, [scrollThreshold]);
+
+  // Android-optimized scroll handler
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
+  const [isScrolling, setIsScrolling] = useState(false);
 
-  // Touch gesture handling - đơn giản hóa
-  const touchStartY = useRef(0);
-  const touchStartTime = useRef(0);
-  const isTouchScrolling = useRef(false);
-
-  // Touch gesture handlers for smooth mobile experience
-  const handleTouchStart = useCallback((e) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchStartTime.current = Date.now();
-    isTouchScrolling.current = true;
-  }, []);
-
-  const handleTouchMove = useCallback(
-    (e) => {
-      if (!isTouchScrolling.current) return;
-
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - touchStartY.current;
-      const currentTime = Date.now();
-      const deltaTime = currentTime - touchStartTime.current;
-
-      // Only process if touch is moving fast enough
-      if (Math.abs(deltaY) > 10 && deltaTime > 50) {
-        const wrap = scrollWrapRef.current;
-        if (!wrap) return;
-
-        const currentScrollY = wrap.scrollTop;
-
-        // Always show header when at the top (unless manually hidden)
-        if (currentScrollY <= 10 && !isHeaderManuallyHidden) {
-          setIsHeaderVisible(true);
-          return;
-        }
-
-        // Only auto-hide if not pinned by user and not manually hidden
-        if (!isHeaderPinned && !isHeaderManuallyHidden) {
-          // Determine scroll direction based on touch movement
-          if (deltaY > 0) {
-            // Swipe down (kéo xuống) - ẩn header để đọc nội dung
-            setIsHeaderVisible(false);
-          } else {
-            // Swipe up (kéo lên) - hiện header
-            setIsHeaderVisible(true);
-          }
-        }
-      }
-    },
-    [isHeaderPinned, isHeaderManuallyHidden]
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    isTouchScrolling.current = false;
-  }, []);
-
-  // Simplified scroll handler - loại bỏ logic phức tạp
   const handleScroll = useCallback(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
@@ -802,88 +625,82 @@ export default function BlogDetailMobile({
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
 
-    // Always show header when at the top (immediate response, unless manually hidden)
-    if (currentScrollY <= 10 && !isHeaderManuallyHidden) {
-      setIsHeaderVisible(true);
-      lastScrollY.current = currentScrollY;
-      return;
-    }
-
-    // Skip if touch scrolling is active
-    if (isTouchScrolling.current) return;
-
     // Debounce scroll events
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
 
     scrollTimeout.current = setTimeout(() => {
-      // Reset scroll state
-    }, 100);
+      setIsScrolling(false);
+    }, 150);
+
+    if (!isScrolling) {
+      setIsScrolling(true);
+      lastScrollTime.current = currentTime;
+      return;
+    }
 
     // Only process if enough time has passed
-    if (currentTime - lastScrollTime.current < 16) return; // 60fps
+    if (currentTime - lastScrollTime.current < 50) return;
 
-    // Only auto-hide if not pinned by user and not manually hidden
-    if (!isHeaderPinned && !isHeaderManuallyHidden) {
-      const scrollDifference = currentScrollY - (lastScrollY.current || 0);
+    const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-      if (Math.abs(scrollDifference) > 5) {
-        // Tăng threshold để giảm jank
-        if (scrollDifference > 0) {
-          // Scroll down (kéo xuống) - ẩn header để đọc nội dung
-          setIsHeaderVisible(false);
-        } else {
-          // Scroll up (kéo lên) - hiện header
-          setIsHeaderVisible(true);
-        }
-        lastScrollY.current = currentScrollY;
-        lastScrollTime.current = currentTime;
+    if (Math.abs(scrollDifference) > 5) {
+      console.log("Scroll detected:", {
+        currentScrollY,
+        lastScrollY: lastScrollY.current,
+        scrollDifference,
+        isHeaderVisible,
+      });
+
+      if (scrollDifference > 0) {
+        // Scroll down (kéo xuống) - hiện header
+        console.log("Showing header - scrolling down");
+        setIsHeaderVisible(true);
+      } else {
+        // Scroll up (kéo lên) - ẩn header
+        console.log("Hiding header - scrolling up");
+        setIsHeaderVisible(false);
       }
+      lastScrollY.current = currentScrollY;
+      lastScrollTime.current = currentTime;
     }
-  }, [isHeaderPinned, isHeaderManuallyHidden]);
+  }, [isScrolling, isHeaderVisible]);
 
-  // Setup scroll and touch handlers for mobile
+  // Setup scroll handlers for Android
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Separate handlers for better performance
-    const progressHandler = () => {
+    // Combined scroll handler for both progress and header
+    const combinedScrollHandler = () => {
+      // Update progress
       if (throttledUpdateRef.current) {
         throttledUpdateRef.current();
       }
-    };
 
-    const headerHandler = () => {
+      // Update header visibility
       handleScroll();
     };
 
-    // Setup scroll handlers
-    wrap.addEventListener("scroll", progressHandler, { passive: true });
-    wrap.addEventListener("scroll", headerHandler, { passive: true });
+    // Setup scroll handler
+    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
 
-    // Setup touch events for smooth mobile gestures
-    wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
-    wrap.addEventListener("touchmove", handleTouchMove, { passive: true });
-    wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
+    // Setup wheel events for better Android support
+    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
 
     // Initialize
-    progressHandler();
-    headerHandler();
+    combinedScrollHandler();
 
     // Cleanup
     return () => {
-      wrap.removeEventListener("scroll", progressHandler);
-      wrap.removeEventListener("scroll", headerHandler);
-      wrap.removeEventListener("touchstart", handleTouchStart);
-      wrap.removeEventListener("touchmove", handleTouchMove);
-      wrap.removeEventListener("touchend", handleTouchEnd);
+      wrap.removeEventListener("scroll", combinedScrollHandler);
+      wrap.removeEventListener("wheel", combinedScrollHandler);
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [handleScroll]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
@@ -1017,14 +834,9 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: "48px", // Fixed padding cho navigation bar
-          // Sử dụng transform thay vì padding để tránh jank
-          transform: shouldShowHeader ? "translateY(40px)" : "translateY(0)",
-          transition: "transform 0.15s ease-out",
-          // Optimize for touch
-          scrollBehavior: "smooth",
-          // Prevent bounce on iOS
-          overscrollBehaviorY: "contain",
+          paddingTop: isHeaderVisible ? "88px" : "48px",
+          // Simplified transition
+          transition: "padding-top 0.3s ease",
         }}
       >
         <ProCard
@@ -1245,25 +1057,14 @@ export default function BlogDetailMobile({
             -moz-osx-font-smoothing: grayscale;
           }
           
-          /* Touch gesture optimizations */
+          /* Prevent iOS zoom on double tap */
           * {
-            touch-action: pan-y;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
+            touch-action: manipulation;
           }
-          
-          /* Allow text selection in content area */
-          .jp-prose, .jp-prose * {
-            -webkit-user-select: text;
-            -khtml-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
+
+          /* Minimal touch optimization */
+          * {
+            -webkit-tap-highlight-color: transparent;
           }
 
           html, body, #root { 
@@ -1328,14 +1129,13 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Optimized CSS to prevent jank */
+            /* Minimal CSS to prevent jank */
             pointer-events: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-user-drag: none;
             user-select: none;
-            /* Hardware acceleration */
+            /* Simple hardware acceleration */
             transform: translateZ(0);
-            will-change: transform;
             /* No transitions or complex properties */
             opacity: 1;
             background: rgba(0,0,0,0.05);
@@ -1345,9 +1145,6 @@ export default function BlogDetailMobile({
             -webkit-perspective: 1000;
             /* Prevent iOS zoom on double tap */
             touch-action: manipulation;
-            /* Optimize for mobile rendering */
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
           }
           .jp-prose p {
             margin: 0.85em 0;
