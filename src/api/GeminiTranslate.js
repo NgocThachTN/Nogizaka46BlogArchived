@@ -9,12 +9,32 @@ const cleanTextForTranslation = (text) => {
 };
 
 const cleanTranslationResult = (text) => {
-  // Remove any potential Japanese text that might be included in translation
-  // This is a safety measure to ensure only Vietnamese is returned
+  // Clean up translation result while preserving Vietnamese content
   return text
-    .replace(/[ひらがなカタカナ一-龯]+/g, "") // Remove Japanese characters
+    .replace(/```html/g, "")
+    .replace(/```/g, "")
     .replace(/\s+/g, " ")
     .trim();
+};
+
+const cleanTitleTranslation = (text) => {
+  // Special cleaning for title translations
+  // Remove any potential Japanese text that might be included
+  let cleaned = text
+    .replace(/```html/g, "")
+    .replace(/```/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // If the text contains both Japanese and Vietnamese, try to extract only Vietnamese
+  // Look for patterns like "Japanese text Vietnamese text" and keep only Vietnamese
+  const lines = cleaned.split("\n").filter((line) => line.trim());
+  if (lines.length > 1) {
+    // If multiple lines, take the last non-empty line (likely Vietnamese)
+    cleaned = lines[lines.length - 1].trim();
+  }
+
+  return cleaned;
 };
 
 const createTranslationPrompt = (text, fromLang, toLang) => {
@@ -34,7 +54,13 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 
 Text to translate: ${cleanedText}
 
-CRITICAL: Return ONLY the Vietnamese translation. Do NOT include the original Japanese text. Do NOT include any explanations, notes, or additional text. Just the pure Vietnamese translation.`;
+IMPORTANT INSTRUCTIONS:
+- Translate ONLY the text above to Vietnamese
+- Do NOT include the original Japanese text
+- Do NOT include any explanations or additional text
+- Return ONLY the Vietnamese translation
+- If translating a title, return only the Vietnamese title
+- If translating content, return only the Vietnamese content`;
   }
 
   // Default English prompt
@@ -159,4 +185,31 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
   }
 
   return onProgress ? "" : translatedText;
+}
+
+export async function translateTitleToVietnamese(title) {
+  console.log("translateTitleToVietnamese called");
+  if (!title) return "";
+
+  try {
+    const prompt = `Translate this Japanese title to Vietnamese with Nogizaka46 idol blog style:
+
+- Use "mình" for I/me when talking about self, "mọi người" for fans
+- Keep tone intimate, natural, gentle like an idol writing diary for fans
+- Preserve nicknames and song titles exactly as they appear in original
+- Keep focus on Nogizaka46 context and member relationships
+
+Title to translate: ${title}
+
+CRITICAL: Return ONLY the Vietnamese title. Do NOT include the original Japanese title. Do NOT include any explanations or additional text.`;
+
+    const result = await model.generateContent(prompt);
+    const rawTranslation = result.response.text();
+    const translation = cleanTitleTranslation(rawTranslation);
+
+    return translation;
+  } catch (error) {
+    console.error("Title translation error:", error);
+    throw new Error("Failed to translate title: " + error.message);
+  }
 }

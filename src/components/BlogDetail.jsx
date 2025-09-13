@@ -54,6 +54,7 @@ import BlogCalendar from "./BlogCalendar";
 import {
   translateJapaneseToEnglish,
   translateJapaneseToVietnamese,
+  translateTitleToVietnamese,
 } from "../api/GeminiTranslate";
 
 const { Title, Text } = Typography;
@@ -313,7 +314,7 @@ export default function BlogDetail() {
         if (language === "en") {
           titleOut = await translateJapaneseToEnglish(blog.title || "");
         } else {
-          titleOut = await translateJapaneseToVietnamese(blog.title || "");
+          titleOut = await translateTitleToVietnamese(blog.title || "");
         }
 
         // Check if blog ID changed after title translation
