@@ -420,8 +420,17 @@ export default function BlogList({ language = "ja", setLanguage }) {
                     // contain layout/paint giúp trình duyệt tối ưu composite
                     contain: "content",
                     willChange: "transform",
+                    height: "100%", // Đảm bảo tất cả card có cùng chiều cao
+                    display: "flex",
+                    flexDirection: "column",
                   }}
-                  bodyStyle={{ padding: 12 }}
+                  bodyStyle={{
+                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    overflow: "hidden", // Tránh tràn nội dung
+                  }}
                   onClick={() => onOpen(blog.id)}
                   className="blog-card"
                 >
@@ -433,7 +442,8 @@ export default function BlogList({ language = "ja", setLanguage }) {
                       overflow: "hidden",
                       borderRadius: 10,
                       background: "#f5f6fa",
-                      marginBottom: 10,
+                      marginBottom: 12,
+                      flexShrink: 0, // Không cho phép thu nhỏ
                     }}
                   >
                     <img
@@ -490,13 +500,15 @@ export default function BlogList({ language = "ja", setLanguage }) {
                   </div>
 
                   {/* Meta */}
-                  <Space
-                    direction="vertical"
-                    size={8}
-                    style={{ width: "100%" }}
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      flex: 1,
+                      minHeight: 0, // Cho phép flex item thu nhỏ
+                    }}
                   >
-                    <Space></Space>
-
                     <Tooltip title={blog.title}>
                       <Title
                         level={5}
@@ -508,42 +520,79 @@ export default function BlogList({ language = "ja", setLanguage }) {
                           overflow: "hidden",
                           minHeight: "2.4em",
                           lineHeight: 1.25,
+                          marginBottom: 12,
+                          flexShrink: 0,
                         }}
                       >
                         {blog.title}
                       </Title>
                     </Tooltip>
 
-                    <Divider style={{ margin: "8px 0" }} />
+                    {/* Action Buttons - Sử dụng ProCard để layout tốt hơn */}
+                    <div style={{ marginTop: "auto", width: "100%" }}>
+                      <Space
+                        style={{
+                          width: "100%",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "nowrap", // Không wrap để tránh tràn
+                        }}
+                        size={[8, 8]}
+                      >
+                        {/* Left side - View and Like buttons */}
+                        <Space size={4} style={{ flexShrink: 1, minWidth: 0 }}>
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<EyeOutlined />}
+                            style={{
+                              padding: "4px 6px",
+                              fontSize: 11,
+                              height: 24,
+                              minWidth: "auto",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {screens.xs ? "" : "閲覧"}
+                          </Button>
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<HeartOutlined />}
+                            style={{
+                              padding: "4px 6px",
+                              fontSize: 11,
+                              height: 24,
+                              minWidth: "auto",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {screens.xs ? "" : "いいね"}
+                          </Button>
+                        </Space>
 
-                    <Space
-                      style={{ width: "100%", justifyContent: "space-between" }}
-                    >
-                      <Space>
-                        <Button type="text" size="small" icon={<EyeOutlined />}>
-                          閲覧
-                        </Button>
+                        {/* Right side - Read More button */}
                         <Button
-                          type="text"
+                          type="primary"
                           size="small"
-                          icon={<HeartOutlined />}
+                          icon={<ReadOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpen(blog.id);
+                          }}
+                          style={{
+                            flexShrink: 0,
+                            minWidth: screens.xs ? 50 : 70,
+                            fontSize: 11,
+                            height: 24,
+                            padding: "0 8px",
+                          }}
                         >
-                          いいね
+                          {screens.xs ? "読む" : t.readMore[currentLanguage]}
                         </Button>
                       </Space>
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<ReadOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpen(blog.id);
-                        }}
-                      >
-                        {t.readMore[currentLanguage]}
-                      </Button>
-                    </Space>
-                  </Space>
+                    </div>
+                  </div>
                 </ProCard>
               ))}
             </ProCard>
@@ -586,10 +635,28 @@ export default function BlogList({ language = "ja", setLanguage }) {
         </ProCard>
       </ProCard>
 
-      {/* Hover effect (tắt scale mạnh cho mobile để đỡ paint) */}
+      {/* Hover effect và responsive layout */}
       <style>{`
         @media (hover:hover) {
           .blog-card:hover img { transform: scale(1.03); }
+        }
+        
+        /* Đảm bảo card layout không bị tràn */
+        .blog-card .ant-pro-card-body {
+          overflow: hidden;
+        }
+        
+        /* Responsive text cho mobile */
+        @media (max-width: 576px) {
+          .blog-card .ant-typography {
+            font-size: 14px !important;
+          }
+          
+          .blog-card .ant-btn {
+            font-size: 10px !important;
+            padding: 2px 4px !important;
+            height: 20px !important;
+          }
         }
       `}</style>
     </PageContainer>

@@ -66,13 +66,7 @@ function App() {
           {/* Mobile Header - Removed title text */}
           <ProLayout
             layout="side"
-            title={
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                  {/* <span className="text-white font-bold text-sm">N46</span> */}
-                </div>
-              </div>
-            }
+            title={<div className="flex items-center space-x-3"></div>}
             logo={false}
             fixSiderbar
             collapsed={isMobile}
