@@ -638,8 +638,8 @@ export default function BlogDetailMobile({
     const currentTime = Date.now();
     const deltaTime = currentTime - touchStartTime.current;
 
-    // Only process if touch is moving fast enough
-    if (Math.abs(deltaY) > 10 && deltaTime > 50) {
+    // More sensitive touch detection for Android
+    if (Math.abs(deltaY) > 5 && deltaTime > 30) {
       const wrap = scrollWrapRef.current;
       if (!wrap) return;
 
@@ -653,17 +653,28 @@ export default function BlogDetailMobile({
 
       // Determine scroll direction based on touch movement
       if (deltaY > 0) {
-        // Swipe down (kéo xuống) - ẩn header để đọc nội dung
-        setIsHeaderVisible(false);
-      } else {
-        // Swipe up (kéo lên) - hiện header
+        // Swipe down (kéo xuống) - hiện header
+        console.log("Touch: Showing header - swipe down");
         setIsHeaderVisible(true);
+      } else {
+        // Swipe up (kéo lên) - ẩn header để đọc nội dung
+        console.log("Touch: Hiding header - swipe up");
+        setIsHeaderVisible(false);
       }
     }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
     isTouchScrolling.current = false;
+
+    // Fallback: Check scroll position after touch ends
+    const wrap = scrollWrapRef.current;
+    if (!wrap) return;
+
+    const currentScrollY = wrap.scrollTop;
+    if (currentScrollY <= 10) {
+      setIsHeaderVisible(true);
+    }
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -705,11 +716,11 @@ export default function BlogDetailMobile({
 
     if (Math.abs(scrollDifference) > 3) {
       if (scrollDifference > 0) {
-        // Scroll down (kéo xuống) - ẩn header để đọc nội dung
-        setIsHeaderVisible(false);
-      } else {
-        // Scroll up (kéo lên) - hiện header
+        // Scroll down (kéo xuống) - hiện header
         setIsHeaderVisible(true);
+      } else {
+        // Scroll up (kéo lên) - ẩn header để đọc nội dung
+        setIsHeaderVisible(false);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
@@ -739,8 +750,8 @@ export default function BlogDetailMobile({
     wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
 
     // Setup touch events for smooth mobile gestures
-    wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
-    wrap.addEventListener("touchmove", handleTouchMove, { passive: true });
+    wrap.addEventListener("touchstart", handleTouchStart, { passive: false });
+    wrap.addEventListener("touchmove", handleTouchMove, { passive: false });
     wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     // Initialize
