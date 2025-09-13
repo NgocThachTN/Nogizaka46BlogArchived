@@ -50,6 +50,7 @@ import {
   prefetchBlogDetail,
 } from "../services/blogService";
 import BlogDetailMobile from "./BlogDetailMobile";
+import BlogCalendar from "./BlogCalendar";
 import {
   translateJapaneseToEnglish,
   translateJapaneseToVietnamese,
@@ -105,6 +106,7 @@ export default function BlogDetail() {
 
   const [blog, setBlog] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
+  const [memberBlogs, setMemberBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [language, setLanguage] = useState("ja");
@@ -196,6 +198,16 @@ export default function BlogDetail() {
         if (!member && data.author)
           member = await fetchMemberInfoByName(data.author);
         setMemberInfo(member);
+
+        // Fetch member blogs for calendar
+        if (member?.code) {
+          try {
+            const blogs = await fetchAllBlogs(member.code);
+            setMemberBlogs(blogs || []);
+          } catch (e) {
+            console.error("Failed to fetch member blogs:", e);
+          }
+        }
       } catch (e) {
         console.error("Error loading blog:", e);
         message.error("Lỗi khi tải blog.");
@@ -261,12 +273,6 @@ export default function BlogDetail() {
     const n = plainText.length || 0;
     return Math.max(1, Math.ceil(n / 600));
   }, [plainText]);
-
-  const blogDay = useMemo(() => {
-    if (!blog?.date) return null;
-    const d = dayjs(blog.date);
-    return d.isValid() ? d : null;
-  }, [blog?.date]);
 
   // Translate when language changes
   useEffect(() => {
@@ -706,48 +712,6 @@ export default function BlogDetail() {
             }}
           />
 
-          <Card title="カレンダー" style={{ borderRadius: 16 }}>
-            <Calendar
-              fullscreen={false}
-              value={blogDay || dayjs()}
-              dateFullCellRender={(value) => {
-                const isBlogDay = blogDay && value.isSame(blogDay, "date");
-                return (
-                  <div
-                    style={{
-                      height: 32,
-                      lineHeight: "32px",
-                      textAlign: "center",
-                      borderRadius: 8,
-                      fontWeight: isBlogDay ? 700 : 500,
-                      background: isBlogDay
-                        ? "rgba(109, 40, 217, 0.12)"
-                        : undefined,
-                      border: isBlogDay
-                        ? "1px solid rgba(109,40,217,0.35)"
-                        : "1px solid transparent",
-                    }}
-                  >
-                    {value.date()}
-                  </div>
-                );
-              }}
-              cellRender={(current) => {
-                const isBlogDay = blogDay && current.isSame(blogDay, "date");
-                if (isBlogDay) {
-                  return (
-                    <div style={{ position: "relative" }}>
-                      <div style={{ position: "absolute", top: 2, right: 6 }}>
-                        <Badge status="processing" />
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-          </Card>
-
           {toc.length > 0 && (
             <Card title={t.toc[language]} style={{ borderRadius: 16 }}>
               <Space direction="vertical" style={{ width: "100%" }} size={6}>
@@ -776,6 +740,14 @@ export default function BlogDetail() {
               </Space>
             </Card>
           )}
+
+          {/* Blog Calendar */}
+          <BlogCalendar
+            blogs={memberBlogs}
+            memberInfo={memberInfo}
+            onBlogClick={(blogId) => navigate(`/blog/${blogId}`)}
+            isMobile={isMobile}
+          />
         </ProCard>
       </ProCard>
 

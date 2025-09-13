@@ -22,11 +22,7 @@ import {
   EyeOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import {
-  PageContainer,
-  ProCard,
-  StatisticCard,
-} from "@ant-design/pro-components";
+import { PageContainer, ProCard } from "@ant-design/pro-components";
 import {
   useState,
   useEffect,
@@ -41,6 +37,7 @@ import {
   getImageUrl,
   fetchMemberInfo,
 } from "../services/blogService";
+import BlogCalendar from "./BlogCalendar";
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -207,11 +204,6 @@ export default function BlogList() {
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, page, PAGE_SIZE]);
 
-  const newestDate = useMemo(
-    () => (blogs[0]?.date ? blogs[0].date : "-"),
-    [blogs]
-  );
-
   const onOpen = (id) => {
     _cache.scrollY.set(memberCode, window.scrollY);
     navigate(`/blog/${id}`);
@@ -267,260 +259,279 @@ export default function BlogList() {
         paddingInlinePageContainerContent: screens.xs ? 12 : 24,
       }}
     >
-      <ProCard ghost direction="column" gutter={[12, 12]}>
-        {/* COMPACT HERO (nhẹ trên mobile) */}
+      <ProCard ghost gutter={[16, 16]} wrap>
+        {/* Main Content */}
         <ProCard
-          bordered
-          style={{
-            borderRadius: 16,
-            background: screens.xs
-              ? "#fff" // đơn giản cho mobile
-              : "linear-gradient(180deg, #ffffff 0%, #faf7ff 100%)",
-            marginTop: 0,
-          }}
-          bodyStyle={{ padding: screens.xs ? 12 : 18 }}
+          colSpan={{ xs: 24, md: 16, xl: 17 }}
+          ghost
+          direction="column"
+          gutter={[12, 12]}
         >
-          <Space
-            direction={screens.xs ? "vertical" : "horizontal"}
-            align="center"
-            style={{ width: "100%", justifyContent: "center" }}
-            size={screens.xs ? 8 : 16}
-          >
-            <Avatar
-              size={screens.xs ? 52 : 64}
-              src={
-                memberInfo?.img ||
-                "https://via.placeholder.com/300x300?text=No+Image"
-              }
-              style={
-                screens.xs ? {} : { boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }
-              }
-            />
-            <Space direction="vertical" align="center" size={2}>
-              <Title level={3} style={{ margin: 0, lineHeight: 1 }}>
-                Blog
-              </Title>
-              <Text type="secondary" style={{ fontSize: 13 }}>
-                {memberInfo?.name || "Loading..."} 公式ブログ
-              </Text>
-            </Space>
-
-            {!screens.xs && (
-              <Space size={8} wrap style={{ marginLeft: "auto" }}>
-                <StatisticCard
-                  style={{ borderRadius: 12, minWidth: 120 }}
-                  bodyStyle={{ padding: 10 }}
-                  statistic={{ title: "投稿数", value: filtered.length }}
-                />
-                <StatisticCard
-                  style={{ borderRadius: 12, minWidth: 160 }}
-                  bodyStyle={{ padding: 10 }}
-                  statistic={{ title: "最新", value: newestDate }}
-                />
-              </Space>
-            )}
-          </Space>
-        </ProCard>
-
-        {/* FILTER ROW */}
-        <ProCard
-          bordered
-          style={{ borderRadius: 14 }}
-          bodyStyle={{ padding: 12 }}
-        >
-          <Space
-            style={{ width: "100%", justifyContent: "space-between" }}
-            wrap
-          >
-            <Input
-              allowClear
-              size={screens.xs ? "middle" : "large"}
-              prefix={<SearchOutlined />}
-              placeholder="検索タイトル・著者..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              style={{ maxWidth: 360, width: "100%" }}
-            />
-            <Tag
-              color="purple"
-              style={{
-                height: screens.xs ? 26 : 30,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              合計 {filtered.length} 件 {isPending ? "…" : ""}
-            </Tag>
-          </Space>
-        </ProCard>
-
-        {/* LIST */}
-        {current.length === 0 ? (
+          {/* COMPACT HERO (nhẹ trên mobile) */}
           <ProCard
             bordered
             style={{
-              borderRadius: 14,
-              minHeight: 220,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              borderRadius: 16,
+              background: screens.xs
+                ? "#fff" // đơn giản cho mobile
+                : "linear-gradient(180deg, #ffffff 0%, #faf7ff 100%)",
+              marginTop: 0,
             }}
+            bodyStyle={{ padding: screens.xs ? 12 : 18 }}
           >
-            <Empty
-              description={
-                q ? "検索結果が見つかりません" : "まだブログ記事がありません"
-              }
-            />
+            <Space
+              direction={screens.xs ? "vertical" : "horizontal"}
+              align="center"
+              style={{ width: "100%", justifyContent: "center" }}
+              size={screens.xs ? 8 : 16}
+            >
+              <Avatar
+                size={screens.xs ? 52 : 64}
+                src={
+                  memberInfo?.img ||
+                  "https://via.placeholder.com/300x300?text=No+Image"
+                }
+                style={
+                  screens.xs ? {} : { boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }
+                }
+              />
+              <Space direction="vertical" align="center" size={2}>
+                <Title level={3} style={{ margin: 0, lineHeight: 1 }}>
+                  Blog
+                </Title>
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  {memberInfo?.name || "Loading..."} 公式ブログ
+                </Text>
+              </Space>
+            </Space>
           </ProCard>
-        ) : (
-          <ProCard ghost gutter={[16, 16]} wrap>
-            {current.map((blog, idx) => (
-              <ProCard
-                key={blog.id}
-                colSpan={{ xs: 24, sm: 12, lg: 8 }}
-                hoverable={!screens.xs} // tắt hover trên mobile cho nhẹ
-                bordered
+
+          {/* FILTER ROW */}
+          <ProCard
+            bordered
+            style={{ borderRadius: 14 }}
+            bodyStyle={{ padding: 12 }}
+          >
+            <Space
+              style={{ width: "100%", justifyContent: "space-between" }}
+              wrap
+            >
+              <Input
+                allowClear
+                size={screens.xs ? "middle" : "large"}
+                prefix={<SearchOutlined />}
+                placeholder="検索タイトル・著者..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                style={{ maxWidth: 360, width: "100%" }}
+              />
+              <Tag
+                color="purple"
                 style={{
-                  borderRadius: 12,
-                  // contain layout/paint giúp trình duyệt tối ưu composite
-                  contain: "content",
-                  willChange: "transform",
+                  height: screens.xs ? 26 : 30,
+                  display: "flex",
+                  alignItems: "center",
                 }}
-                bodyStyle={{ padding: 12 }}
-                onClick={() => onOpen(blog.id)}
-                className="blog-card"
               >
-                {/* Thumbnail */}
-                <div
+                合計 {filtered.length} 件 {isPending ? "…" : ""}
+              </Tag>
+            </Space>
+          </ProCard>
+
+          {/* LIST */}
+          {current.length === 0 ? (
+            <ProCard
+              bordered
+              style={{
+                borderRadius: 14,
+                minHeight: 220,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Empty
+                description={
+                  q ? "検索結果が見つかりません" : "まだブログ記事がありません"
+                }
+              />
+            </ProCard>
+          ) : (
+            <ProCard ghost gutter={[16, 16]} wrap>
+              {current.map((blog, idx) => (
+                <ProCard
+                  key={blog.id}
+                  colSpan={{ xs: 24, sm: 12, lg: 8 }}
+                  hoverable={!screens.xs} // tắt hover trên mobile cho nhẹ
+                  bordered
                   style={{
-                    position: "relative",
-                    height: screens.xs ? 148 : 190,
-                    overflow: "hidden",
-                    borderRadius: 10,
-                    background: "#f5f6fa",
-                    marginBottom: 10,
+                    borderRadius: 12,
+                    // contain layout/paint giúp trình duyệt tối ưu composite
+                    contain: "content",
+                    willChange: "transform",
                   }}
+                  bodyStyle={{ padding: 12 }}
+                  onClick={() => onOpen(blog.id)}
+                  className="blog-card"
                 >
-                  <img
-                    src={
-                      blog.thumbnail
-                        ? getImageUrl(blog.thumbnail, {
-                            w: screens.xs ? 640 : 960,
-                          })
-                        : "https://via.placeholder.com/600x320/f0f0f0/666666?text=No+Image"
-                    }
-                    srcSet={
-                      blog.thumbnail
-                        ? [
-                            `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
-                            `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
-                            `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
-                            `${getImageUrl(blog.thumbnail, { w: 1280 })} 1280w`,
-                          ].join(", ")
-                        : undefined
-                    }
-                    sizes={
-                      screens.xs ? "(max-width: 576px) 100vw, 640px" : "33vw"
-                    }
-                    alt={blog.title}
-                    loading={idx === 0 ? "eager" : "lazy"}
-                    // ảnh eager đầu tiên để cảm giác “vào là thấy”, còn lại lazy
-                    decoding="async"
-                    fetchpriority={idx === 0 ? "high" : "low"}
+                  {/* Thumbnail */}
+                  <div
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      transition: "transform .25s",
+                      position: "relative",
+                      height: screens.xs ? 148 : 190,
+                      overflow: "hidden",
+                      borderRadius: 10,
+                      background: "#f5f6fa",
+                      marginBottom: 10,
                     }}
-                  />
-                  <div style={{ position: "absolute", top: 8, left: 8 }}>
-                    <Badge
-                      count={
-                        <Space size={4} style={{ fontSize: 12 }}>
-                          <CalendarOutlined />
-                          {blog.date}
-                        </Space>
+                  >
+                    <img
+                      src={
+                        blog.thumbnail
+                          ? getImageUrl(blog.thumbnail, {
+                              w: screens.xs ? 640 : 960,
+                            })
+                          : "https://via.placeholder.com/600x320/f0f0f0/666666?text=No+Image"
                       }
+                      srcSet={
+                        blog.thumbnail
+                          ? [
+                              `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
+                              `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
+                              `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
+                              `${getImageUrl(blog.thumbnail, {
+                                w: 1280,
+                              })} 1280w`,
+                            ].join(", ")
+                          : undefined
+                      }
+                      sizes={
+                        screens.xs ? "(max-width: 576px) 100vw, 640px" : "33vw"
+                      }
+                      alt={blog.title}
+                      loading={idx === 0 ? "eager" : "lazy"}
+                      // ảnh eager đầu tiên để cảm giác “vào là thấy”, còn lại lazy
+                      decoding="async"
+                      fetchpriority={idx === 0 ? "high" : "low"}
                       style={{
-                        background: "rgba(0,0,0,.55)",
-                        color: "#fff",
-                        padding: "3px 8px",
-                        borderRadius: 999,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        transition: "transform .25s",
                       }}
                     />
+                    <div style={{ position: "absolute", top: 8, left: 8 }}>
+                      <Badge
+                        count={
+                          <Space size={4} style={{ fontSize: 12 }}>
+                            <CalendarOutlined />
+                            {blog.date}
+                          </Space>
+                        }
+                        style={{
+                          background: "rgba(0,0,0,.55)",
+                          color: "#fff",
+                          padding: "3px 8px",
+                          borderRadius: 999,
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Meta */}
-                <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                  <Space></Space>
-
-                  <Tooltip title={blog.title}>
-                    <Title
-                      level={5}
-                      style={{
-                        margin: 0,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        minHeight: "2.4em",
-                        lineHeight: 1.25,
-                      }}
-                    >
-                      {blog.title}
-                    </Title>
-                  </Tooltip>
-
-                  <Divider style={{ margin: "8px 0" }} />
-
+                  {/* Meta */}
                   <Space
-                    style={{ width: "100%", justifyContent: "space-between" }}
+                    direction="vertical"
+                    size={8}
+                    style={{ width: "100%" }}
                   >
-                    <Space>
-                      <Button type="text" size="small" icon={<EyeOutlined />}>
-                        閲覧
-                      </Button>
-                      <Button type="text" size="small" icon={<HeartOutlined />}>
-                        いいね
+                    <Space></Space>
+
+                    <Tooltip title={blog.title}>
+                      <Title
+                        level={5}
+                        style={{
+                          margin: 0,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          minHeight: "2.4em",
+                          lineHeight: 1.25,
+                        }}
+                      >
+                        {blog.title}
+                      </Title>
+                    </Tooltip>
+
+                    <Divider style={{ margin: "8px 0" }} />
+
+                    <Space
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Space>
+                        <Button type="text" size="small" icon={<EyeOutlined />}>
+                          閲覧
+                        </Button>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<HeartOutlined />}
+                        >
+                          いいね
+                        </Button>
+                      </Space>
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<ReadOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpen(blog.id);
+                        }}
+                      >
+                        読む
                       </Button>
                     </Space>
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<ReadOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpen(blog.id);
-                      }}
-                    >
-                      読む
-                    </Button>
                   </Space>
-                </Space>
-              </ProCard>
-            ))}
-          </ProCard>
-        )}
+                </ProCard>
+              ))}
+            </ProCard>
+          )}
 
-        {/* PAGINATION */}
-        {filtered.length > 0 && (
-          <ProCard ghost style={{ justifyContent: "center" }}>
-            <Pagination
-              current={page}
-              total={filtered.length}
-              pageSize={PAGE_SIZE}
-              onChange={(p) => {
-                _cache.scrollY.set(memberCode, 0); // sang page mới thì về top
-                setPage(p);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              showSizeChanger={false}
-              size={screens.xs ? "small" : "default"}
-            />
-          </ProCard>
-        )}
+          {/* PAGINATION */}
+          {filtered.length > 0 && (
+            <ProCard ghost style={{ justifyContent: "center" }}>
+              <Pagination
+                current={page}
+                total={filtered.length}
+                pageSize={PAGE_SIZE}
+                onChange={(p) => {
+                  _cache.scrollY.set(memberCode, 0); // sang page mới thì về top
+                  setPage(p);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                showSizeChanger={false}
+                size={screens.xs ? "small" : "default"}
+              />
+            </ProCard>
+          )}
+        </ProCard>
+
+        {/* Sidebar */}
+        <ProCard
+          colSpan={{ xs: 24, md: 8, xl: 7 }}
+          ghost
+          direction="column"
+          gutter={[16, 16]}
+        >
+          {/* Blog Calendar */}
+          <BlogCalendar
+            blogs={blogs}
+            memberInfo={memberInfo}
+            onBlogClick={onOpen}
+            isMobile={screens.xs}
+          />
+        </ProCard>
       </ProCard>
 
       {/* Hover effect (tắt scale mạnh cho mobile để đỡ paint) */}
