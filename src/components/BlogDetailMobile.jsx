@@ -102,7 +102,7 @@ function optimizeHtmlForMobile(html) {
 
 export default function BlogDetailMobile({
   blog,
-  loading,
+  // loading, // Removed - using mobileLoading instead
   translating,
   language,
   setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
@@ -122,6 +122,9 @@ export default function BlogDetailMobile({
   const [cachedDisplayContent, setCachedDisplayContent] =
     useState(displayContent);
   const [cachedLanguage, setCachedLanguage] = useState(language);
+
+  // Mobile-specific loading state - override parent loading when we have content
+  const [mobileLoading, setMobileLoading] = useState(true);
 
   // Track previous blog ID to detect blog changes
   const prevBlogIdRef = useRef(blog?.id);
@@ -176,6 +179,7 @@ export default function BlogDetailMobile({
         // Blog changed - clear everything immediately
         setCachedDisplayContent(null);
         setCachedLanguage(language);
+        setMobileLoading(true); // Reset loading state
         prevBlogIdRef.current = blog.id;
 
         // Reset scroll position when switching blogs
@@ -189,6 +193,7 @@ export default function BlogDetailMobile({
         // Show original content immediately - don't wait for translation
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
+          setMobileLoading(false); // Content is ready
         }
 
         // Force reset read progress
@@ -204,11 +209,13 @@ export default function BlogDetailMobile({
           // Use cached content
           setCachedDisplayContent(cached.displayContent);
           setCachedLanguage(cached.language);
+          setMobileLoading(false); // Content is ready
         } else {
           // Clear cache and show original content
           _mobileCache.blogContent.delete(blog.id);
           if (blog?.content) {
             setCachedDisplayContent(blog.content);
+            setMobileLoading(false); // Content is ready
           }
         }
       }
@@ -235,25 +242,52 @@ export default function BlogDetailMobile({
           // Use cached content immediately
           setCachedDisplayContent(cached.displayContent);
           setCachedLanguage(cached.language);
+          setMobileLoading(false); // Content is ready
           return;
         }
 
-        // If no fresh cache, show original content
+        // If no fresh cache, show original content immediately
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
           setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
         }
       } catch (e) {
         console.error("Error loading content:", e);
         // Fallback to original content
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
+          setMobileLoading(false); // Content is ready
         }
       }
     };
 
     loadContent();
   }, [blog?.id, language, blog?.content]);
+
+  // ---- Force show content when blog is available, even if parent is still loading ----
+  useEffect(() => {
+    if (blog?.id && blog?.content && !cachedDisplayContent) {
+      // iOS-specific delay for immediate content display
+      const showContent = async () => {
+        try {
+          if (isIOS()) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+
+          setCachedDisplayContent(blog.content);
+          setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
+        } catch (e) {
+          console.error("Error showing content:", e);
+          setCachedDisplayContent(blog.content);
+          setMobileLoading(false); // Content is ready
+        }
+      };
+
+      showContent();
+    }
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
 
   // ---- Cache management và smooth updates ----
   useEffect(() => {
@@ -280,6 +314,7 @@ export default function BlogDetailMobile({
           // Update cached state immediately (not in transition) to prevent flicker
           setCachedDisplayContent(displayContent);
           setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
 
           // Reset read progress
           setReadPct(0);
@@ -311,6 +346,7 @@ export default function BlogDetailMobile({
           // Fallback to immediate update
           setCachedDisplayContent(displayContent);
           setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
         }
       };
 
@@ -333,6 +369,7 @@ export default function BlogDetailMobile({
           // we immediately show it instead of cached content
           setCachedDisplayContent(displayContent);
           setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
 
           // Clear any existing cache for this blog to prevent conflicts
           _mobileCache.blogContent.delete(blog.id);
@@ -341,6 +378,7 @@ export default function BlogDetailMobile({
           // Fallback to immediate update
           setCachedDisplayContent(displayContent);
           setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
         }
       };
 
@@ -844,8 +882,8 @@ export default function BlogDetailMobile({
     handleImages();
   }, [cachedDisplayContent]);
 
-  // Loading skeleton (ngon hơn Spin)
-  if (loading) {
+  // Loading skeleton (ngon hơn Spin) - chỉ hiển thị khi mobile đang loading
+  if (mobileLoading && !cachedDisplayContent) {
     return (
       <PageContainer
         header={false}
