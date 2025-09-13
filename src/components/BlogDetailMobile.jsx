@@ -150,12 +150,7 @@ export default function BlogDetailMobile({
     []
   );
 
-  // progress đọc (%)
-  const [readPct, setReadPct] = useState(0);
   const scrollWrapRef = useRef(null);
-  const lastTotalRef = useRef(0);
-  const lastScrolledRef = useRef(0);
-  const lastPctRef = useRef(0);
   const throttledUpdateRef = useRef(null);
 
   // Header visibility state for scroll-based hiding
@@ -190,9 +185,6 @@ export default function BlogDetailMobile({
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
         }
-
-        // Force reset read progress
-        setReadPct(0);
       } else {
         // Same blog - check if we have valid cache
         const cached = _mobileCache.blogContent.get(blog.id);
@@ -233,9 +225,6 @@ export default function BlogDetailMobile({
       setCachedDisplayContent(displayContent);
       setCachedLanguage(language);
 
-      // Reset read progress
-      setReadPct(0);
-
       // Force scroll to top immediately for new content
       if (scrollWrapRef.current) {
         // Disable smooth scrolling temporarily
@@ -260,6 +249,16 @@ export default function BlogDetailMobile({
       }
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
+
+  // ---- Handle translation state changes to prevent white space ----
+  useEffect(() => {
+    if (translating && scrollWrapRef.current) {
+      // Ensure container maintains proper height during translation
+      const container = scrollWrapRef.current;
+      container.style.minHeight = "100dvh";
+      container.style.maxHeight = "100dvh";
+    }
+  }, [translating]);
 
   // ---- Force clear content when displayContent changes from parent ----
   useEffect(() => {
@@ -583,31 +582,9 @@ export default function BlogDetailMobile({
     [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
   );
 
-  // Create a single throttled updater for scroll progress and header visibility
+  // Create a single throttled updater for header visibility
   useEffect(() => {
     throttledUpdateRef.current = throttle(() => {
-      const wrap = scrollWrapRef.current;
-      if (!wrap) return;
-      const total = wrap.scrollHeight - wrap.clientHeight;
-      const scrolled = wrap.scrollTop;
-      const lastTotal = lastTotalRef.current;
-      const lastScrolled = lastScrolledRef.current;
-
-      // Update read progress
-      if (
-        Math.abs(total - lastTotal) > 1 ||
-        Math.abs(scrolled - lastScrolled) > 1
-      ) {
-        const pct =
-          total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
-        if (Math.abs(pct - lastPctRef.current) > 0.5) {
-          setReadPct(pct);
-          lastPctRef.current = pct;
-        }
-        lastTotalRef.current = total;
-        lastScrolledRef.current = scrolled;
-      }
-
       // Header visibility is now handled by separate mobile-optimized effect
     }, 100);
   }, [scrollThreshold]);
@@ -818,11 +795,11 @@ export default function BlogDetailMobile({
       {NavigationBar}
       {AuthorBar}
 
-      {/* scroll container để bắt progress */}
+      {/* scroll container */}
       <div
         ref={scrollWrapRef}
         style={{
-          height: "calc(100dvh - 3px)", // Subtract progress bar height
+          height: "100dvh", // Full viewport height
           overflow: "auto",
           background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
@@ -837,6 +814,9 @@ export default function BlogDetailMobile({
           paddingTop: isHeaderVisible ? "88px" : "48px",
           // Simplified transition
           transition: "padding-top 0.3s ease",
+          // Fix white space issue during translation
+          minHeight: "100dvh",
+          maxHeight: "100dvh",
         }}
       >
         <ProCard
@@ -849,11 +829,18 @@ export default function BlogDetailMobile({
             maxWidth: "100%",
             ...jpFont,
             position: "relative",
+            // Fix white space during translation
+            minHeight: "100%",
+            display: "flex",
+            flexDirection: "column",
           }}
           bodyStyle={{
             padding: "0 0 0",
             margin: 0,
             width: "100%",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {/* Translation Loading Overlay */}
@@ -868,6 +855,13 @@ export default function BlogDetailMobile({
                 justifyContent: "center",
                 zIndex: 10,
                 backdropFilter: "blur(3px)",
+                // Fix white space issue
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: "100%",
+                height: "100%",
               }}
             >
               <ProCard
@@ -921,7 +915,15 @@ export default function BlogDetailMobile({
           )}
 
           {/* Content - Title moved to author section */}
-          <div style={{ padding: "12px 12px 0 12px" }}>
+          <div
+            style={{
+              padding: "12px 12px 0 12px",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0, // Prevent flex item from growing beyond container
+            }}
+          >
             {/* Nội dung */}
             <div
               className="jp-prose"
@@ -935,6 +937,9 @@ export default function BlogDetailMobile({
                 wordWrap: "break-word",
                 hyphens: "auto",
                 paddingBottom: "20px",
+                // Fix white space during translation
+                flex: 1,
+                minHeight: 0,
               }}
               dangerouslySetInnerHTML={{
                 __html: optimizedHtml,
@@ -1013,30 +1018,6 @@ export default function BlogDetailMobile({
         </Space>
       </Drawer>
 
-      {/* Progress đọc ở mép dưới màn hình */}
-      <Affix offsetBottom={0}>
-        <div
-          style={{
-            height: 3,
-            width: "100%",
-            background: "rgba(139, 69, 19, 0.1)",
-            willChange: "transform",
-            transform: "translateZ(0)",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              background: "#8b4513",
-              transform: `translateX(${readPct - 100}%)`,
-              willChange: "transform",
-              transition: "transform 0.1s ease-out",
-            }}
-          />
-        </div>
-      </Affix>
-
       {/* Full-bleed overrides */}
       <style>{`
           /* Hide scrollbar for Chrome, Safari and Opera */
@@ -1087,6 +1068,17 @@ export default function BlogDetailMobile({
             display: flex;
             flex-direction: column;
           }
+          /* Fix white space during translation */
+          .ant-pro-page-container-children-container {
+            flex: 1 !important;
+            margin: 0 !important; 
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
           .ant-pro-page-container { 
             padding: 0 !important;
             margin: 0 !important;
@@ -1116,10 +1108,17 @@ export default function BlogDetailMobile({
           .ant-pro-card {
             margin: 0 !important;
             padding: 0 !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
           }
           .ant-pro-card-body {
             margin: 0 !important;
             padding: 0 !important;
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
           }
           .jp-prose img {
             border-radius: 12px;
