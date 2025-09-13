@@ -8,6 +8,15 @@ const cleanTextForTranslation = (text) => {
   return text.replace(/\s+/g, " ").trim();
 };
 
+const cleanTranslationResult = (text) => {
+  // Remove any potential Japanese text that might be included in translation
+  // This is a safety measure to ensure only Vietnamese is returned
+  return text
+    .replace(/[ひらがなカタカナ一-龯]+/g, "") // Remove Japanese characters
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 const createTranslationPrompt = (text, fromLang, toLang) => {
   const cleanedText = cleanTextForTranslation(text);
 
@@ -16,15 +25,16 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
 
 - Use "mình" for I/me when talking about self, "mọi người" for fans, never use "ạ" "nhé" 
 - Use proper Vietnamese address terms for members: "cậu" (same age), "chị" (older), "em" (younger)
+- Keep tone intimate, natural, gentle like an idol writing diary for fans
 - Preserve HTML tags exactly, only translate text between tags
 - Keep original content structure and emotional flow
 - Maintain the diary-like, personal writing style
 - Preserve nicknames and song titles exactly as they appear in original
 - Keep focus on Nogizaka46 context and member relationships
 
-Text: ${cleanedText}
+Text to translate: ${cleanedText}
 
-Output ONLY the translated content in Vietnamese. No explanations, no additional text.`;
+CRITICAL: Return ONLY the Vietnamese translation. Do NOT include the original Japanese text. Do NOT include any explanations, notes, or additional text. Just the pure Vietnamese translation.`;
   }
 
   // Default English prompt
@@ -103,7 +113,8 @@ export async function translateJapaneseToEnglish(text, onProgress) {
     try {
       const prompt = createTranslationPrompt(chunk, "Japanese", "English");
       const result = await model.generateContent(prompt);
-      const translation = result.response.text();
+      const rawTranslation = result.response.text();
+      const translation = cleanTranslationResult(rawTranslation);
 
       if (onProgress) {
         onProgress(translation, isLastChunk);
@@ -133,7 +144,8 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
     try {
       const prompt = createTranslationPrompt(chunk, "Japanese", "Vietnamese");
       const result = await model.generateContent(prompt);
-      const translation = result.response.text();
+      const rawTranslation = result.response.text();
+      const translation = cleanTranslationResult(rawTranslation);
 
       if (onProgress) {
         onProgress(translation, isLastChunk);
