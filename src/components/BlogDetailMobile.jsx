@@ -453,6 +453,9 @@ export default function BlogDetailMobile({
                     )
                   }
                   onClick={() => {
+                    // Set transitioning flag to prevent scroll conflicts
+                    isTransitioning.current = true;
+
                     if (isHeaderPinned) {
                       // Nếu đang pin, chuyển sang ẩn hoàn toàn
                       setIsHeaderPinned(false);
@@ -466,6 +469,11 @@ export default function BlogDetailMobile({
                       setIsHeaderPinned(true);
                       setIsHeaderManuallyHidden(false);
                     }
+
+                    // Clear transitioning flag after animation completes
+                    setTimeout(() => {
+                      isTransitioning.current = false;
+                    }, 300);
                   }}
                   style={{
                     color: shouldShowHeader ? "#1890ff" : "#8c8c8c",
@@ -506,27 +514,19 @@ export default function BlogDetailMobile({
           size="small"
           style={{
             ...jpFont,
-            background: shouldShowHeader
-              ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
-              : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
-            borderBottom: shouldShowHeader
-              ? "1px solid rgba(139, 69, 19, 0.2)"
-              : "1px solid rgba(139, 69, 19, 0)",
+            background:
+              "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)",
+            borderBottom: "1px solid rgba(139, 69, 19, 0.2)",
             zIndex: 998,
             position: "fixed",
             top: 48,
             left: 0,
             right: 0,
             width: "100%",
-            // Add smooth transition for show/hide
+            // Simplified transform only - no complex transitions
             transform: shouldShowHeader ? "translateY(0)" : "translateY(-100%)",
-            transition: shouldShowHeader
-              ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
-              : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
-            willChange: "transform, opacity, background, border-color",
-            // Hide completely when not visible
-            visibility: shouldShowHeader ? "visible" : "hidden",
-            opacity: shouldShowHeader ? 1 : 0,
+            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            willChange: "transform",
             margin: 0,
             borderRadius: 0,
             boxShadow: "none",
@@ -662,6 +662,7 @@ export default function BlogDetailMobile({
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
   const [isScrolling, setIsScrolling] = useState(false);
+  const isTransitioning = useRef(false);
 
   // Touch gesture handling
   const touchStartY = useRef(0);
@@ -723,6 +724,9 @@ export default function BlogDetailMobile({
 
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
+
+    // Skip if transitioning to prevent conflicts
+    if (isTransitioning.current) return;
 
     // Always show header when at the top (immediate response, unless manually hidden)
     if (currentScrollY <= 10 && !isHeaderManuallyHidden) {
@@ -952,8 +956,8 @@ export default function BlogDetailMobile({
           flexDirection: "column",
           touchAction: "pan-y",
           paddingTop: shouldShowHeader ? "88px" : "48px",
-          // Smooth transition for mobile
-          transition: "padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          // Simplified transition - only padding-top
+          transition: "padding-top 0.3s ease-out",
           // Optimize for touch
           scrollBehavior: "smooth",
           // Prevent bounce on iOS
@@ -1252,6 +1256,17 @@ export default function BlogDetailMobile({
           .ant-pro-card-body {
             margin: 0 !important;
             padding: 0 !important;
+          }
+          /* Optimize transitions for smooth animations */
+          .ant-affix {
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: transform;
+          }
+          .ant-pro-card {
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: transform;
           }
           .jp-prose img {
             border-radius: 12px;
