@@ -20,6 +20,8 @@ import {
   Calendar,
   Badge,
   Segmented,
+  Progress,
+  notification,
 } from "antd";
 import {
   LeftOutlined,
@@ -30,6 +32,7 @@ import {
   LoadingOutlined,
   RightOutlined,
   ReadOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 import {
   useEffect,
@@ -124,6 +127,7 @@ export default function BlogDetail({
   const [trHtml, setTrHtml] = useState({ en: "", vi: "" });
   const [trTitle, setTrTitle] = useState({ en: "", vi: "" });
   const [translating, setTranslating] = useState(false);
+  const [translationProgress, setTranslationProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const [navIds, setNavIds] = useState({ prevId: null, nextId: null });
@@ -189,11 +193,21 @@ export default function BlogDetail({
 
         const data = await fetchBlogDetail(id);
         if (!data) {
-          message.error("Không thể tải nội dung blog. Vui lòng thử lại sau.");
+          notification.error({
+            message: "Lỗi tải nội dung",
+            description: "Không thể tải nội dung blog. Vui lòng thử lại sau.",
+            placement: "topRight",
+            duration: 4,
+          });
           return;
         }
         if (!data.content) {
-          message.warning("Blog không có nội dung.");
+          notification.warning({
+            message: "Cảnh báo",
+            description: "Blog không có nội dung.",
+            placement: "topRight",
+            duration: 3,
+          });
         }
         setBlog(data);
 
@@ -215,7 +229,12 @@ export default function BlogDetail({
         }
       } catch (e) {
         console.error("Error loading blog:", e);
-        message.error("Lỗi khi tải blog.");
+        notification.error({
+          message: "Lỗi hệ thống",
+          description: "Lỗi khi tải blog. Vui lòng thử lại sau.",
+          placement: "topRight",
+          duration: 4,
+        });
       } finally {
         setLoading(false);
         setPendingNavId(null);
@@ -306,10 +325,12 @@ export default function BlogDetail({
 
       try {
         setTranslating(true);
+        setTranslationProgress(0);
 
         // Check if blog ID changed before starting translation
         if (currentBlogId !== id) {
           setTranslating(false);
+          setTranslationProgress(0);
           return;
         }
 
@@ -324,11 +345,16 @@ export default function BlogDetail({
         // Check if blog ID changed after title translation
         if (currentBlogId !== id) {
           setTranslating(false);
+          setTranslationProgress(0);
           return;
         }
 
+        // Update progress after title translation
+        setTranslationProgress(20);
+
         // Chunk callback
         let translatedContent = "";
+        let chunkCount = 0;
         const updateProgress = (translatedChunk, isLast) => {
           if (!translatedChunk) return;
 
@@ -340,10 +366,16 @@ export default function BlogDetail({
             .replace(/```/g, "")
             .trim();
           translatedContent += cleaned;
+          chunkCount++;
+
+          // Update progress based on chunks (20% + 60% for content)
+          const contentProgress = Math.min(20 + chunkCount * 15, 80);
+          setTranslationProgress(contentProgress);
 
           if (isLast && currentBlogId === id) {
             setTrHtml((prev) => ({ ...prev, [language]: translatedContent }));
             localStorage.setItem(keyHtml, translatedContent);
+            setTranslationProgress(100);
           }
         };
 
@@ -361,16 +393,30 @@ export default function BlogDetail({
             setTrTitle((s) => ({ ...s, [language]: safeTtl }));
             localStorage.setItem(keyTtl, safeTtl);
           }
-          message.success("Dịch thành công!");
+          setTranslationProgress(100);
+          notification.success({
+            message: "Dịch thuật thành công",
+            description: `Nội dung đã được dịch sang ${
+              language === "en" ? "tiếng Anh" : "tiếng Việt"
+            }`,
+            placement: "topRight",
+            duration: 3,
+          });
         }
       } catch (err) {
         console.error("Translation failed:", err);
         if (currentBlogId === id) {
-          message.error("Lỗi dịch. Vui lòng thử lại sau.");
+          notification.error({
+            message: "Lỗi dịch thuật",
+            description: "Không thể dịch nội dung. Vui lòng thử lại sau.",
+            placement: "topRight",
+            duration: 4,
+          });
         }
       } finally {
         if (currentBlogId === id) {
           setTranslating(false);
+          setTranslationProgress(0);
         }
       }
     })();
@@ -527,11 +573,61 @@ export default function BlogDetail({
               setLanguage(value);
               if (propSetLanguage) propSetLanguage(value);
             }}
-            style={{ width: 120 }}
+            style={{ width: 140 }}
+            loading={translating}
+            disabled={translating}
             options={[
-              { value: "ja", label: "日本語" },
-              { value: "en", label: "English" },
-              { value: "vi", label: "Tiếng Việt" },
+              {
+                value: "ja",
+                label: (
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <GlobalOutlined
+                      style={{ color: "#666", fontSize: "14px" }}
+                    />
+                    日本語
+                  </span>
+                ),
+              },
+              {
+                value: "en",
+                label: (
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <GlobalOutlined
+                      style={{ color: "#666", fontSize: "14px" }}
+                    />
+                    English
+                  </span>
+                ),
+              },
+              {
+                value: "vi",
+                label: (
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <GlobalOutlined
+                      style={{ color: "#666", fontSize: "14px" }}
+                    />
+                    Tiếng Việt
+                  </span>
+                ),
+              },
             ]}
           />,
 
@@ -569,25 +665,80 @@ export default function BlogDetail({
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: "rgba(255,255,255,0.55)",
+                  background: "rgba(255,255,255,0.9)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   zIndex: 2,
                   borderRadius: 16,
-                  backdropFilter: "blur(1.5px)",
+                  backdropFilter: "blur(3px)",
                 }}
               >
-                <Space direction="vertical" align="center">
-                  <Spin indicator={<LoadingOutlined spin />} />
-                  <Text type="secondary" style={{ fontSize: 13 }}>
-                    {language === "vi"
-                      ? "Đang dịch nội dung..."
-                      : language === "en"
-                      ? "Translating content..."
-                      : "翻訳中..."}
-                  </Text>
-                </Space>
+                <ProCard
+                  style={{
+                    textAlign: "center",
+                    borderRadius: 16,
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
+                    border: "1px solid rgba(109, 40, 217, 0.15)",
+                    background:
+                      "linear-gradient(135deg, #ffffff 0%, #faf7ff 100%)",
+                    maxWidth: 320,
+                    width: "90%",
+                  }}
+                  bodyStyle={{ padding: "32px 24px" }}
+                >
+                  <Space direction="vertical" align="center" size={20}>
+                    <div
+                      style={{
+                        position: "relative",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Spin
+                        size="large"
+                        indicator={
+                          <LoadingOutlined
+                            style={{ fontSize: 28, color: "#6d28d9" }}
+                            spin
+                          />
+                        }
+                      />
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
+                          fontSize: 16,
+                          color: "#6d28d9",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {translationProgress}%
+                      </div>
+                    </div>
+
+                    <div>
+                      <Progress
+                        percent={translationProgress}
+                        strokeColor={{
+                          "0%": "#6d28d9",
+                          "50%": "#8b5cf6",
+                          "100%": "#a855f7",
+                        }}
+                        trailColor="#f3f4f6"
+                        size="small"
+                        style={{
+                          width: 240,
+                          marginBottom: 12,
+                        }}
+                        showInfo={false}
+                      />
+                    </div>
+                  </Space>
+                </ProCard>
               </div>
             )}
 

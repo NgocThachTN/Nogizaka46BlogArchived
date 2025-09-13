@@ -44,6 +44,7 @@ import {
   StarOutlined,
   DownOutlined,
   RightOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 
 /** Typography */
@@ -448,11 +449,59 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                     value={language}
                     onChange={setLanguage}
                     size="small"
-                    style={{ width: 100 }}
+                    style={{ width: 120 }}
                     options={[
-                      { value: "ja", label: "日" },
-                      { value: "en", label: "EN" },
-                      { value: "vi", label: "VI" },
+                      {
+                        value: "ja",
+                        label: (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <GlobalOutlined
+                              style={{ color: "#666", fontSize: "12px" }}
+                            />
+                            日
+                          </span>
+                        ),
+                      },
+                      {
+                        value: "en",
+                        label: (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <GlobalOutlined
+                              style={{ color: "#666", fontSize: "12px" }}
+                            />
+                            EN
+                          </span>
+                        ),
+                      },
+                      {
+                        value: "vi",
+                        label: (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <GlobalOutlined
+                              style={{ color: "#666", fontSize: "12px" }}
+                            />
+                            VI
+                          </span>
+                        ),
+                      },
                     ]}
                   />
                 )}

@@ -22,6 +22,7 @@ import {
   ReadOutlined,
   EyeOutlined,
   SearchOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
 import {
@@ -344,11 +345,59 @@ export default function BlogList({ language = "ja", setLanguage }) {
                     value={language}
                     onChange={setLanguage}
                     size="small"
-                    style={{ width: 120, marginTop: 8 }}
+                    style={{ width: 140, marginTop: 8 }}
                     options={[
-                      { value: "ja", label: "日本語" },
-                      { value: "en", label: "English" },
-                      { value: "vi", label: "Tiếng Việt" },
+                      {
+                        value: "ja",
+                        label: (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <GlobalOutlined
+                              style={{ color: "#666", fontSize: "12px" }}
+                            />
+                            日本語
+                          </span>
+                        ),
+                      },
+                      {
+                        value: "en",
+                        label: (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <GlobalOutlined
+                              style={{ color: "#666", fontSize: "12px" }}
+                            />
+                            English
+                          </span>
+                        ),
+                      },
+                      {
+                        value: "vi",
+                        label: (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <GlobalOutlined
+                              style={{ color: "#666", fontSize: "12px" }}
+                            />
+                            Tiếng Việt
+                          </span>
+                        ),
+                      },
                     ]}
                   />
                 )}

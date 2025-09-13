@@ -12,9 +12,9 @@ import {
   Empty,
   List,
   Tooltip,
-  message,
   Button,
   Select,
+  notification,
 } from "antd";
 import { ProCard, PageContainer } from "@ant-design/pro-components";
 import {
@@ -22,6 +22,7 @@ import {
   StarOutlined,
   SearchOutlined,
   LinkOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 import MemberListMobile from "./MemberListMobile";
 
@@ -151,7 +152,13 @@ const MemberList = ({ language = "ja", setLanguage }) => {
         setMembers(normalized);
       } catch (e) {
         console.error(e);
-        message.error("Không tải được danh sách thành viên.");
+        notification.error({
+          message: "Lỗi tải dữ liệu",
+          description:
+            "Không tải được danh sách thành viên. Vui lòng thử lại sau.",
+          placement: "topRight",
+          duration: 4,
+        });
       } finally {
         setLoading(false);
       }
@@ -240,11 +247,59 @@ const MemberList = ({ language = "ja", setLanguage }) => {
               <Select
                 value={language}
                 onChange={setLanguage}
-                style={{ width: 120 }}
+                style={{ width: 140 }}
                 options={[
-                  { value: "ja", label: "日本語" },
-                  { value: "en", label: "English" },
-                  { value: "vi", label: "Tiếng Việt" },
+                  {
+                    value: "ja",
+                    label: (
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <GlobalOutlined
+                          style={{ color: "#666", fontSize: "14px" }}
+                        />
+                        日本語
+                      </span>
+                    ),
+                  },
+                  {
+                    value: "en",
+                    label: (
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <GlobalOutlined
+                          style={{ color: "#666", fontSize: "14px" }}
+                        />
+                        English
+                      </span>
+                    ),
+                  },
+                  {
+                    value: "vi",
+                    label: (
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <GlobalOutlined
+                          style={{ color: "#666", fontSize: "14px" }}
+                        />
+                        Tiếng Việt
+                      </span>
+                    ),
+                  },
                 ]}
               />
             )}

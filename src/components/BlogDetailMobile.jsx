@@ -21,6 +21,7 @@ import {
   InfoCircleOutlined,
   CalendarOutlined,
   FontSizeOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -384,15 +385,22 @@ export default function BlogDetailMobile({
                 {/* trạng thái dịch */}
                 {translating || isPending ? (
                   <Tag
-                    icon={<LoadingOutlined />}
+                    icon={<LoadingOutlined spin />}
                     color="processing"
-                    style={{ marginRight: 6 }}
+                    style={{
+                      marginRight: 6,
+                      background:
+                        "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
+                      border: "none",
+                      color: "white",
+                      fontWeight: 500,
+                    }}
                   >
                     {cachedLanguage === "vi"
-                      ? "Đang dịch..."
+                      ? "Dịch"
                       : cachedLanguage === "en"
-                      ? "Translating..."
-                      : "翻訳中..."}
+                      ? "Trans"
+                      : "翻訳"}
                   </Tag>
                 ) : (
                   <Tag color="default" style={{ marginRight: 6 }}>
@@ -405,9 +413,9 @@ export default function BlogDetailMobile({
                   value={cachedLanguage}
                   onChange={(val) => setLanguage(val)}
                   options={[
-                    { label: "日", value: "ja" },
-                    { label: "EN", value: "en" },
-                    { label: "VI", value: "vi" },
+                    { label: "🌏 日", value: "ja" },
+                    { label: "🌍 EN", value: "en" },
+                    { label: "🌎 VI", value: "vi" },
                   ]}
                 />
                 <Button
@@ -823,6 +831,7 @@ export default function BlogDetailMobile({
             width: "100%",
             maxWidth: "100%",
             ...jpFont,
+            position: "relative",
           }}
           bodyStyle={{
             padding: "0 0 80px",
@@ -830,6 +839,70 @@ export default function BlogDetailMobile({
             width: "100%",
           }}
         >
+          {/* Translation Loading Overlay */}
+          {translating && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(255,255,255,0.95)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 10,
+                backdropFilter: "blur(3px)",
+              }}
+            >
+              <ProCard
+                style={{
+                  textAlign: "center",
+                  borderRadius: 16,
+                  boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
+                  border: "1px solid rgba(109, 40, 217, 0.15)",
+                  background:
+                    "linear-gradient(135deg, #ffffff 0%, #faf7ff 100%)",
+                  margin: "0 16px",
+                  maxWidth: 280,
+                  width: "90%",
+                }}
+                bodyStyle={{ padding: "24px 20px" }}
+              >
+                <Space direction="vertical" align="center" size={16}>
+                  <div
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <LoadingOutlined
+                      style={{ fontSize: 24, color: "#6d28d9" }}
+                      spin
+                    />
+                  </div>
+
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 16,
+                        color: "#6d28d9",
+                        fontWeight: 600,
+                        marginBottom: 8,
+                      }}
+                    >
+                      {cachedLanguage === "vi"
+                        ? "Đang xử lý..."
+                        : cachedLanguage === "en"
+                        ? "Processing..."
+                        : "処理中..."}
+                    </div>
+                  </div>
+                </Space>
+              </ProCard>
+            </div>
+          )}
+
           {/* Content - Title moved to author section */}
           <div style={{ padding: "12px" }}>
             {/* Nội dung */}
@@ -874,9 +947,9 @@ export default function BlogDetailMobile({
               value={cachedLanguage}
               onChange={(val) => setLanguage(val)}
               options={[
-                { label: "Nhật", value: "ja" },
-                { label: "English", value: "en" },
-                { label: "Tiếng Việt", value: "vi" },
+                { label: "🌏 Nhật", value: "ja" },
+                { label: "🌍 English", value: "en" },
+                { label: "🌎 Tiếng Việt", value: "vi" },
               ]}
             />
             <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
