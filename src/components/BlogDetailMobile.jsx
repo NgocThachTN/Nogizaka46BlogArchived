@@ -1029,30 +1029,7 @@ export default function BlogDetailMobile({
         </Space>
       </Drawer>
 
-      {/* Progress đọc ở mép dưới màn hình */}
-      <Affix offsetBottom={0}>
-        <div
-          style={{
-            height: 3,
-            width: "100%",
-            background: "rgba(139, 69, 19, 0.1)",
-            willChange: "transform",
-            transform: "translateZ(0)",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              background: "#8b4513",
-              transform: `translateX(${readPct - 100}%)`,
-              willChange: "transform",
-              transition: "transform 0.1s ease-out",
-            }}
-          />
-        </div>
-      </Affix>
-
+     
       {/* Full-bleed overrides */}
       <style>{`
           /* Hide scrollbar for Chrome, Safari and Opera */
