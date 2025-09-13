@@ -130,6 +130,8 @@ export default function BlogDetailMobile({
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
+  const [isHeaderPinned, setIsHeaderPinned] = useState(true); // Thêm state để control header
+  const [isHeaderManuallyHidden, setIsHeaderManuallyHidden] = useState(false); // Thêm state để control manual hide
 
   const navTopBtnStyle = useMemo(
     () => ({
@@ -161,6 +163,13 @@ export default function BlogDetailMobile({
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
+
+  // Combined header visibility - either pinned by user or auto-hide
+  const shouldShowHeader = isHeaderManuallyHidden
+    ? false
+    : isHeaderPinned
+    ? true
+    : isHeaderVisible;
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -432,6 +441,37 @@ export default function BlogDetailMobile({
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
                 />
+                <Button
+                  type="text"
+                  icon={
+                    shouldShowHeader ? (
+                      <ArrowUpOutlined />
+                    ) : (
+                      <ArrowUpOutlined
+                        style={{ transform: "rotate(180deg)" }}
+                      />
+                    )
+                  }
+                  onClick={() => {
+                    if (isHeaderPinned) {
+                      // Nếu đang pin, chuyển sang ẩn hoàn toàn
+                      setIsHeaderPinned(false);
+                      setIsHeaderManuallyHidden(true);
+                    } else if (isHeaderManuallyHidden) {
+                      // Nếu đang ẩn hoàn toàn, chuyển sang auto-hide
+                      setIsHeaderManuallyHidden(false);
+                      setIsHeaderVisible(true);
+                    } else {
+                      // Nếu đang auto-hide, chuyển sang pin
+                      setIsHeaderPinned(true);
+                      setIsHeaderManuallyHidden(false);
+                    }
+                  }}
+                  style={{
+                    color: shouldShowHeader ? "#1890ff" : "#8c8c8c",
+                    fontWeight: shouldShowHeader ? 600 : 400,
+                  }}
+                />
               </Space>
             </Space>
           </div>
@@ -450,6 +490,11 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
+      isHeaderPinned,
+      isHeaderManuallyHidden,
+      setIsHeaderPinned,
+      setIsHeaderManuallyHidden,
+      shouldShowHeader,
     ]
   );
 
@@ -461,10 +506,10 @@ export default function BlogDetailMobile({
           size="small"
           style={{
             ...jpFont,
-            background: isHeaderVisible
+            background: shouldShowHeader
               ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
               : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
-            borderBottom: isHeaderVisible
+            borderBottom: shouldShowHeader
               ? "1px solid rgba(139, 69, 19, 0.2)"
               : "1px solid rgba(139, 69, 19, 0)",
             zIndex: 998,
@@ -474,14 +519,14 @@ export default function BlogDetailMobile({
             right: 0,
             width: "100%",
             // Add smooth transition for show/hide
-            transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
-            transition: isHeaderVisible
+            transform: shouldShowHeader ? "translateY(0)" : "translateY(-100%)",
+            transition: shouldShowHeader
               ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
               : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
             willChange: "transform, opacity, background, border-color",
             // Hide completely when not visible
-            visibility: isHeaderVisible ? "visible" : "hidden",
-            opacity: isHeaderVisible ? 1 : 0,
+            visibility: shouldShowHeader ? "visible" : "hidden",
+            opacity: shouldShowHeader ? 1 : 0,
             margin: 0,
             borderRadius: 0,
             boxShadow: "none",
@@ -580,7 +625,7 @@ export default function BlogDetailMobile({
         </ProCard>
       </Affix>
     ),
-    [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
+    [blog, displayTitle, memberInfo, shouldShowHeader, setDrawerVisible]
   );
 
   // Create a single throttled updater for scroll progress and header visibility
@@ -630,51 +675,46 @@ export default function BlogDetailMobile({
     isTouchScrolling.current = true;
   }, []);
 
-  const handleTouchMove = useCallback((e) => {
-    if (!isTouchScrolling.current) return;
+  const handleTouchMove = useCallback(
+    (e) => {
+      if (!isTouchScrolling.current) return;
 
-    const currentY = e.touches[0].clientY;
-    const deltaY = currentY - touchStartY.current;
-    const currentTime = Date.now();
-    const deltaTime = currentTime - touchStartTime.current;
+      const currentY = e.touches[0].clientY;
+      const deltaY = currentY - touchStartY.current;
+      const currentTime = Date.now();
+      const deltaTime = currentTime - touchStartTime.current;
 
-    // More sensitive touch detection for Android
-    if (Math.abs(deltaY) > 5 && deltaTime > 30) {
-      const wrap = scrollWrapRef.current;
-      if (!wrap) return;
+      // Only process if touch is moving fast enough
+      if (Math.abs(deltaY) > 10 && deltaTime > 50) {
+        const wrap = scrollWrapRef.current;
+        if (!wrap) return;
 
-      const currentScrollY = wrap.scrollTop;
+        const currentScrollY = wrap.scrollTop;
 
-      // Always show header when at the top
-      if (currentScrollY <= 10) {
-        setIsHeaderVisible(true);
-        return;
+        // Always show header when at the top (unless manually hidden)
+        if (currentScrollY <= 10 && !isHeaderManuallyHidden) {
+          setIsHeaderVisible(true);
+          return;
+        }
+
+        // Only auto-hide if not pinned by user and not manually hidden
+        if (!isHeaderPinned && !isHeaderManuallyHidden) {
+          // Determine scroll direction based on touch movement
+          if (deltaY > 0) {
+            // Swipe down (kéo xuống) - ẩn header để đọc nội dung
+            setIsHeaderVisible(false);
+          } else {
+            // Swipe up (kéo lên) - hiện header
+            setIsHeaderVisible(true);
+          }
+        }
       }
-
-      // Determine scroll direction based on touch movement
-      if (deltaY > 0) {
-        // Swipe down (kéo xuống) - hiện header
-        console.log("Touch: Showing header - swipe down");
-        setIsHeaderVisible(true);
-      } else {
-        // Swipe up (kéo lên) - ẩn header để đọc nội dung
-        console.log("Touch: Hiding header - swipe up");
-        setIsHeaderVisible(false);
-      }
-    }
-  }, []);
+    },
+    [isHeaderPinned, isHeaderManuallyHidden]
+  );
 
   const handleTouchEnd = useCallback(() => {
     isTouchScrolling.current = false;
-
-    // Fallback: Check scroll position after touch ends
-    const wrap = scrollWrapRef.current;
-    if (!wrap) return;
-
-    const currentScrollY = wrap.scrollTop;
-    if (currentScrollY <= 10) {
-      setIsHeaderVisible(true);
-    }
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -684,8 +724,8 @@ export default function BlogDetailMobile({
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
 
-    // Always show header when at the top (immediate response)
-    if (currentScrollY <= 10) {
+    // Always show header when at the top (immediate response, unless manually hidden)
+    if (currentScrollY <= 10 && !isHeaderManuallyHidden) {
       setIsHeaderVisible(true);
       lastScrollY.current = currentScrollY;
       return;
@@ -712,20 +752,23 @@ export default function BlogDetailMobile({
     // Only process if enough time has passed
     if (currentTime - lastScrollTime.current < 30) return;
 
-    const scrollDifference = currentScrollY - (lastScrollY.current || 0);
+    // Only auto-hide if not pinned by user and not manually hidden
+    if (!isHeaderPinned && !isHeaderManuallyHidden) {
+      const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-    if (Math.abs(scrollDifference) > 3) {
-      if (scrollDifference > 0) {
-        // Scroll down (kéo xuống) - hiện header
-        setIsHeaderVisible(true);
-      } else {
-        // Scroll up (kéo lên) - ẩn header để đọc nội dung
-        setIsHeaderVisible(false);
+      if (Math.abs(scrollDifference) > 3) {
+        if (scrollDifference > 0) {
+          // Scroll down (kéo xuống) - ẩn header để đọc nội dung
+          setIsHeaderVisible(false);
+        } else {
+          // Scroll up (kéo lên) - hiện header
+          setIsHeaderVisible(true);
+        }
+        lastScrollY.current = currentScrollY;
+        lastScrollTime.current = currentTime;
       }
-      lastScrollY.current = currentScrollY;
-      lastScrollTime.current = currentTime;
     }
-  }, [isScrolling]);
+  }, [isScrolling, isHeaderPinned, isHeaderManuallyHidden]);
 
   // Setup scroll and touch handlers for mobile
   useEffect(() => {
@@ -750,8 +793,8 @@ export default function BlogDetailMobile({
     wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
 
     // Setup touch events for smooth mobile gestures
-    wrap.addEventListener("touchstart", handleTouchStart, { passive: false });
-    wrap.addEventListener("touchmove", handleTouchMove, { passive: false });
+    wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
+    wrap.addEventListener("touchmove", handleTouchMove, { passive: true });
     wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     // Initialize
@@ -768,7 +811,13 @@ export default function BlogDetailMobile({
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [
+    handleScroll,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    isHeaderPinned,
+  ]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
@@ -902,7 +951,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: isHeaderVisible ? "88px" : "48px",
+          paddingTop: shouldShowHeader ? "88px" : "48px",
           // Smooth transition for mobile
           transition: "padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           // Optimize for touch
