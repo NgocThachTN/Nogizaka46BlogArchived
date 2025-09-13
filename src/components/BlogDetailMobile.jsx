@@ -74,31 +74,33 @@ function optimizeHtmlForMobile(html) {
       // Force width constraint and enhanced loading for iOS Safari
       if (!/\bwidth=/.test(newAttrs)) newAttrs += ' width="100%"';
       if (!/\bheight=/.test(newAttrs)) newAttrs += ' height="auto"';
-      
+
       // Enhanced style attributes for iOS Safari
       const iosStyles = [
-        'max-width: 100%',
-        'height: auto',
-        'width: 100%',
-        '-webkit-user-select: none',
-        '-webkit-touch-callout: none',
-        '-webkit-tap-highlight-color: transparent',
-        'content-visibility: auto',
-        '-webkit-transform: translateZ(0)',
-        'transform: translateZ(0)',
-        '-webkit-backface-visibility: hidden',
-        'backface-visibility: hidden'
-      ].join(';');
+        "max-width: 100%",
+        "height: auto",
+        "width: 100%",
+        "-webkit-user-select: none",
+        "-webkit-touch-callout: none",
+        "-webkit-tap-highlight-color: transparent",
+        "content-visibility: auto",
+        "-webkit-transform: translateZ(0)",
+        "transform: translateZ(0)",
+        "-webkit-backface-visibility: hidden",
+        "backface-visibility: hidden",
+      ].join(";");
 
       // Either append to existing style or create new style attribute
       if (/\bstyle=["']([^"']*)["']/.test(newAttrs)) {
-        newAttrs = newAttrs.replace(/\bstyle=["']([^"']*)["']/, 
-          (m, existing) => `style="${existing};${iosStyles}"`);
+        newAttrs = newAttrs.replace(
+          /\bstyle=["']([^"']*)["']/,
+          (m, existing) => `style="${existing};${iosStyles}"`
+        );
       } else {
         newAttrs += ` style="${iosStyles}"`;
       }
 
-      // Additional iOS optimization attributes  
+      // Additional iOS optimization attributes
       newAttrs += ' role="presentation"';
       newAttrs += ' draggable="false"';
       newAttrs += ' crossorigin="anonymous"';
@@ -139,27 +141,9 @@ export default function BlogDetailMobile({
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
 
-  const navTopBtnStyle = useMemo(
-    () => ({
-      width: 32,
-      height: 32,
-      borderRadius: 10,
-      background: "rgba(253, 246, 227, 0.8)",
-      color: "#111",
-      border: "1px solid rgba(0,0,0,0.06)",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontWeight: 700,
-      fontSize: 16,
-      padding: 0,
-    }),
-    []
-  );
+  // Removed unused navTopBtnStyle
 
-  // Header visibility state for scroll-based hiding
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  // Removed unused isHeaderVisible
   const scrollWrapRef = useRef(null);
 
   useEffect(() => {
@@ -229,9 +213,9 @@ export default function BlogDetailMobile({
       // iOS Safari specific: Add delay to prevent rendering issues
       const updateContent = async () => {
         if (isIOS()) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        
+
         setCachedDisplayContent(displayContent);
         setCachedLanguage(language);
       };
@@ -242,12 +226,12 @@ export default function BlogDetailMobile({
       if (scrollWrapRef.current) {
         if (isIOS()) {
           // iOS smooth scroll workaround
-          scrollWrapRef.current.style.overflow = 'hidden';
+          scrollWrapRef.current.style.overflow = "hidden";
           scrollWrapRef.current.scrollTop = 0;
           requestAnimationFrame(() => {
             if (scrollWrapRef.current) {
-              scrollWrapRef.current.style.overflow = 'auto';
-              scrollWrapRef.current.style.WebkitOverflowScrolling = 'touch';
+              scrollWrapRef.current.style.overflow = "auto";
+              scrollWrapRef.current.style.WebkitOverflowScrolling = "touch";
             }
           });
         } else {
@@ -646,7 +630,7 @@ export default function BlogDetailMobile({
   // Simple scroll handler - keep header always visible
   const handleScroll = useCallback(() => {
     // Keep header always visible - no auto-hide functionality
-    setIsHeaderVisible(true);
+    // Removed setIsHeaderVisible call
   }, []);
 
   // Setup scroll handlers - simplified
@@ -779,7 +763,13 @@ export default function BlogDetailMobile({
         right: 0,
         bottom: 0,
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        /* iOS Safari specific fixes */
+        WebkitOverflowScrolling: "touch",
+        WebkitTransform: "translateZ(0)",
+        transform: "translateZ(0)",
+        WebkitBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden",
       }}
     >
       {NavigationBar}
@@ -789,28 +779,29 @@ export default function BlogDetailMobile({
       <div
         ref={scrollWrapRef}
         style={{
-          height: 'calc(100dvh - 84px)', // Trừ đi chiều cao của cả NavigationBar và AuthorBar
-          maxHeight: 'calc(100dvh - 84px)',
-          overflow: 'auto',
-          background: 'rgba(253, 246, 227, 0.8)',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'none',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          width: '100%',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          touchAction: 'pan-y',
+          height: "calc(100dvh - 84px)", // Trừ đi chiều cao của cả NavigationBar và AuthorBar
+          maxHeight: "calc(100dvh - 84px)",
+          overflow: "auto",
+          background: "rgba(253, 246, 227, 0.8)",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "none",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          width: "100%",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          touchAction: "pan-y",
           paddingTop: 0, // Đã tính trong height
-          marginTop: '84px',
+          marginTop: "84px",
           marginBottom: 0,
           flexShrink: 1,
-          WebkitBackfaceVisibility: 'hidden',
-          WebkitTransform: 'translate3d(0,0,0)',
-          transform: 'translate3d(0,0,0)',
-          willChange: 'transform',
-          contain: 'paint layout style'
+          WebkitBackfaceVisibility: "hidden",
+          WebkitTransform: "translate3d(0,0,0)",
+          transform: "translate3d(0,0,0)",
+          willChange: "transform",
+          contain: "paint layout style",
+          /* iOS Safari specific fixes - removed duplicate keys */
         }}
       >
         <ProCard
@@ -823,6 +814,11 @@ export default function BlogDetailMobile({
             maxWidth: "100%",
             ...jpFont,
             position: "relative",
+            /* iOS Safari specific fixes */
+            WebkitTransform: "translateZ(0)",
+            transform: "translateZ(0)",
+            WebkitBackfaceVisibility: "hidden",
+            backfaceVisibility: "hidden",
           }}
           bodyStyle={{
             padding: "0 0 0",
@@ -895,7 +891,16 @@ export default function BlogDetailMobile({
           )}
 
           {/* Content - Title moved to author section */}
-          <div style={{ padding: "12px 12px 0 12px" }}>
+          <div
+            style={{
+              padding: "12px 12px 0 12px",
+              /* iOS Safari specific fixes */
+              WebkitTransform: "translateZ(0)",
+              transform: "translateZ(0)",
+              WebkitBackfaceVisibility: "hidden",
+              backfaceVisibility: "hidden",
+            }}
+          >
             {/* Nội dung */}
             <div
               className="jp-prose"
@@ -909,6 +914,11 @@ export default function BlogDetailMobile({
                 wordWrap: "break-word",
                 hyphens: "auto",
                 paddingBottom: "20px",
+                /* iOS Safari specific fixes */
+                WebkitTransform: "translateZ(0)",
+                transform: "translateZ(0)",
+                WebkitBackfaceVisibility: "hidden",
+                backfaceVisibility: "hidden",
               }}
               dangerouslySetInnerHTML={{
                 __html: optimizedHtml,
@@ -931,7 +941,7 @@ export default function BlogDetailMobile({
         open={drawerVisible}
         width={320}
         styles={{ body: { paddingTop: 8 } }}
-        afterOpenChange={(open) => {
+        afterOpenChange={() => {
           // Header is always visible now
         }}
       >
@@ -1119,6 +1129,30 @@ export default function BlogDetailMobile({
           .jp-prose ul, .jp-prose ol { padding-left: 1.2em; margin: 0.8em 0; }
           .jp-prose li { margin: 0.4em 0; color: #374151; }
           .jp-prose strong { color: #111827; font-weight: 600; }
+          
+          /* iOS Safari specific fixes */
+          @media screen and (-webkit-min-device-pixel-ratio: 0) {
+            .ant-pro-page-container {
+              -webkit-transform: translateZ(0);
+              transform: translateZ(0);
+              -webkit-backface-visibility: hidden;
+              backface-visibility: hidden;
+            }
+            
+            .ant-pro-card {
+              -webkit-transform: translateZ(0);
+              transform: translateZ(0);
+              -webkit-backface-visibility: hidden;
+              backface-visibility: hidden;
+            }
+            
+            .jp-prose {
+              -webkit-transform: translateZ(0);
+              transform: translateZ(0);
+              -webkit-backface-visibility: hidden;
+              backface-visibility: hidden;
+            }
+          }
         `}</style>
     </PageContainer>
   );

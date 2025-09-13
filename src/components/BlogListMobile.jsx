@@ -129,6 +129,15 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
   const navigate = useNavigate();
   const { memberCode } = useParams();
 
+  // Debug iOS detection
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  console.log(
+    "BlogListMobile - iOS detected:",
+    isIOS,
+    "User Agent:",
+    navigator.userAgent
+  );
+
   const [blogs, setBlogs] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -169,26 +178,39 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     const renderCachedContent = async () => {
       const b = _cache.blogsByMember.get(memberCode);
       const m = _cache.memberByCode.get(memberCode);
-      
+
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      
+
+      // iOS Safari: More aggressive delay to prevent layout issues
       if (isIOS) {
-        // iOS Safari: Delay render slightly to prevent layout issues
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+
+        // Force iOS Safari to recalculate layout
+        document.body.style.transform = "translateZ(0)";
+        requestAnimationFrame(() => {
+          document.body.style.transform = "none";
+        });
       }
 
       if (b?.list?.length) {
-        startTransition(() => {
+        // Force immediate state update for iOS
+        if (isIOS) {
           setBlogs(b.list);
           setFiltered(b.list);
           setLoading(false);
-        });
+        } else {
+          startTransition(() => {
+            setBlogs(b.list);
+            setFiltered(b.list);
+            setLoading(false);
+          });
+        }
       }
-      
+
       if (m?.info) {
         if (isIOS) {
-          // iOS: Render member info after slight delay
-          await new Promise(resolve => setTimeout(resolve, 30));
+          // iOS: More delay for member info
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
         setMemberInfo(m.info);
       }
@@ -197,13 +219,16 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
       const y = _cache.scrollY.get(memberCode);
       if (typeof y === "number") {
         if (isIOS) {
-          // iOS: Smooth scroll restoration
+          // iOS: More aggressive scroll restoration
           setTimeout(() => {
             window.scrollTo({
               top: y,
-              behavior: 'auto'
+              behavior: "auto",
             });
-          }, 50);
+            // Force iOS to update scroll position
+            document.documentElement.scrollTop = y;
+            document.body.scrollTop = y;
+          }, 200);
         } else {
           requestAnimationFrame(() => window.scrollTo(0, y));
         }
@@ -252,13 +277,17 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         // iOS Safari specific delay and optimizations
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         if (isIOS) {
-          // Add small delay for iOS to stabilize
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          
-          // Force layout recalc on iOS
-          document.body.style.willChange = 'transform';
+          // Add more delay for iOS to stabilize
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
+          // Force layout recalc on iOS with multiple techniques
+          document.body.style.willChange = "transform";
+          document.body.style.transform = "translateZ(0)";
           requestAnimationFrame(() => {
-            document.body.style.willChange = 'auto';
+            document.body.style.willChange = "auto";
+            document.body.style.transform = "none";
+            // Force iOS Safari to repaint
+            document.body.offsetHeight;
           });
         }
 
@@ -299,7 +328,8 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             ts: Date.now(),
           });
 
-          startTransition(() => {
+          // iOS-specific state updates
+          if (isIOS) {
             setBlogs(all);
             setFiltered(
               deferredQ
@@ -310,8 +340,27 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                   )
                 : all
             );
-          });
-          setMemberInfo(member);
+            setMemberInfo(member);
+
+            // Force iOS to update the DOM
+            setTimeout(() => {
+              document.body.offsetHeight;
+            }, 50);
+          } else {
+            startTransition(() => {
+              setBlogs(all);
+              setFiltered(
+                deferredQ
+                  ? all.filter((f) =>
+                      (f.title + f.author)
+                        .toLowerCase()
+                        .includes(deferredQ.toLowerCase())
+                    )
+                  : all
+              );
+            });
+            setMemberInfo(member);
+          }
         }
       } catch (e) {
         if (e.name !== "AbortError") {
@@ -324,7 +373,17 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     };
 
     const hasCache = !!_cache.blogsByMember.get(memberCode)?.list?.length;
-    load(hasCache);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    // iOS Safari: Always try to load fresh data if no cache
+    if (isIOS && !hasCache) {
+      // Force a fresh load for iOS
+      setTimeout(() => {
+        load(false);
+      }, 100);
+    } else {
+      load(hasCache);
+    }
 
     return () => controller.abort();
   }, [memberCode, deferredQ, currentLanguage]);
@@ -345,7 +404,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
   useEffect(() => {
     const h = setTimeout(() => {
       const kw = q.trim().toLowerCase();
-      startTransition(() => {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS) {
+        // iOS Safari: Direct state update without transition
         if (!kw) {
           setFiltered(blogs);
         } else {
@@ -358,7 +420,27 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           );
         }
         setPage(1);
-      });
+
+        // Force iOS to update
+        setTimeout(() => {
+          document.body.offsetHeight;
+        }, 10);
+      } else {
+        startTransition(() => {
+          if (!kw) {
+            setFiltered(blogs);
+          } else {
+            setFiltered(
+              blogs.filter(
+                (b) =>
+                  b.title.toLowerCase().includes(kw) ||
+                  b.author.toLowerCase().includes(kw)
+              )
+            );
+          }
+          setPage(1);
+        });
+      }
     }, 200);
     return () => clearTimeout(h);
   }, [q, blogs]);
@@ -374,8 +456,19 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
   // );
 
   const onOpen = (id) => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    // Save scroll position
     _cache.scrollY.set(memberCode, window.scrollY);
-    navigate(`/blog/${id}`);
+
+    if (isIOS) {
+      // iOS Safari: Add small delay to ensure state is saved
+      setTimeout(() => {
+        navigate(`/blog/${id}`);
+      }, 50);
+    } else {
+      navigate(`/blog/${id}`);
+    }
   };
 
   // Lazy loading cho images
@@ -426,6 +519,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         style={{
           background: `linear-gradient(135deg, ${colors.background} 0%, #f5f5f5 100%)`,
           minHeight: "100dvh",
+          /* iOS Safari specific */
+          WebkitOverflowScrolling: "touch",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
         }}
       >
         <div
@@ -442,6 +539,9 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               background: colors.surface,
               borderRadius: 20,
               boxShadow: `0 4px 20px ${colors.shadow}`,
+              /* iOS Safari specific */
+              WebkitTransform: "translateZ(0)",
+              transform: "translateZ(0)",
             }}
           >
             <Space direction="vertical" align="center" size={16}>
@@ -449,6 +549,17 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               <Text style={{ ...jpFont, color: colors.textSecondary }}>
                 {t.loading[currentLanguage]}
               </Text>
+              {isIOS && (
+                <Text
+                  style={{
+                    ...jpFont,
+                    color: colors.textSecondary,
+                    fontSize: 12,
+                  }}
+                >
+                  iOS Safari detected - Loading...
+                </Text>
+              )}
             </Space>
           </ProCard>
         </div>
@@ -467,6 +578,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         style={{
           background: `linear-gradient(135deg, ${colors.background} 0%, #f5f5f5 100%)`,
           minHeight: "100dvh",
+          /* iOS Safari specific */
+          WebkitOverflowScrolling: "touch",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
         }}
       >
         <div
@@ -484,12 +599,26 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               borderRadius: 20,
               boxShadow: `0 4px 20px ${colors.shadow}`,
               textAlign: "center",
+              /* iOS Safari specific */
+              WebkitTransform: "translateZ(0)",
+              transform: "translateZ(0)",
             }}
           >
             <Space direction="vertical" align="center" size={16}>
               <Title level={4} style={{ color: colors.error, ...jpFont }}>
                 {error}
               </Title>
+              {isIOS && (
+                <Text
+                  style={{
+                    ...jpFont,
+                    color: colors.textSecondary,
+                    fontSize: 12,
+                  }}
+                >
+                  iOS Safari detected - Error occurred
+                </Text>
+              )}
               <Button
                 type="primary"
                 onClick={() => window.location.reload()}
@@ -520,6 +649,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         minHeight: "100dvh",
         padding: 0,
         margin: 0,
+        /* iOS Safari specific */
+        WebkitOverflowScrolling: "touch",
+        WebkitTransform: "translateZ(0)",
+        transform: "translateZ(0)",
       }}
     >
       {/* Sticky Hero - Japanese style */}
@@ -531,6 +664,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             width: "100%",
             zIndex: 998,
             boxShadow: `0 2px 20px ${colors.shadow}`,
+            /* iOS Safari specific */
+            WebkitTransform: "translateZ(0)",
+            transform: "translateZ(0)",
+            WebkitBackfaceVisibility: "hidden",
+            backfaceVisibility: "hidden",
           }}
         >
           <ProCard
@@ -692,6 +830,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           width: "100%",
           maxWidth: "100%",
           minHeight: "calc(100dvh - 120px)",
+          /* iOS Safari specific */
+          WebkitOverflowScrolling: "touch",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
         }}
       >
         {current.length === 0 ? (
@@ -705,6 +847,9 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              /* iOS Safari specific */
+              WebkitTransform: "translateZ(0)",
+              transform: "translateZ(0)",
             }}
           >
             <Empty
@@ -730,6 +875,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                   border: `1px solid ${colors.border}`,
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   contain: "layout paint style",
+                  /* iOS Safari specific */
+                  WebkitTransform: "translateZ(0)",
+                  transform: "translateZ(0)",
+                  WebkitBackfaceVisibility: "hidden",
+                  backfaceVisibility: "hidden",
                 }}
                 bodyStyle={{ padding: 0 }}
               >
@@ -917,9 +1067,20 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               total={filtered.length}
               pageSize={PAGE_SIZE}
               onChange={(p) => {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                 _cache.scrollY.set(memberCode, 0);
                 setPage(p);
-                window.scrollTo({ top: 0, behavior: "smooth" });
+
+                if (isIOS) {
+                  // iOS Safari: More aggressive scroll to top
+                  setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: "auto" });
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                  }, 50);
+                } else {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
               }}
               showSizeChanger={false}
               size="small"
@@ -928,6 +1089,9 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                 padding: "8px 16px",
                 borderRadius: 16,
                 boxShadow: `0 2px 8px ${colors.shadow}`,
+                /* iOS Safari specific */
+                WebkitTransform: "translateZ(0)",
+                transform: "translateZ(0)",
               }}
             />
           </div>
@@ -948,6 +1112,15 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           max-width: 100vw;
           overflow-x: hidden;
           font-family: 'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif;
+          /* iOS Safari specific fixes */
+          -webkit-overflow-scrolling: touch;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          /* Force hardware acceleration on iOS */
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
         }
         body { 
           margin: 0; 
@@ -955,6 +1128,12 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           overscroll-behavior: none;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
+          /* iOS Safari specific */
+          -webkit-overflow-scrolling: touch;
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+          /* Prevent iOS zoom */
+          touch-action: manipulation;
         }
         #root {
           display: flex;
@@ -1037,16 +1216,30 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         .ant-card {
           contain: layout paint style;
           will-change: transform;
+          /* iOS Safari specific */
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
         }
         
         /* Smooth image loading */
         img {
           transition: filter 0.3s ease, transform 0.3s ease;
+          /* iOS Safari specific */
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
         }
         
         /* Optimize scrolling */
         .ant-pro-page-container-children-container {
           contain: layout paint;
+          /* iOS Safari specific */
+          -webkit-overflow-scrolling: touch;
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
         }
 
         /* Hide scrollbars */
@@ -1071,6 +1264,30 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         /* Smooth animations */
         * {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* iOS Safari specific fixes */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+          .ant-card {
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+          }
+          
+          .ant-pro-page-container {
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+          }
+          
+          .ant-pagination {
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+          }
         }
       `}</style>
     </PageContainer>
