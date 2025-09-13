@@ -162,12 +162,6 @@ export default function BlogDetailMobile({
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
-  // Force header visibility control for Android
-  const forceHeaderVisibility = useCallback((visible) => {
-    console.log("Force header visibility:", visible);
-    setIsHeaderVisible(visible);
-  }, []);
-
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
@@ -438,14 +432,6 @@ export default function BlogDetailMobile({
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
                 />
-                {/* Debug button for Android testing */}
-                <Button
-                  type="text"
-                  onClick={() => forceHeaderVisibility(!isHeaderVisible)}
-                  style={{ fontSize: "12px", padding: "2px 4px" }}
-                >
-                  {isHeaderVisible ? "Hide" : "Show"}
-                </Button>
               </Space>
             </Space>
           </div>
@@ -464,8 +450,6 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
-      forceHeaderVisibility,
-      isHeaderVisible,
     ]
   );
 
@@ -635,12 +619,47 @@ export default function BlogDetailMobile({
   const [isScrolling, setIsScrolling] = useState(false);
 
   // Touch gesture handling
+  const touchStartY = useRef(0);
+  const touchStartTime = useRef(0);
   const isTouchScrolling = useRef(false);
 
-  // Simplified scroll-based header control for Android
-  const handleTouchStart = useCallback(() => {
-    // Just track that touch started
+  // Touch gesture handlers for smooth mobile experience
+  const handleTouchStart = useCallback((e) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
     isTouchScrolling.current = true;
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!isTouchScrolling.current) return;
+
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    const currentTime = Date.now();
+    const deltaTime = currentTime - touchStartTime.current;
+
+    // Only process if touch is moving fast enough
+    if (Math.abs(deltaY) > 10 && deltaTime > 50) {
+      const wrap = scrollWrapRef.current;
+      if (!wrap) return;
+
+      const currentScrollY = wrap.scrollTop;
+
+      // Always show header when at the top
+      if (currentScrollY <= 10) {
+        setIsHeaderVisible(true);
+        return;
+      }
+
+      // Determine scroll direction based on touch movement
+      if (deltaY > 0) {
+        // Swipe down (kéo xuống) - ẩn header để đọc nội dung
+        setIsHeaderVisible(false);
+      } else {
+        // Swipe up (kéo lên) - hiện header
+        setIsHeaderVisible(true);
+      }
+    }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
@@ -656,50 +675,48 @@ export default function BlogDetailMobile({
 
     // Always show header when at the top (immediate response)
     if (currentScrollY <= 10) {
-      console.log("Scroll: At top - showing header");
       setIsHeaderVisible(true);
       lastScrollY.current = currentScrollY;
       return;
     }
 
-    // Clear any existing timeout
+    // Skip if touch scrolling is active
+    if (isTouchScrolling.current) return;
+
+    // Debounce scroll events for other scroll actions
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
 
-    // Set a timeout to detect when scrolling stops
     scrollTimeout.current = setTimeout(() => {
       setIsScrolling(false);
-    }, 150);
+    }, 100);
 
-    // Calculate scroll difference
+    if (!isScrolling) {
+      setIsScrolling(true);
+      lastScrollTime.current = currentTime;
+      return;
+    }
+
+    // Only process if enough time has passed
+    if (currentTime - lastScrollTime.current < 30) return;
+
     const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-    console.log("Scroll detected:", {
-      currentScrollY,
-      lastScrollY: lastScrollY.current,
-      scrollDifference,
-      isHeaderVisible,
-      isScrolling,
-    });
-
-    // Only process if scroll difference is significant
-    if (Math.abs(scrollDifference) > 5) {
+    if (Math.abs(scrollDifference) > 3) {
       if (scrollDifference > 0) {
-        // Scroll down (kéo xuống) - hiện header
-        console.log("Scroll: Showing header - scrolling down");
-        setIsHeaderVisible(true);
-      } else {
-        // Scroll up (kéo lên) - ẩn header để đọc nội dung
-        console.log("Scroll: Hiding header - scrolling up");
+        // Scroll down (kéo xuống) - ẩn header để đọc nội dung
         setIsHeaderVisible(false);
+      } else {
+        // Scroll up (kéo lên) - hiện header
+        setIsHeaderVisible(true);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isHeaderVisible, isScrolling]);
+  }, [isScrolling]);
 
-  // Setup scroll handlers for mobile - simplified for Android
+  // Setup scroll and touch handlers for mobile
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
@@ -715,17 +732,18 @@ export default function BlogDetailMobile({
       handleScroll();
     };
 
-    // Setup scroll handler with immediate execution
+    // Setup scroll handler
     wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
 
     // Setup wheel events for better Android support
     wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
 
-    // Simple touch events just for tracking
+    // Setup touch events for smooth mobile gestures
     wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
+    wrap.addEventListener("touchmove", handleTouchMove, { passive: true });
     wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
 
-    // Initialize immediately
+    // Initialize
     combinedScrollHandler();
 
     // Cleanup
@@ -733,12 +751,13 @@ export default function BlogDetailMobile({
       wrap.removeEventListener("scroll", combinedScrollHandler);
       wrap.removeEventListener("wheel", combinedScrollHandler);
       wrap.removeEventListener("touchstart", handleTouchStart);
+      wrap.removeEventListener("touchmove", handleTouchMove);
       wrap.removeEventListener("touchend", handleTouchEnd);
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll, handleTouchStart, handleTouchEnd]);
+  }, [handleScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
