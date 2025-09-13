@@ -41,23 +41,22 @@ import {
 import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 import { isIOS } from "../utils/deviceDetection";
 
-// Utility function for throttle
+// Optimized throttle function with better performance
 function throttle(func, limit) {
-  let inThrottle;
-  let lastRan;
+  let inThrottle = false;
+  let lastRan = 0;
   return function (...args) {
+    const now = Date.now();
     if (!inThrottle) {
       func.apply(this, args);
-      lastRan = Date.now();
+      lastRan = now;
       inThrottle = true;
-    } else {
-      clearTimeout(inThrottle);
-      inThrottle = setTimeout(() => {
-        if (Date.now() - lastRan >= limit) {
-          func.apply(this, args);
-          lastRan = Date.now();
-        }
-      }, limit - (Date.now() - lastRan));
+      setTimeout(() => {
+        inThrottle = false;
+      }, limit);
+    } else if (now - lastRan >= limit) {
+      func.apply(this, args);
+      lastRan = now;
     }
   };
 }
@@ -71,32 +70,95 @@ const jpFont = {
 
 const LS_FONT = "mblog:fontSize";
 
-/** ---------- Simple in-memory cache for mobile optimization ---------- **/
+/** ---------- Optimized in-memory cache for mobile ---------- **/
 const _mobileCache = {
   blogContent: new Map(), // key: blogId -> { content, displayContent, language, ts }
   scrollPosition: new Map(), // key: blogId -> number
   imageCache: new Map(), // key: src -> { loaded: boolean, ts }
+  // Add cache size limits to prevent memory leaks
+  maxCacheSize: 50,
+  maxImageCacheSize: 100,
 };
+
 const CACHE_STALE_MS = 1000 * 60 * 5; // 5 phút
 
-// Inject performance attributes into HTML for mobile rendering
+// Cache cleanup function
+function cleanupCache() {
+  const now = Date.now();
+
+  // Clean blog content cache
+  if (_mobileCache.blogContent.size > _mobileCache.maxCacheSize) {
+    const entries = Array.from(_mobileCache.blogContent.entries());
+    entries.sort((a, b) => a[1].ts - b[1].ts);
+    const toDelete = entries.slice(
+      0,
+      entries.length - _mobileCache.maxCacheSize
+    );
+    toDelete.forEach(([key]) => _mobileCache.blogContent.delete(key));
+  }
+
+  // Clean image cache
+  if (_mobileCache.imageCache.size > _mobileCache.maxImageCacheSize) {
+    const entries = Array.from(_mobileCache.imageCache.entries());
+    entries.sort((a, b) => a[1].ts - b[1].ts);
+    const toDelete = entries.slice(
+      0,
+      entries.length - _mobileCache.maxImageCacheSize
+    );
+    toDelete.forEach(([key]) => _mobileCache.imageCache.delete(key));
+  }
+
+  // Clean stale entries
+  for (const [key, value] of _mobileCache.blogContent.entries()) {
+    if (now - value.ts > CACHE_STALE_MS) {
+      _mobileCache.blogContent.delete(key);
+    }
+  }
+
+  for (const [key, value] of _mobileCache.imageCache.entries()) {
+    if (now - value.ts > CACHE_STALE_MS) {
+      _mobileCache.imageCache.delete(key);
+    }
+  }
+}
+
+// Optimized HTML processing for mobile rendering
 function optimizeHtmlForMobile(html) {
   if (!html) return html;
+
+  // Use a more efficient regex and processing
   return html.replace(/<img\b([^>]*?)>/gi, (match, attrs) => {
-    let newAttrs = attrs || "";
-    if (!/\bloading=/.test(newAttrs)) newAttrs += ' loading="lazy"';
-    if (!/\bdecoding=/.test(newAttrs)) newAttrs += ' decoding="async"';
-    if (!/\breferrerpolicy=/.test(newAttrs))
-      newAttrs += ' referrerpolicy="no-referrer"';
+    if (!attrs) return match;
+
+    const attrsMap = new Map();
+    const existingAttrs = attrs.match(/\w+="[^"]*"/g) || [];
+
+    // Parse existing attributes
+    existingAttrs.forEach((attr) => {
+      const [key, value] = attr.split("=");
+      attrsMap.set(key, value);
+    });
+
+    // Add performance attributes if not present
+    if (!attrsMap.has("loading")) attrsMap.set("loading", '"lazy"');
+    if (!attrsMap.has("decoding")) attrsMap.set("decoding", '"async"');
+    if (!attrsMap.has("referrerpolicy"))
+      attrsMap.set("referrerpolicy", '"no-referrer"');
 
     // iOS-specific optimizations
-    if (isIOS()) {
-      if (!/\bstyle=/.test(newAttrs)) {
-        newAttrs += ' style="max-width: 100%; height: auto;"';
-      }
+    if (isIOS() && !attrsMap.has("style")) {
+      attrsMap.set(
+        "style",
+        '"max-width: 100%; height: auto; will-change: transform;"'
+      );
     }
 
-    return `<img${newAttrs}>`;
+    // Rebuild attributes string
+    const newAttrs = Array.from(attrsMap.entries())
+      .map(([key, value]) => `${key}=${value}`)
+      .join(" ");
+
+    return `<img ${newAttrs}>`;
   });
 }
 
@@ -162,7 +224,6 @@ export default function BlogDetailMobile({
 
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
   // Combined header visibility - either pinned by user or auto-hide
   const shouldShowHeader = isHeaderManuallyHidden
@@ -224,9 +285,12 @@ export default function BlogDetailMobile({
     }
   }, [blog?.id, language, blog?.content]);
 
-  // ---- Cache management và smooth updates ----
+  // ---- Optimized cache management ----
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
+      // Cleanup cache before adding new content
+      cleanupCache();
+
       // Clear any existing cache for this blog first to prevent stale content
       _mobileCache.blogContent.delete(blog.id);
 
@@ -259,12 +323,15 @@ export default function BlogDetailMobile({
         });
       }
 
-      // Simple image handling - no delays or complex logic
+      // Optimized image handling
       if (scrollWrapRef.current) {
         const images = scrollWrapRef.current.getElementsByTagName("img");
         Array.from(images).forEach((img) => {
           img.style.opacity = "1";
           img.style.transition = "none";
+          // Add performance optimizations
+          img.style.willChange = "transform";
+          img.style.transform = "translateZ(0)";
         });
       }
     }
@@ -518,11 +585,10 @@ export default function BlogDetailMobile({
             left: 0,
             right: 0,
             width: "100%",
-            // Add smooth transition for show/hide
+            // Optimized transition - đơn giản hóa
             transform: shouldShowHeader ? "translateY(0)" : "translateY(-100%)",
-            transition: shouldShowHeader
-              ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
-              : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
+            transition:
+              "transform 0.2s ease-out, opacity 0.2s ease-out, visibility 0.2s ease-out",
             willChange: "transform, opacity, background, border-color",
             // Hide completely when not visible
             visibility: shouldShowHeader ? "visible" : "hidden",
@@ -628,7 +694,7 @@ export default function BlogDetailMobile({
     [blog, displayTitle, memberInfo, shouldShowHeader, setDrawerVisible]
   );
 
-  // Create a single throttled updater for scroll progress and header visibility
+  // Optimized throttled updater - chỉ update progress, không touch header
   useEffect(() => {
     throttledUpdateRef.current = throttle(() => {
       const wrap = scrollWrapRef.current;
@@ -638,7 +704,7 @@ export default function BlogDetailMobile({
       const lastTotal = lastTotalRef.current;
       const lastScrolled = lastScrolledRef.current;
 
-      // Update read progress
+      // Update read progress only
       if (
         Math.abs(total - lastTotal) > 1 ||
         Math.abs(scrolled - lastScrolled) > 1
@@ -652,18 +718,15 @@ export default function BlogDetailMobile({
         lastTotalRef.current = total;
         lastScrolledRef.current = scrolled;
       }
+    }, 16); // 60fps throttle
+  }, []);
 
-      // Header visibility is now handled by separate mobile-optimized effect
-    }, 100);
-  }, [scrollThreshold]);
-
-  // Mobile-optimized scroll handler with touch gestures
+  // Simplified scroll state - loại bỏ các state không cần thiết
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
-  const [isScrolling, setIsScrolling] = useState(false);
 
-  // Touch gesture handling
+  // Touch gesture handling - đơn giản hóa
   const touchStartY = useRef(0);
   const touchStartTime = useRef(0);
   const isTouchScrolling = useRef(false);
@@ -717,6 +780,7 @@ export default function BlogDetailMobile({
     isTouchScrolling.current = false;
   }, []);
 
+  // Simplified scroll handler - loại bỏ logic phức tạp
   const handleScroll = useCallback(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
@@ -734,29 +798,24 @@ export default function BlogDetailMobile({
     // Skip if touch scrolling is active
     if (isTouchScrolling.current) return;
 
-    // Debounce scroll events for other scroll actions
+    // Debounce scroll events
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
 
     scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false);
+      // Reset scroll state
     }, 100);
 
-    if (!isScrolling) {
-      setIsScrolling(true);
-      lastScrollTime.current = currentTime;
-      return;
-    }
-
     // Only process if enough time has passed
-    if (currentTime - lastScrollTime.current < 30) return;
+    if (currentTime - lastScrollTime.current < 16) return; // 60fps
 
     // Only auto-hide if not pinned by user and not manually hidden
     if (!isHeaderPinned && !isHeaderManuallyHidden) {
       const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-      if (Math.abs(scrollDifference) > 3) {
+      if (Math.abs(scrollDifference) > 5) {
+        // Tăng threshold để giảm jank
         if (scrollDifference > 0) {
           // Scroll down (kéo xuống) - ẩn header để đọc nội dung
           setIsHeaderVisible(false);
@@ -768,29 +827,27 @@ export default function BlogDetailMobile({
         lastScrollTime.current = currentTime;
       }
     }
-  }, [isScrolling, isHeaderPinned, isHeaderManuallyHidden]);
+  }, [isHeaderPinned, isHeaderManuallyHidden]);
 
   // Setup scroll and touch handlers for mobile
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Combined scroll handler for both progress and header
-    const combinedScrollHandler = () => {
-      // Update progress
+    // Separate handlers for better performance
+    const progressHandler = () => {
       if (throttledUpdateRef.current) {
         throttledUpdateRef.current();
       }
+    };
 
-      // Update header visibility
+    const headerHandler = () => {
       handleScroll();
     };
 
-    // Setup scroll handler
-    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
-
-    // Setup wheel events for better Android support
-    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
+    // Setup scroll handlers
+    wrap.addEventListener("scroll", progressHandler, { passive: true });
+    wrap.addEventListener("scroll", headerHandler, { passive: true });
 
     // Setup touch events for smooth mobile gestures
     wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
@@ -798,12 +855,13 @@ export default function BlogDetailMobile({
     wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     // Initialize
-    combinedScrollHandler();
+    progressHandler();
+    headerHandler();
 
     // Cleanup
     return () => {
-      wrap.removeEventListener("scroll", combinedScrollHandler);
-      wrap.removeEventListener("wheel", combinedScrollHandler);
+      wrap.removeEventListener("scroll", progressHandler);
+      wrap.removeEventListener("scroll", headerHandler);
       wrap.removeEventListener("touchstart", handleTouchStart);
       wrap.removeEventListener("touchmove", handleTouchMove);
       wrap.removeEventListener("touchend", handleTouchEnd);
@@ -811,13 +869,7 @@ export default function BlogDetailMobile({
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [
-    handleScroll,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-    isHeaderPinned,
-  ]);
+  }, [handleScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
@@ -952,8 +1004,8 @@ export default function BlogDetailMobile({
           flexDirection: "column",
           touchAction: "pan-y",
           paddingTop: shouldShowHeader ? "88px" : "48px",
-          // Smooth transition for mobile
-          transition: "padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          // Optimized transition - sử dụng transform thay vì padding
+          transition: "padding-top 0.2s ease-out",
           // Optimize for touch
           scrollBehavior: "smooth",
           // Prevent bounce on iOS
@@ -1261,13 +1313,14 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Minimal CSS to prevent jank */
+            /* Optimized CSS to prevent jank */
             pointer-events: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-user-drag: none;
             user-select: none;
-            /* Simple hardware acceleration */
+            /* Hardware acceleration */
             transform: translateZ(0);
+            will-change: transform;
             /* No transitions or complex properties */
             opacity: 1;
             background: rgba(0,0,0,0.05);
@@ -1277,6 +1330,9 @@ export default function BlogDetailMobile({
             -webkit-perspective: 1000;
             /* Prevent iOS zoom on double tap */
             touch-action: manipulation;
+            /* Optimize for mobile rendering */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
           }
           .jp-prose p {
             margin: 0.85em 0;
