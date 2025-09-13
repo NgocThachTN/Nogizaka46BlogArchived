@@ -612,11 +612,59 @@ export default function BlogDetailMobile({
     }, 100);
   }, [scrollThreshold]);
 
-  // Android-optimized scroll handler
+  // Mobile-optimized scroll handler with touch gestures
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
   const [isScrolling, setIsScrolling] = useState(false);
+
+  // Touch gesture handling
+  const touchStartY = useRef(0);
+  const touchStartTime = useRef(0);
+  const isTouchScrolling = useRef(false);
+
+  // Touch gesture handlers for smooth mobile experience
+  const handleTouchStart = useCallback((e) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+    isTouchScrolling.current = true;
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!isTouchScrolling.current) return;
+
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    const currentTime = Date.now();
+    const deltaTime = currentTime - touchStartTime.current;
+
+    // Only process if touch is moving fast enough
+    if (Math.abs(deltaY) > 10 && deltaTime > 50) {
+      const wrap = scrollWrapRef.current;
+      if (!wrap) return;
+
+      const currentScrollY = wrap.scrollTop;
+
+      // Always show header when at the top
+      if (currentScrollY <= 10) {
+        setIsHeaderVisible(true);
+        return;
+      }
+
+      // Determine scroll direction based on touch movement
+      if (deltaY > 0) {
+        // Swipe down (kéo xuống) - ẩn header để đọc nội dung
+        setIsHeaderVisible(false);
+      } else {
+        // Swipe up (kéo lên) - hiện header
+        setIsHeaderVisible(true);
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    isTouchScrolling.current = false;
+  }, []);
 
   const handleScroll = useCallback(() => {
     const wrap = scrollWrapRef.current;
@@ -625,14 +673,24 @@ export default function BlogDetailMobile({
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
 
-    // Debounce scroll events
+    // Always show header when at the top (immediate response)
+    if (currentScrollY <= 10) {
+      setIsHeaderVisible(true);
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    // Skip if touch scrolling is active
+    if (isTouchScrolling.current) return;
+
+    // Debounce scroll events for other scroll actions
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
 
     scrollTimeout.current = setTimeout(() => {
       setIsScrolling(false);
-    }, 150);
+    }, 100);
 
     if (!isScrolling) {
       setIsScrolling(true);
@@ -641,33 +699,24 @@ export default function BlogDetailMobile({
     }
 
     // Only process if enough time has passed
-    if (currentTime - lastScrollTime.current < 50) return;
+    if (currentTime - lastScrollTime.current < 30) return;
 
     const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-    if (Math.abs(scrollDifference) > 5) {
-      console.log("Scroll detected:", {
-        currentScrollY,
-        lastScrollY: lastScrollY.current,
-        scrollDifference,
-        isHeaderVisible,
-      });
-
+    if (Math.abs(scrollDifference) > 3) {
       if (scrollDifference > 0) {
-        // Scroll down (kéo xuống) - hiện header
-        console.log("Showing header - scrolling down");
-        setIsHeaderVisible(true);
-      } else {
-        // Scroll up (kéo lên) - ẩn header
-        console.log("Hiding header - scrolling up");
+        // Scroll down (kéo xuống) - ẩn header để đọc nội dung
         setIsHeaderVisible(false);
+      } else {
+        // Scroll up (kéo lên) - hiện header
+        setIsHeaderVisible(true);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling, isHeaderVisible]);
+  }, [isScrolling]);
 
-  // Setup scroll handlers for Android
+  // Setup scroll and touch handlers for mobile
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
@@ -689,6 +738,11 @@ export default function BlogDetailMobile({
     // Setup wheel events for better Android support
     wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
 
+    // Setup touch events for smooth mobile gestures
+    wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
+    wrap.addEventListener("touchmove", handleTouchMove, { passive: true });
+    wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
+
     // Initialize
     combinedScrollHandler();
 
@@ -696,11 +750,14 @@ export default function BlogDetailMobile({
     return () => {
       wrap.removeEventListener("scroll", combinedScrollHandler);
       wrap.removeEventListener("wheel", combinedScrollHandler);
+      wrap.removeEventListener("touchstart", handleTouchStart);
+      wrap.removeEventListener("touchmove", handleTouchMove);
+      wrap.removeEventListener("touchend", handleTouchEnd);
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScroll]);
+  }, [handleScroll, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   // Simple image handling - no complex logic
   useEffect(() => {
@@ -835,8 +892,12 @@ export default function BlogDetailMobile({
           flexDirection: "column",
           touchAction: "pan-y",
           paddingTop: isHeaderVisible ? "88px" : "48px",
-          // Simplified transition
-          transition: "padding-top 0.3s ease",
+          // Smooth transition for mobile
+          transition: "padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          // Optimize for touch
+          scrollBehavior: "smooth",
+          // Prevent bounce on iOS
+          overscrollBehaviorY: "contain",
         }}
       >
         <ProCard
@@ -1057,14 +1118,25 @@ export default function BlogDetailMobile({
             -moz-osx-font-smoothing: grayscale;
           }
           
-          /* Prevent iOS zoom on double tap */
+          /* Touch gesture optimizations */
           * {
-            touch-action: manipulation;
-          }
-
-          /* Minimal touch optimization */
-          * {
+            touch-action: pan-y;
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+          
+          /* Allow text selection in content area */
+          .jp-prose, .jp-prose * {
+            -webkit-user-select: text;
+            -khtml-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
           }
 
           html, body, #root { 
