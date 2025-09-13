@@ -275,6 +275,10 @@ export default function BlogDetailMobile({
             await new Promise((resolve) => setTimeout(resolve, 50));
           }
 
+          console.log("iOS: Force showing content", {
+            blogId: blog.id,
+            hasContent: !!blog.content,
+          });
           setCachedDisplayContent(blog.content);
           setCachedLanguage(language);
           setMobileLoading(false); // Content is ready
@@ -286,6 +290,26 @@ export default function BlogDetailMobile({
       };
 
       showContent();
+    }
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
+
+  // ---- Emergency fallback: Force show content immediately if blog exists ----
+  useEffect(() => {
+    if (blog?.id && blog?.content && !cachedDisplayContent) {
+      console.log("iOS: Emergency fallback - showing content immediately");
+      setCachedDisplayContent(blog.content);
+      setCachedLanguage(language);
+      setMobileLoading(false);
+    }
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
+
+  // ---- iOS-specific immediate content display ----
+  useLayoutEffect(() => {
+    if (blog?.id && blog?.content && !cachedDisplayContent) {
+      console.log("iOS: useLayoutEffect - showing content immediately");
+      setCachedDisplayContent(blog.content);
+      setCachedLanguage(language);
+      setMobileLoading(false);
     }
   }, [blog?.id, blog?.content, cachedDisplayContent, language]);
 
@@ -435,9 +459,30 @@ export default function BlogDetailMobile({
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
 
   // Optimized HTML with lazy images - sử dụng cached content
-  const optimizedHtml = useMemo(() => {
-    return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
-  }, [cachedDisplayContent, blog?.content]);
+  // const optimizedHtml = useMemo(() => {
+  //   const content = cachedDisplayContent || blog?.content || "";
+  //   console.log("iOS: optimizedHtml useMemo", {
+  //     hasCachedContent: !!cachedDisplayContent,
+  //     hasBlogContent: !!blog?.content,
+  //     contentLength: content.length
+  //   });
+  //   return optimizeHtmlForMobile(content);
+  // }, [cachedDisplayContent, blog?.content]);
+
+  // Force content display for iOS
+  const finalDisplayContent = useMemo(() => {
+    if (blog?.id && blog?.content) {
+      console.log("iOS: finalDisplayContent useMemo - blog content available");
+      if (!cachedDisplayContent) {
+        // Force set content immediately
+        setCachedDisplayContent(blog.content);
+        setCachedLanguage(language);
+        setMobileLoading(false);
+      }
+      return blog.content;
+    }
+    return cachedDisplayContent || "";
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
 
   // Debug logging removed for performance
 
@@ -882,8 +927,31 @@ export default function BlogDetailMobile({
     handleImages();
   }, [cachedDisplayContent]);
 
-  // Loading skeleton (ngon hơn Spin) - chỉ hiển thị khi mobile đang loading
-  if (mobileLoading && !cachedDisplayContent) {
+  // Debug logging for iOS
+  useEffect(() => {
+    if (isIOS()) {
+      console.log("BlogDetailMobile iOS Debug:", {
+        blogId: blog?.id,
+        hasBlog: !!blog,
+        hasContent: !!blog?.content,
+        mobileLoading,
+        cachedDisplayContent: !!cachedDisplayContent,
+        displayContent: !!displayContent,
+        translating,
+      });
+    }
+  }, [
+    blog?.id,
+    blog?.content,
+    mobileLoading,
+    cachedDisplayContent,
+    displayContent,
+    translating,
+    blog,
+  ]);
+
+  // Loading skeleton (ngon hơn Spin) - chỉ hiển thị khi không có content
+  if (!cachedDisplayContent && !blog?.content) {
     return (
       <PageContainer
         header={false}
@@ -915,6 +983,15 @@ export default function BlogDetailMobile({
         </ProCard>
       </PageContainer>
     );
+  }
+
+  // iOS Emergency fallback: Force show content if blog exists but no cached content
+  if (blog?.id && blog?.content && !cachedDisplayContent) {
+    console.log("iOS: Render fallback - forcing content display");
+    // Force update state immediately
+    setCachedDisplayContent(blog.content);
+    setCachedLanguage(language);
+    setMobileLoading(false);
   }
 
   if (!blog) {
@@ -1103,7 +1180,7 @@ export default function BlogDetailMobile({
                 hyphens: "auto",
               }}
               dangerouslySetInnerHTML={{
-                __html: optimizedHtml,
+                __html: optimizeHtmlForMobile(finalDisplayContent),
               }}
             />
           </div>
