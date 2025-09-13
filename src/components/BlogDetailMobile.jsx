@@ -822,7 +822,7 @@ export default function BlogDetailMobile({
       <div
         ref={scrollWrapRef}
         style={{
-          height: "100dvh",
+          height: "calc(100dvh - 3px)", // Subtract progress bar height
           overflow: "auto",
           background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
@@ -851,7 +851,7 @@ export default function BlogDetailMobile({
             position: "relative",
           }}
           bodyStyle={{
-            padding: "0 0 80px",
+            padding: "0 0 0",
             margin: 0,
             width: "100%",
           }}
@@ -921,7 +921,7 @@ export default function BlogDetailMobile({
           )}
 
           {/* Content - Title moved to author section */}
-          <div style={{ padding: "12px" }}>
+          <div style={{ padding: "12px 12px 0 12px" }}>
             {/* Nội dung */}
             <div
               className="jp-prose"
@@ -934,6 +934,7 @@ export default function BlogDetailMobile({
                 overflowWrap: "break-word",
                 wordWrap: "break-word",
                 hyphens: "auto",
+                paddingBottom: "20px",
               }}
               dangerouslySetInnerHTML={{
                 __html: optimizedHtml,
@@ -1111,6 +1112,14 @@ export default function BlogDetailMobile({
           .ant-card { 
             background: #fdf6e3;
             width: 100% !important;
+          }
+          .ant-pro-card {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .ant-pro-card-body {
+            margin: 0 !important;
+            padding: 0 !important;
           }
           .jp-prose img {
             border-radius: 12px;

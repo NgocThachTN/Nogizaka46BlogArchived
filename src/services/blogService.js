@@ -20,7 +20,7 @@ export const prefetchBlogDetail = async (blogId) => {
   } catch {
     return undefined;
   }
-};
+}
 // Fetch tất cả các blog của member
 export const fetchAllBlogs = async (memberCode) => {
   try {
@@ -40,7 +40,7 @@ export const fetchAllBlogs = async (memberCode) => {
     console.error("Error fetching all blogs:", error);
     return [];
   }
-};
+}
 
 // Fetch một trang blog
 const fetchBlogPage = async (page, memberCode) => {
@@ -50,7 +50,7 @@ const fetchBlogPage = async (page, memberCode) => {
       ct: memberCode,
       page: page,
       ima: Math.floor(Date.now() / 1000), // Timestamp hiện tại
-    };
+    }
 
     let htmlData;
     if (shouldUseProxy()) {
@@ -108,12 +108,12 @@ const fetchBlogPage = async (page, memberCode) => {
     return {
       blogs,
       nextPage: hasNextPage,
-    };
+    }
   } catch (error) {
     console.error(`Error fetching blog page ${page}:`, error);
-    return { blogs: [], nextPage: false };
+    return { blogs: [], nextPage: false }
   }
-};
+}
 
 // Fetch chi tiết một blog
 export const fetchBlogDetail = async (blogId) => {
@@ -122,7 +122,7 @@ export const fetchBlogDetail = async (blogId) => {
     const params = {
       cd: "MEMBER",
       ima: Math.floor(Date.now() / 1000),
-    };
+    }
 
     let htmlData;
     if (shouldUseProxy()) {
@@ -322,7 +322,7 @@ export const fetchBlogDetail = async (blogId) => {
       author,
       memberImage: memberInfo?.img || null,
       originalUrl,
-    };
+    }
 
     // cache the result for instant reuse
     _detailCache.set(String(blogId), detail);
@@ -331,14 +331,14 @@ export const fetchBlogDetail = async (blogId) => {
     console.error("Error fetching blog detail:", error);
     return null;
   }
-};
+}
 
 // Helper function to get image URL
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "";
   if (imagePath.startsWith("http")) return imagePath;
   return `${BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
-};
+}
 
 // Fetch thông tin member từ code
 export const fetchMemberInfo = async (memberCode) => {
@@ -396,7 +396,7 @@ export const fetchMemberInfo = async (memberCode) => {
     console.error("Error fetching member info:", error);
     return null;
   }
-};
+}
 
 // Fetch member info by exact name match (fallback when code is missing)
 export const fetchMemberInfoByName = async (memberName) => {
@@ -448,4 +448,4 @@ export const fetchMemberInfoByName = async (memberName) => {
     console.error("Error fetching member by name:", error);
     return null;
   }
-};
+}
