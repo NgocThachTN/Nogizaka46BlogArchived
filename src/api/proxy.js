@@ -23,13 +23,15 @@ export const fetchWithProxy = async (path, params = {}, retries = 3) => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "User-Agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
-          "Cache-Control": "no-cache",
+          "Cache-Control": "public, max-age=300",
+          "X-Requested-With": "XMLHttpRequest",
+          Pragma: "no-cache"
         },
+        credentials: "omit",
+        mode: "cors",
         signal: controller.signal,
       });
 

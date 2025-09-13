@@ -132,11 +132,23 @@ export default function BlogDetailMobile({
 }) {
   const navigate = useNavigate();
 
-  // Mobile-optimized state management
+  // Enhanced mobile state management with loading protection
   const [isPending] = useTransition();
-  const [cachedDisplayContent, setCachedDisplayContent] =
-    useState(displayContent);
+  const [cachedDisplayContent, setCachedDisplayContent] = useState(displayContent || blog?.content);
   const [cachedLanguage, setCachedLanguage] = useState(language);
+  
+  // Force exit loading if stuck
+  useEffect(() => {
+    if (!displayContent && blog?.content && loading) {
+      const forceLoadTimer = setTimeout(() => {
+        console.warn('Force loading content from blog');
+        setCachedDisplayContent(blog.content);
+        setCachedLanguage(language);
+      }, 2000);
+      
+      return () => clearTimeout(forceLoadTimer);
+    }
+  }, [displayContent, blog?.content, loading, language]);
 
   // Track previous blog ID to detect blog changes
   const prevBlogIdRef = useRef(blog?.id);
@@ -709,8 +721,22 @@ export default function BlogDetailMobile({
     });
   }, [cachedDisplayContent]);
 
-  // Loading skeleton
-  if (loading) {
+  // Loading skeleton with timeout protection
+  useEffect(() => {
+    // If loading takes too long, force show content
+    if (loading && blog?.content) {
+      const timer = setTimeout(() => {
+        console.warn('Force exit loading state after timeout');
+        setCachedDisplayContent(blog.content);
+        setCachedLanguage(language);
+      }, 3000); // 3 seconds timeout
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, blog?.content, language]);
+
+  // Enhanced loading state
+  if (loading && !cachedDisplayContent) {
     return (
       <PageContainer
         header={false}
