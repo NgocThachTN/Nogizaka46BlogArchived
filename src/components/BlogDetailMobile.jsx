@@ -41,27 +41,6 @@ import {
 import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 import { isIOS } from "../utils/deviceDetection";
 
-// Utility function for throttle
-function throttle(func, limit) {
-  let inThrottle;
-  let lastRan;
-  return function (...args) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      lastRan = Date.now();
-      inThrottle = true;
-    } else {
-      clearTimeout(inThrottle);
-      inThrottle = setTimeout(() => {
-        if (Date.now() - lastRan >= limit) {
-          func.apply(this, args);
-          lastRan = Date.now();
-        }
-      }, limit - (Date.now() - lastRan));
-    }
-  };
-}
-
 const { Title, Text } = Typography;
 
 const jpFont = {
@@ -150,17 +129,10 @@ export default function BlogDetailMobile({
     []
   );
 
-  // progress đọc (%) - currently not displayed but kept for future use
-  const [readPct, setReadPct] = useState(0);
   const scrollWrapRef = useRef(null);
-  const lastTotalRef = useRef(0);
-  const lastScrolledRef = useRef(0);
-  const lastPctRef = useRef(0);
-  const throttledUpdateRef = useRef(null);
 
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -190,9 +162,6 @@ export default function BlogDetailMobile({
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
         }
-
-        // Force reset read progress
-        setReadPct(0);
       } else {
         // Same blog - check if we have valid cache
         const cached = _mobileCache.blogContent.get(blog.id);
@@ -232,9 +201,6 @@ export default function BlogDetailMobile({
       // Update cached state immediately (not in transition) to prevent flicker
       setCachedDisplayContent(displayContent);
       setCachedLanguage(language);
-
-      // Reset read progress
-      setReadPct(0);
 
       // Force scroll to top immediately for new content
       if (scrollWrapRef.current) {
@@ -583,35 +549,6 @@ export default function BlogDetailMobile({
     [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
   );
 
-  // Create a single throttled updater for scroll progress and header visibility
-  useEffect(() => {
-    throttledUpdateRef.current = throttle(() => {
-      const wrap = scrollWrapRef.current;
-      if (!wrap) return;
-      const total = wrap.scrollHeight - wrap.clientHeight;
-      const scrolled = wrap.scrollTop;
-      const lastTotal = lastTotalRef.current;
-      const lastScrolled = lastScrolledRef.current;
-
-      // Update read progress
-      if (
-        Math.abs(total - lastTotal) > 1 ||
-        Math.abs(scrolled - lastScrolled) > 1
-      ) {
-        const pct =
-          total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
-        if (Math.abs(pct - lastPctRef.current) > 0.5) {
-          setReadPct(pct);
-          lastPctRef.current = pct;
-        }
-        lastTotalRef.current = total;
-        lastScrolledRef.current = scrolled;
-      }
-
-      // Header visibility is now handled by separate mobile-optimized effect
-    }, 100);
-  }, [scrollThreshold]);
-
   // Mobile-optimized scroll handler with touch gestures
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
@@ -688,34 +625,28 @@ export default function BlogDetailMobile({
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Combined scroll handler for both progress and header
-    const combinedScrollHandler = () => {
-      // Update progress
-      if (throttledUpdateRef.current) {
-        throttledUpdateRef.current();
-      }
-
-      // Update header visibility
+    // Scroll handler for header visibility only
+    const scrollHandler = () => {
       handleScroll();
     };
 
     // Setup scroll handler with immediate execution
-    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
+    wrap.addEventListener("scroll", scrollHandler, { passive: true });
 
     // Setup wheel events for better Android support
-    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
+    wrap.addEventListener("wheel", scrollHandler, { passive: true });
 
     // Simple touch events just for tracking
     wrap.addEventListener("touchstart", handleTouchStart, { passive: true });
     wrap.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     // Initialize immediately
-    combinedScrollHandler();
+    scrollHandler();
 
     // Cleanup
     return () => {
-      wrap.removeEventListener("scroll", combinedScrollHandler);
-      wrap.removeEventListener("wheel", combinedScrollHandler);
+      wrap.removeEventListener("scroll", scrollHandler);
+      wrap.removeEventListener("wheel", scrollHandler);
       wrap.removeEventListener("touchstart", handleTouchStart);
       wrap.removeEventListener("touchend", handleTouchEnd);
       if (scrollTimeout.current) {
@@ -838,7 +769,7 @@ export default function BlogDetailMobile({
       {NavigationBar}
       {AuthorBar}
 
-      {/* scroll container để bắt progress */}
+      {/* scroll container */}
       <div
         ref={scrollWrapRef}
         style={{
@@ -852,9 +783,6 @@ export default function BlogDetailMobile({
           width: "100%",
           position: "relative",
           touchAction: "pan-y",
-          paddingTop: isHeaderVisible ? "0px" : "0px", // Remove extra padding
-          // Smooth transition for mobile
-          transition: "padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           // Optimize for touch
           scrollBehavior: "smooth",
           // Prevent bounce on iOS
@@ -936,7 +864,7 @@ export default function BlogDetailMobile({
           )}
 
           {/* Content - Title moved to author section */}
-          <div style={{ padding: "12px 12px 0px 12px" }}>
+          <div style={{ padding: "12px 12px 0px 12px", marginBottom: 0 }}>
             {/* Nội dung */}
             <div
               className="jp-prose"
@@ -949,8 +877,8 @@ export default function BlogDetailMobile({
                 overflowWrap: "break-word",
                 wordWrap: "break-word",
                 hyphens: "auto",
-                paddingBottom: "0px", // Remove extra bottom padding
-                marginBottom: "0px", // Remove extra bottom margin
+                paddingBottom: "0px",
+                marginBottom: "0px",
               }}
               dangerouslySetInnerHTML={{
                 __html: optimizedHtml,
@@ -1163,12 +1091,22 @@ export default function BlogDetailMobile({
             color: #1f2937;
           }
           .jp-prose p:last-child {
-            margin-bottom: 0;
+            margin-bottom: 0 !important;
           }
           .jp-prose > *:last-child {
             margin-bottom: 0 !important;
           }
           .jp-prose {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+          }
+          /* Force remove all bottom spacing */
+          .jp-prose *:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+          }
+          /* Ensure container has no bottom spacing */
+          .ant-pro-page-container-children-container > div:last-child {
             margin-bottom: 0 !important;
             padding-bottom: 0 !important;
           }
