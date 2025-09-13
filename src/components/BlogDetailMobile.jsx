@@ -194,6 +194,7 @@ export default function BlogDetailMobile({
   );
   const [isHeaderPinned, setIsHeaderPinned] = useState(true); // Thêm state để control header
   const [isHeaderManuallyHidden, setIsHeaderManuallyHidden] = useState(false); // Thêm state để control manual hide
+  const [isTransitioning, setIsTransitioning] = useState(false); // State để track transition
 
   const navTopBtnStyle = useMemo(
     () => ({
@@ -520,19 +521,32 @@ export default function BlogDetailMobile({
                     )
                   }
                   onClick={() => {
-                    if (isHeaderPinned) {
-                      // Nếu đang pin, chuyển sang ẩn hoàn toàn
-                      setIsHeaderPinned(false);
-                      setIsHeaderManuallyHidden(true);
-                    } else if (isHeaderManuallyHidden) {
-                      // Nếu đang ẩn hoàn toàn, chuyển sang auto-hide
-                      setIsHeaderManuallyHidden(false);
-                      setIsHeaderVisible(true);
-                    } else {
-                      // Nếu đang auto-hide, chuyển sang pin
-                      setIsHeaderPinned(true);
-                      setIsHeaderManuallyHidden(false);
-                    }
+                    // Tránh multiple clicks trong lúc transition
+                    if (isTransitioning) return;
+
+                    setIsTransitioning(true);
+
+                    // Batch state updates để tránh multiple re-renders
+                    requestAnimationFrame(() => {
+                      if (isHeaderPinned) {
+                        // Nếu đang pin, chuyển sang ẩn hoàn toàn
+                        setIsHeaderPinned(false);
+                        setIsHeaderManuallyHidden(true);
+                      } else if (isHeaderManuallyHidden) {
+                        // Nếu đang ẩn hoàn toàn, chuyển sang auto-hide
+                        setIsHeaderManuallyHidden(false);
+                        setIsHeaderVisible(true);
+                      } else {
+                        // Nếu đang auto-hide, chuyển sang pin
+                        setIsHeaderPinned(true);
+                        setIsHeaderManuallyHidden(false);
+                      }
+
+                      // Reset transition state sau khi hoàn thành
+                      setTimeout(() => {
+                        setIsTransitioning(false);
+                      }, 200);
+                    });
                   }}
                   style={{
                     color: shouldShowHeader ? "#1890ff" : "#8c8c8c",
@@ -562,6 +576,7 @@ export default function BlogDetailMobile({
       setIsHeaderPinned,
       setIsHeaderManuallyHidden,
       shouldShowHeader,
+      isTransitioning,
     ]
   );
 
@@ -585,12 +600,11 @@ export default function BlogDetailMobile({
             left: 0,
             right: 0,
             width: "100%",
-            // Optimized transition - đơn giản hóa
+            // Optimized transition - chỉ dùng transform để tránh jank
             transform: shouldShowHeader ? "translateY(0)" : "translateY(-100%)",
-            transition:
-              "transform 0.2s ease-out, opacity 0.2s ease-out, visibility 0.2s ease-out",
-            willChange: "transform, opacity, background, border-color",
-            // Hide completely when not visible
+            transition: "transform 0.15s ease-out",
+            willChange: "transform",
+            // Hide completely when not visible - không dùng transition cho visibility/opacity
             visibility: shouldShowHeader ? "visible" : "hidden",
             opacity: shouldShowHeader ? 1 : 0,
             margin: 0,
@@ -1003,9 +1017,10 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: shouldShowHeader ? "88px" : "48px",
-          // Optimized transition - sử dụng transform thay vì padding
-          transition: "padding-top 0.2s ease-out",
+          paddingTop: "48px", // Fixed padding cho navigation bar
+          // Sử dụng transform thay vì padding để tránh jank
+          transform: shouldShowHeader ? "translateY(40px)" : "translateY(0)",
+          transition: "transform 0.15s ease-out",
           // Optimize for touch
           scrollBehavior: "smooth",
           // Prevent bounce on iOS
