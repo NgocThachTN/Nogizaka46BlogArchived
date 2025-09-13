@@ -28,7 +28,7 @@ import {
   ProCard,
   ProSkeleton,
 } from "@ant-design/pro-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   useCallback,
   useEffect,
@@ -38,7 +38,11 @@ import {
   useLayoutEffect,
   useTransition,
 } from "react";
-import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
+import {
+  getCachedBlogDetail,
+  getImageUrl,
+  fetchBlogDetail,
+} from "../services/blogService";
 import { isIOS } from "../utils/deviceDetection";
 
 // Utility function for throttle
@@ -116,6 +120,7 @@ export default function BlogDetailMobile({
   memberInfo, // Add memberInfo prop
 }) {
   const navigate = useNavigate();
+  const { id } = useParams(); // Get blog ID from URL
 
   // Mobile-optimized state management
   const [isPending] = useTransition();
@@ -412,15 +417,16 @@ export default function BlogDetailMobile({
 
   // Lưu vị trí cuộn trước khi rời trang (chỉ khi không phải content mới)
   useEffect(() => {
-    if (!blog?.id) return;
+    const blogId = blog?.id || id;
+    if (!blogId) return;
 
     const onStore = () => {
       if (scrollWrapRef.current) {
         // Chỉ lưu scroll position nếu content đã ổn định
-        const cached = _mobileCache.blogContent.get(blog.id);
+        const cached = _mobileCache.blogContent.get(blogId);
         if (cached && cached.language === language) {
           _mobileCache.scrollPosition.set(
-            blog.id,
+            blogId,
             scrollWrapRef.current.scrollTop
           );
         }
@@ -453,7 +459,7 @@ export default function BlogDetailMobile({
       window.removeEventListener("pagehide", onStore);
       window.removeEventListener("beforeunload", onStore);
     };
-  }, [blog?.id, language]);
+  }, [blog?.id, id, language]);
 
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 30));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
@@ -471,7 +477,8 @@ export default function BlogDetailMobile({
 
   // Force content display for iOS
   const finalDisplayContent = useMemo(() => {
-    if (blog?.id && blog?.content) {
+    const blogId = blog?.id || id;
+    if (blogId && blog?.content) {
       console.log("iOS: finalDisplayContent useMemo - blog content available");
       if (!cachedDisplayContent) {
         // Force set content immediately
@@ -482,7 +489,7 @@ export default function BlogDetailMobile({
       return blog.content;
     }
     return cachedDisplayContent || "";
-  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
+  }, [blog?.id, blog?.content, cachedDisplayContent, language, id]);
 
   // Debug logging removed for performance
 
@@ -654,7 +661,7 @@ export default function BlogDetailMobile({
             fontSize: "13px",
           }}
         >
-          {blog && (
+          {(blog || cachedDisplayContent) && (
             <>
               {/* Author Info - Left Side */}
               <Space
@@ -676,7 +683,7 @@ export default function BlogDetailMobile({
                 />
                 <div>
                   <Text strong style={{ color: "#3c2415", fontSize: "13px" }}>
-                    {memberInfo?.name || blog.author}
+                    {memberInfo?.name || blog?.author || "Loading..."}
                   </Text>
                   <div
                     style={{
@@ -690,7 +697,7 @@ export default function BlogDetailMobile({
                     <CalendarOutlined
                       style={{ marginRight: 4, fontSize: "10px" }}
                     />
-                    <Text>{blog.date}</Text>
+                    <Text>{blog?.date || "Loading..."}</Text>
                   </div>
                 </div>
               </Space>
@@ -717,7 +724,7 @@ export default function BlogDetailMobile({
                     whiteSpace: "normal",
                   }}
                 >
-                  {displayTitle || blog?.title || "Không có title"}
+                  {displayTitle || blog?.title || "Loading..."}
                 </Text>
               </div>
 
@@ -739,7 +746,14 @@ export default function BlogDetailMobile({
         </ProCard>
       </Affix>
     ),
-    [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
+    [
+      blog,
+      displayTitle,
+      memberInfo,
+      isHeaderVisible,
+      setDrawerVisible,
+      cachedDisplayContent,
+    ]
   );
 
   // Create a single throttled updater for scroll progress and header visibility
@@ -931,13 +945,16 @@ export default function BlogDetailMobile({
   useEffect(() => {
     if (isIOS()) {
       console.log("BlogDetailMobile iOS Debug:", {
-        blogId: blog?.id,
+        blogId: blog?.id || id,
         hasBlog: !!blog,
         hasContent: !!blog?.content,
         mobileLoading,
         cachedDisplayContent: !!cachedDisplayContent,
         displayContent: !!displayContent,
         translating,
+        userAgent: navigator.userAgent,
+        isIOS: isIOS(),
+        urlId: id,
       });
     }
   }, [
@@ -948,10 +965,61 @@ export default function BlogDetailMobile({
     displayContent,
     translating,
     blog,
+    id,
   ]);
 
+  // iOS Emergency fallback 3: Force fetch blog content if we have blog ID but no content
+  useEffect(() => {
+    const blogId = blog?.id || id;
+    if (blogId && !blog?.content && isIOS()) {
+      console.log("iOS: Emergency fallback 3 - force fetching blog content");
+      const forceFetch = async () => {
+        try {
+          const data = await fetchBlogDetail(blogId);
+          if (data?.content) {
+            console.log("iOS: Successfully fetched blog content");
+            setCachedDisplayContent(data.content);
+            setCachedLanguage(language);
+            setMobileLoading(false);
+          }
+        } catch (error) {
+          console.error("iOS: Failed to force fetch blog content:", error);
+        }
+      };
+      forceFetch();
+    }
+  }, [blog?.id, blog?.content, language, id]);
+
+  // iOS Emergency fallback 4: If no blog prop but we have ID from URL, fetch it directly
+  useEffect(() => {
+    if (!blog && id && isIOS()) {
+      console.log(
+        "iOS: Emergency fallback 4 - no blog prop, fetching from URL ID"
+      );
+      const fetchFromUrl = async () => {
+        try {
+          setMobileLoading(true);
+          const data = await fetchBlogDetail(id);
+          if (data?.content) {
+            console.log("iOS: Successfully fetched blog content from URL ID");
+            setCachedDisplayContent(data.content);
+            setCachedLanguage(language);
+            setMobileLoading(false);
+          }
+        } catch (error) {
+          console.error(
+            "iOS: Failed to fetch blog content from URL ID:",
+            error
+          );
+          setMobileLoading(false);
+        }
+      };
+      fetchFromUrl();
+    }
+  }, [blog, id, language]);
+
   // Loading skeleton (ngon hơn Spin) - chỉ hiển thị khi không có content
-  if (!cachedDisplayContent && !blog?.content) {
+  if (!cachedDisplayContent && !blog?.content && !mobileLoading) {
     return (
       <PageContainer
         header={false}
@@ -986,7 +1054,8 @@ export default function BlogDetailMobile({
   }
 
   // iOS Emergency fallback: Force show content if blog exists but no cached content
-  if (blog?.id && blog?.content && !cachedDisplayContent) {
+  const blogId = blog?.id || id;
+  if (blogId && blog?.content && !cachedDisplayContent) {
     console.log("iOS: Render fallback - forcing content display");
     // Force update state immediately
     setCachedDisplayContent(blog.content);
@@ -994,7 +1063,20 @@ export default function BlogDetailMobile({
     setMobileLoading(false);
   }
 
-  if (!blog) {
+  // iOS Emergency fallback 2: If we have blog but no content, try to get it from cache
+  if (blogId && !blog?.content && !cachedDisplayContent) {
+    console.log("iOS: Emergency fallback 2 - trying to get content from cache");
+    const cached = _mobileCache.blogContent.get(blogId);
+    if (cached?.content) {
+      console.log("iOS: Found cached content, using it");
+      setCachedDisplayContent(cached.content);
+      setCachedLanguage(cached.language || language);
+      setMobileLoading(false);
+    }
+  }
+
+  // Only show "not found" if we don't have blog AND no content AND not loading
+  if (!blog && !cachedDisplayContent && !mobileLoading) {
     return (
       <PageContainer
         header={false}
