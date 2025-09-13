@@ -71,9 +71,37 @@ function optimizeHtmlForMobile(html) {
 
     // iOS-specific optimizations
     if (isIOS()) {
-      if (!/\bstyle=/.test(newAttrs)) {
-        newAttrs += ' style="max-width: 100%; height: auto;"';
+      // Force width constraint and enhanced loading for iOS Safari
+      if (!/\bwidth=/.test(newAttrs)) newAttrs += ' width="100%"';
+      if (!/\bheight=/.test(newAttrs)) newAttrs += ' height="auto"';
+      
+      // Enhanced style attributes for iOS Safari
+      const iosStyles = [
+        'max-width: 100%',
+        'height: auto',
+        'width: 100%',
+        '-webkit-user-select: none',
+        '-webkit-touch-callout: none',
+        '-webkit-tap-highlight-color: transparent',
+        'content-visibility: auto',
+        '-webkit-transform: translateZ(0)',
+        'transform: translateZ(0)',
+        '-webkit-backface-visibility: hidden',
+        'backface-visibility: hidden'
+      ].join(';');
+
+      // Either append to existing style or create new style attribute
+      if (/\bstyle=["']([^"']*)["']/.test(newAttrs)) {
+        newAttrs = newAttrs.replace(/\bstyle=["']([^"']*)["']/, 
+          (m, existing) => `style="${existing};${iosStyles}"`);
+      } else {
+        newAttrs += ` style="${iosStyles}"`;
       }
+
+      // Additional iOS optimization attributes  
+      newAttrs += ' role="presentation"';
+      newAttrs += ' draggable="false"';
+      newAttrs += ' crossorigin="anonymous"';
     }
 
     return `<img${newAttrs}>`;
@@ -184,11 +212,13 @@ export default function BlogDetailMobile({
     }
   }, [blog?.id, language, blog?.content]);
 
-  // ---- Cache management và smooth updates ----
+  // ---- Cache management và smooth updates with iOS optimizations ----
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
+      // Clear old cache immediately
       _mobileCache.blogContent.delete(blog.id);
 
+      // Update cache with new content
       _mobileCache.blogContent.set(blog.id, {
         content: blog.content,
         displayContent,
@@ -196,18 +226,39 @@ export default function BlogDetailMobile({
         ts: Date.now(),
       });
 
-      setCachedDisplayContent(displayContent);
-      setCachedLanguage(language);
+      // iOS Safari specific: Add delay to prevent rendering issues
+      const updateContent = async () => {
+        if (isIOS()) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        setCachedDisplayContent(displayContent);
+        setCachedLanguage(language);
+      };
 
-      // Force scroll to top immediately for new content
+      updateContent();
+
+      // Force scroll to top with iOS optimizations
       if (scrollWrapRef.current) {
-        scrollWrapRef.current.style.scrollBehavior = "auto";
-        scrollWrapRef.current.scrollTop = 0;
-        requestAnimationFrame(() => {
-          if (scrollWrapRef.current) {
-            scrollWrapRef.current.style.scrollBehavior = "smooth";
-          }
-        });
+        if (isIOS()) {
+          // iOS smooth scroll workaround
+          scrollWrapRef.current.style.overflow = 'hidden';
+          scrollWrapRef.current.scrollTop = 0;
+          requestAnimationFrame(() => {
+            if (scrollWrapRef.current) {
+              scrollWrapRef.current.style.overflow = 'auto';
+              scrollWrapRef.current.style.WebkitOverflowScrolling = 'touch';
+            }
+          });
+        } else {
+          scrollWrapRef.current.style.scrollBehavior = "auto";
+          scrollWrapRef.current.scrollTop = 0;
+          requestAnimationFrame(() => {
+            if (scrollWrapRef.current) {
+              scrollWrapRef.current.style.scrollBehavior = "smooth";
+            }
+          });
+        }
       }
 
       // Simple image handling - no delays or complex logic
