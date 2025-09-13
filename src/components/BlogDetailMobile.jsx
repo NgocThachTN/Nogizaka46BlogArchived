@@ -851,8 +851,6 @@ export default function BlogDetailMobile({
           msOverflowStyle: "none",
           width: "100%",
           position: "relative",
-          display: "flex",
-          flexDirection: "column",
           touchAction: "pan-y",
           paddingTop: isHeaderVisible ? "40px" : "0px", // Reduced padding
           // Smooth transition for mobile
@@ -863,8 +861,7 @@ export default function BlogDetailMobile({
           overscrollBehaviorY: "contain",
         }}
       >
-        <ProCard
-          ghost
+        <div
           style={{
             background: "rgba(253, 246, 227, 0.8)",
             padding: 0,
@@ -872,13 +869,6 @@ export default function BlogDetailMobile({
             maxWidth: "100%",
             ...jpFont,
             position: "relative",
-            minHeight: "auto", // Remove minHeight to prevent extra space
-          }}
-          bodyStyle={{
-            padding: "0 0 0",
-            margin: 0,
-            width: "100%",
-            minHeight: "auto", // Remove minHeight from body too
           }}
         >
           {/* Translation Loading Overlay */}
@@ -967,7 +957,7 @@ export default function BlogDetailMobile({
               }}
             />
           </div>
-        </ProCard>
+        </div>
       </div>
 
       {/* Drawer thông tin & cài đặt */}
@@ -1195,6 +1185,12 @@ export default function BlogDetailMobile({
             line-height: 1.9;
             font-size: 20px;
             color: #1f2937;
+          }
+          .jp-prose p:last-child {
+            margin-bottom: 0;
+          }
+          .jp-prose > *:last-child {
+            margin-bottom: 0 !important;
           }
           .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: #111827; }
           .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: #111827; }
