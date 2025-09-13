@@ -1,6 +1,6 @@
 // BlogDetailMobile.jsx — Full-bleed mobile reader (Ant Design Pro)
-// Giữ nguyên bố cục, nâng UX: ProSkeleton, progress đọc, ngôn ngữ JP/EN/VI, A-/A+, Drawer info.
-// Thêm: Auto-hide AuthorBar + Title trên Android (kéo xuống ẩn, kéo lên hiện) + nút ẩn/hiện thủ công + nút bật/tắt auto-hide.
+// Đã xoá: nút ẩn/hiện thủ công AuthorBar + progress bar dưới cùng.
+// Giữ: Auto-hide AuthorBar trên Android (kéo xuống ẩn, kéo lên hiện) + nút bật/tắt auto-hide.
 
 import {
   Typography,
@@ -24,8 +24,6 @@ import {
   CalendarOutlined,
   FontSizeOutlined,
   GlobalOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
   PushpinOutlined,
   PushpinFilled,
 } from "@ant-design/icons";
@@ -51,27 +49,6 @@ import { isIOS } from "../utils/deviceDetection";
 const isAndroid = () =>
   typeof navigator !== "undefined" &&
   /Android/i.test(navigator.userAgent || "");
-
-// Utility function for throttle
-function throttle(func, limit) {
-  let inThrottle;
-  let lastRan;
-  return function (...args) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      lastRan = Date.now();
-      inThrottle = true;
-    } else {
-      clearTimeout(inThrottle);
-      inThrottle = setTimeout(() => {
-        if (Date.now() - lastRan >= limit) {
-          func.apply(this, args);
-          lastRan = Date.now();
-        }
-      }, limit - (Date.now() - lastRan));
-    }
-  };
-}
 
 const { Title, Text } = Typography;
 
@@ -161,21 +138,12 @@ export default function BlogDetailMobile({
     []
   );
 
-  // progress đọc (%)
-  const [readPct, setReadPct] = useState(0);
-  const scrollWrapRef = useRef(null);
-  const lastTotalRef = useRef(0);
-  const lastScrolledRef = useRef(0);
-  const lastPctRef = useRef(0);
-  const throttledUpdateRef = useRef(null);
-
   // Header visibility state for scroll-based hiding
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
+  const scrollWrapRef = useRef(null);
 
-  // Auto-hide khi cuộn (Android), và ẩn thủ công
+  // Auto-hide khi cuộn (Android)
   const [autoHideHeader, setAutoHideHeader] = useState(true);
-  const [manuallyHidden, setManuallyHidden] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -205,9 +173,6 @@ export default function BlogDetailMobile({
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
         }
-
-        // Force reset read progress
-        setReadPct(0);
       } else {
         // Same blog - check if we have valid cache
         const cached = _mobileCache.blogContent.get(blog.id);
@@ -233,10 +198,8 @@ export default function BlogDetailMobile({
   // ---- Cache management và smooth updates ----
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
-      // Clear any existing cache for this blog first to prevent stale content
       _mobileCache.blogContent.delete(blog.id);
 
-      // Cache new content với timestamp
       _mobileCache.blogContent.set(blog.id, {
         content: blog.content,
         displayContent,
@@ -244,20 +207,13 @@ export default function BlogDetailMobile({
         ts: Date.now(),
       });
 
-      // Update cached state immediately (not in transition) to prevent flicker
       setCachedDisplayContent(displayContent);
       setCachedLanguage(language);
 
-      // Reset read progress
-      setReadPct(0);
-
       // Force scroll to top immediately for new content
       if (scrollWrapRef.current) {
-        // Disable smooth scrolling temporarily
         scrollWrapRef.current.style.scrollBehavior = "auto";
         scrollWrapRef.current.scrollTop = 0;
-
-        // Re-enable smooth scrolling after scroll
         requestAnimationFrame(() => {
           if (scrollWrapRef.current) {
             scrollWrapRef.current.style.scrollBehavior = "smooth";
@@ -279,12 +235,8 @@ export default function BlogDetailMobile({
   // ---- Force clear content when displayContent changes from parent ----
   useEffect(() => {
     if (displayContent && blog?.id) {
-      // This ensures that when parent provides new displayContent,
-      // we immediately show it instead of cached content
       setCachedDisplayContent(displayContent);
       setCachedLanguage(language);
-
-      // Clear any existing cache for this blog to prevent conflicts
       _mobileCache.blogContent.delete(blog.id);
     }
   }, [displayContent, language, blog?.id]);
@@ -295,7 +247,6 @@ export default function BlogDetailMobile({
 
     const onStore = () => {
       if (scrollWrapRef.current) {
-        // Chỉ lưu scroll position nếu content đã ổn định
         const cached = _mobileCache.blogContent.get(blog.id);
         if (cached && cached.language === language) {
           _mobileCache.scrollPosition.set(
@@ -447,14 +398,6 @@ export default function BlogDetailMobile({
                   onClick={() => setDrawerVisible(true)}
                 />
 
-                {/* Nút ẩn/hiện thủ công AuthorBar */}
-                <Button
-                  type="text"
-                  onClick={() => setManuallyHidden((v) => !v)}
-                  title={manuallyHidden ? "Hiện thanh tác giả" : "Ẩn thanh tác giả"}
-                  icon={manuallyHidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                />
-
                 {/* Nút bật/tắt auto-hide khi cuộn (Android only) */}
                 {isAndroid() && (
                   <Button
@@ -482,12 +425,11 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
-      manuallyHidden,
       autoHideHeader,
     ]
   );
 
-  // Author Bar (scroll-hideable) - Compact with Ant Design Pro
+  // Author Bar (scroll-hideable)
   const AuthorBar = useMemo(
     () => (
       <Affix offsetTop={48}>
@@ -496,11 +438,11 @@ export default function BlogDetailMobile({
           style={{
             ...jpFont,
             background:
-              isHeaderVisible && !manuallyHidden
+              isHeaderVisible
                 ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
                 : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
             borderBottom:
-              isHeaderVisible && !manuallyHidden
+              isHeaderVisible
                 ? "1px solid rgba(139, 69, 19, 0.2)"
                 : "1px solid rgba(139, 69, 19, 0)",
             zIndex: 998,
@@ -509,15 +451,13 @@ export default function BlogDetailMobile({
             left: 0,
             right: 0,
             width: "100%",
-            transform:
-              isHeaderVisible && !manuallyHidden ? "translateY(0)" : "translateY(-100%)",
-            transition:
-              isHeaderVisible && !manuallyHidden
-                ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
-                : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
+            transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
+            transition: isHeaderVisible
+              ? "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out, visibility 0.3s ease-out, background 0.3s ease-out, border-color 0.3s ease-out"
+              : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease-in, visibility 0.2s ease-in, background 0.2s ease-in, border-color 0.2s ease-in",
             willChange: "transform, opacity, background, border-color",
-            visibility: isHeaderVisible && !manuallyHidden ? "visible" : "hidden",
-            opacity: isHeaderVisible && !manuallyHidden ? 1 : 0,
+            visibility: isHeaderVisible ? "visible" : "hidden",
+            opacity: isHeaderVisible ? 1 : 0,
             margin: 0,
             borderRadius: 0,
             boxShadow: "none",
@@ -614,34 +554,8 @@ export default function BlogDetailMobile({
         </ProCard>
       </Affix>
     ),
-    [blog, displayTitle, memberInfo, isHeaderVisible, manuallyHidden]
+    [blog, displayTitle, memberInfo, isHeaderVisible]
   );
-
-  // Create a single throttled updater for scroll progress
-  useEffect(() => {
-    throttledUpdateRef.current = throttle(() => {
-      const wrap = scrollWrapRef.current;
-      if (!wrap) return;
-      const total = wrap.scrollHeight - wrap.clientHeight;
-      const scrolled = wrap.scrollTop;
-      const lastTotal = lastTotalRef.current;
-      const lastScrolled = lastScrolledRef.current;
-
-      if (
-        Math.abs(total - lastTotal) > 1 ||
-        Math.abs(scrolled - lastScrolled) > 1
-      ) {
-        const pct =
-          total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
-        if (Math.abs(pct - lastPctRef.current) > 0.5) {
-          setReadPct(pct);
-          lastPctRef.current = pct;
-        }
-        lastTotalRef.current = total;
-        lastScrolledRef.current = scrolled;
-      }
-    }, 100);
-  }, [scrollThreshold]);
 
   // Android-optimized scroll handler
   const lastScrollTime = useRef(0);
@@ -653,8 +567,8 @@ export default function BlogDetailMobile({
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Chỉ auto-hide trên Android, khi bật autoHideHeader và không bị ẩn thủ công
-    if (!isAndroid() || !autoHideHeader || manuallyHidden) return;
+    // Chỉ auto-hide trên Android, khi bật autoHideHeader
+    if (!isAndroid() || !autoHideHeader) return;
 
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
@@ -689,7 +603,7 @@ export default function BlogDetailMobile({
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling, autoHideHeader, manuallyHidden]);
+  }, [isScrolling, autoHideHeader]);
 
   // Setup scroll handlers
   useEffect(() => {
@@ -697,10 +611,6 @@ export default function BlogDetailMobile({
     if (!wrap) return;
 
     const combinedScrollHandler = () => {
-      // Update progress
-      if (throttledUpdateRef.current) {
-        throttledUpdateRef.current();
-      }
       // Update header visibility (Android)
       handleScroll();
     };
@@ -835,11 +745,11 @@ export default function BlogDetailMobile({
       {NavigationBar}
       {AuthorBar}
 
-      {/* scroll container để bắt progress */}
+      {/* scroll container */}
       <div
         ref={scrollWrapRef}
         style={{
-          height: "calc(100dvh - 3px)", // Subtract progress bar height
+          height: "100dvh",
           overflow: "auto",
           background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
@@ -851,8 +761,7 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          // Nếu bị ẩn thủ công thì 48px. Nếu auto-hide thì theo isHeaderVisible.
-          paddingTop: manuallyHidden ? "48px" : isHeaderVisible ? "88px" : "48px",
+          paddingTop: isHeaderVisible ? "88px" : "48px",
           transition: "padding-top 0.3s ease",
         }}
       >
@@ -1032,30 +941,6 @@ export default function BlogDetailMobile({
           )}
         </Space>
       </Drawer>
-
-      {/* Progress đọc ở mép dưới màn hình */}
-      <Affix offsetBottom={0}>
-        <div
-          style={{
-            height: 3,
-            width: "100%",
-            background: "rgba(139, 69, 19, 0.1)",
-            willChange: "transform",
-            transform: "translateZ(0)",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              background: "#8b4513",
-              transform: `translateX(${readPct - 100}%)`,
-              willChange: "transform",
-              transition: "transform 0.1s ease-out",
-            }}
-          />
-        </div>
-      </Affix>
 
       {/* Full-bleed overrides */}
       <style>{`
