@@ -423,14 +423,12 @@ export default function BlogDetailMobile({
           size="small"
           style={{
             ...jpFont,
-            background:
-              isHeaderVisible
-                ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
-                : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
-            borderBottom:
-              isHeaderVisible
-                ? "1px solid rgba(139, 69, 19, 0.2)"
-                : "1px solid rgba(139, 69, 19, 0)",
+            background: isHeaderVisible
+              ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
+            borderBottom: isHeaderVisible
+              ? "1px solid rgba(139, 69, 19, 0.2)"
+              : "1px solid rgba(139, 69, 19, 0)",
             zIndex: 998,
             position: "fixed",
             top: 48,
@@ -490,7 +488,9 @@ export default function BlogDetailMobile({
                       alignItems: "center",
                     }}
                   >
-                    <CalendarOutlined style={{ marginRight: 4, fontSize: "10px" }} />
+                    <CalendarOutlined
+                      style={{ marginRight: 4, fontSize: "10px" }}
+                    />
                     <Text>{blog.date}</Text>
                   </div>
                 </div>
@@ -805,7 +805,10 @@ export default function BlogDetailMobile({
                       justifyContent: "center",
                     }}
                   >
-                    <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} spin />
+                    <LoadingOutlined
+                      style={{ fontSize: 24, color: "#8b4513" }}
+                      spin
+                    />
                   </div>
 
                   <div>
