@@ -185,142 +185,32 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // ---- Handle blog content changes with iOS optimization ----
+  // ---- Simplified content handling with iOS optimization ----
   useLayoutEffect(() => {
-    if (blog?.id) {
-      // Detect if blog ID changed
-      const blogChanged = prevBlogIdRef.current !== blog.id;
-      const cached = _mobileCache.blogContent.get(blog.id);
+    if (!blog?.id || !blog?.content) return;
 
-      const applyChanges = async () => {
-        try {
-          // Special handling for iOS
-          if (isIOS()) {
-            // Ensure we have some content to show while loading
-            if (blogChanged && blog?.content) {
-              setCachedDisplayContent(blog.content);
-              setCachedLanguage(language);
-            }
-            
-            // Small delay for iOS Safari to stabilize
-            await new Promise(resolve => setTimeout(resolve, 50));
-          }
-
-          // Update cache references
-          prevBlogIdRef.current = blog.id;
-
-          // Reset scroll position for blog changes
-          if (blogChanged && scrollWrapRef.current) {
-            scrollWrapRef.current.scrollTop = 0;
-          }
-
-          // Content management
-          if (blogChanged) {
-            // Only clear specific blog cache, not everything
-            if (cached) {
-              _mobileCache.blogContent.delete(blog.id);
-            }
-            
-            // Set new content
-            if (blog?.content) {
-              _mobileCache.blogContent.set(blog.id, {
-                content: blog.content,
-                displayContent: blog.content,  // Start with original
-                language: language,
-                ts: Date.now()
-              });
-              
-              setCachedDisplayContent(blog.content);
-              setCachedLanguage(language);
-            }
-          } else {
-            // Same blog - use cache if valid
-            if (cached?.displayContent && 
-                cached.language === language && 
-                cached.content === blog?.content) {
-              setCachedDisplayContent(cached.displayContent);
-              setCachedLanguage(cached.language);
-            } else if (blog?.content) {
-              // Cache miss - set original content
-              setCachedDisplayContent(blog.content);
-              setCachedLanguage(language);
-            }
-          }
-        } catch (error) {
-          console.warn('Error handling blog content:', error);
-          // Fallback - show original content
-          if (blog?.content) {
-            setCachedDisplayContent(blog.content);
-            setCachedLanguage(language);
-          }
-        }
-      };
-
-      applyChanges();
+    // Luôn hiển thị content gốc ngay lập tức để tránh màn hình trắng
+    setCachedDisplayContent(blog.content);
+    setCachedLanguage('ja'); // Bắt đầu với tiếng Nhật
+    
+    // Reset scroll
+    if (scrollWrapRef.current) {
+      scrollWrapRef.current.scrollTop = 0;
     }
-  }, [blog?.id, language, blog?.content]);
 
-  // ---- Cache management và smooth updates ----
+    // Cập nhật cache ID
+    prevBlogIdRef.current = blog.id;
+
+  }, [blog?.id, blog?.content]);
+
+  // ---- Simplified translation handling ----
   useEffect(() => {
-    const updateCache = async () => {
-      if (displayContent && !translating && blog?.id) {
-        try {
-          // Add delay for iOS Safari
-          if (isIOS()) {
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
-
-          // First get existing cache
-          const existingCache = _mobileCache.blogContent.get(blog.id);
-
-          // Only update if content changed
-          if (
-            !existingCache ||
-            existingCache.content !== blog.content ||
-            existingCache.language !== language
-          ) {
-            _mobileCache.blogContent.set(blog.id, {
-              content: blog.content,
-              displayContent,
-              language,
-              ts: Date.now(),
-            });
-
-            setCachedDisplayContent(displayContent);
-            setCachedLanguage(language);
-
-            // Force scroll to top immediately for new content
-            if (scrollWrapRef.current) {
-              scrollWrapRef.current.style.scrollBehavior = "auto";
-              scrollWrapRef.current.scrollTop = 0;
-              requestAnimationFrame(() => {
-                if (scrollWrapRef.current) {
-                  scrollWrapRef.current.style.scrollBehavior = "smooth";
-                }
-              });
-            }
-
-            // Enhanced image handling for iOS
-            if (scrollWrapRef.current) {
-              const images = scrollWrapRef.current.getElementsByTagName("img");
-              Array.from(images).forEach((img) => {
-                img.style.opacity = "1";
-                img.style.transition = "none";
-                if (isIOS()) {
-                  img.style.webkitBackfaceVisibility = "hidden";
-                  img.style.transform = "translate3d(0,0,0)";
-                }
-              });
-            }
-          }
-        } catch (error) {
-          console.warn("Error updating mobile cache:", error);
-        }
-      }
-    };
-
-    updateCache();
-  }, [displayContent, translating, language, blog?.id, blog?.content]);
+    // Chỉ cập nhật khi có displayContent mới từ translation
+    if (displayContent && blog?.id && !translating) {
+      setCachedDisplayContent(displayContent);
+      setCachedLanguage(language);
+    }
+  }, [displayContent, translating, language, blog?.id]);
 
   // ---- Force clear content when displayContent changes from parent ----
   useEffect(() => {
@@ -721,22 +611,8 @@ export default function BlogDetailMobile({
     });
   }, [cachedDisplayContent]);
 
-  // Loading skeleton with timeout protection
-  useEffect(() => {
-    // If loading takes too long, force show content
-    if (loading && blog?.content) {
-      const timer = setTimeout(() => {
-        console.warn('Force exit loading state after timeout');
-        setCachedDisplayContent(blog.content);
-        setCachedLanguage(language);
-      }, 3000); // 3 seconds timeout
-      
-      return () => clearTimeout(timer);
-    }
-  }, [loading, blog?.content, language]);
-
-  // Enhanced loading state
-  if (loading && !cachedDisplayContent) {
+  // Simple loading state - no timeouts needed
+  if (loading && !blog?.content) {
     return (
       <PageContainer
         header={false}
