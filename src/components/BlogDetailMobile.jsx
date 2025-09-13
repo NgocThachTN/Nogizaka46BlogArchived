@@ -142,9 +142,6 @@ export default function BlogDetailMobile({
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollWrapRef = useRef(null);
 
-  // Auto-hide khi cuộn (Android)
-  const [autoHideHeader, setAutoHideHeader] = useState(true);
-
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
@@ -397,16 +394,6 @@ export default function BlogDetailMobile({
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
                 />
-
-                {/* Nút bật/tắt auto-hide khi cuộn (Android only) */}
-                {isAndroid() && (
-                  <Button
-                    type="text"
-                    onClick={() => setAutoHideHeader((v) => !v)}
-                    title={autoHideHeader ? "Tắt auto-hide khi cuộn" : "Bật auto-hide khi cuộn"}
-                    icon={autoHideHeader ? <PushpinFilled /> : <PushpinOutlined />}
-                  />
-                )}
               </Space>
             </Space>
           </div>
@@ -425,7 +412,6 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
-      autoHideHeader,
     ]
   );
 
@@ -567,8 +553,8 @@ export default function BlogDetailMobile({
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Chỉ auto-hide trên Android, khi bật autoHideHeader
-    if (!isAndroid() || !autoHideHeader) return;
+    // Chỉ auto-hide trên Android
+    if (!isAndroid()) return;
 
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
@@ -603,7 +589,7 @@ export default function BlogDetailMobile({
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling, autoHideHeader]);
+  }, [isScrolling]);
 
   // Setup scroll handlers
   useEffect(() => {
