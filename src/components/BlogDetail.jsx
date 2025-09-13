@@ -29,6 +29,7 @@ import {
   ArrowUpOutlined,
   LoadingOutlined,
   RightOutlined,
+  ReadOutlined,
 } from "@ant-design/icons";
 import {
   useEffect,
@@ -703,15 +704,52 @@ export default function BlogDetail() {
           colSpan={{ xs: 24, md: 8, xl: 7 }}
           ghost
           direction="column"
-          gutter={[16, 16]}
+          gutter={[0, 16]}
         >
-          <StatisticCard
+          {/* Reading Time Estimate */}
+          <ProCard
+            title={
+              <Space>
+                <ReadOutlined />
+                <span>{t.readTime[language]}</span>
+              </Space>
+            }
             style={{ borderRadius: 16 }}
-            statistic={{
-              title: t.readTime[language],
-              value: `${readMinutes} 分`,
-            }}
-          />
+            bodyStyle={{ padding: isMobile ? 12 : 16 }}
+          >
+            <div
+              style={{
+                textAlign: "center",
+                padding: isMobile ? "16px 0" : "20px 0",
+                background: "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)",
+                borderRadius: 12,
+                border: "1px solid #f0f0f0",
+                boxShadow: "0 2px 8px rgba(109, 40, 217, 0.05)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: isMobile ? 24 : 28,
+                  fontWeight: 700,
+                  color: "#6d28d9",
+                  marginBottom: 4,
+                  textShadow: "0 1px 2px rgba(109, 40, 217, 0.1)",
+                }}
+              >
+                {readMinutes}
+              </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 12 : 14,
+                  color: "#666",
+                  fontWeight: 500,
+                  letterSpacing: 0.5,
+                }}
+              >
+                分
+              </div>
+            </div>
+          </ProCard>
 
           {toc.length > 0 && (
             <Card title={t.toc[language]} style={{ borderRadius: 16 }}>
