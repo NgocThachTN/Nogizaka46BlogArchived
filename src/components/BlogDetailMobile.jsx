@@ -72,41 +72,16 @@ function optimizeHtmlForMobile(html) {
   if (!html) return html;
   return html.replace(/<img\b([^>]*?)>/gi, (match, attrs) => {
     let newAttrs = attrs || "";
-
-    // Common attributes for all platforms
-    if (!/\bloading=/.test(newAttrs)) newAttrs += ' loading="lazy"'; 
+    if (!/\bloading=/.test(newAttrs)) newAttrs += ' loading="lazy"';
     if (!/\bdecoding=/.test(newAttrs)) newAttrs += ' decoding="async"';
-    if (!/\breferrerpolicy=/.test(newAttrs)) 
+    if (!/\breferrerpolicy=/.test(newAttrs))
       newAttrs += ' referrerpolicy="no-referrer"';
 
     // iOS-specific optimizations
     if (isIOS()) {
-      // Force width constraint to prevent layout shifts
-      if (!/\bwidth=/.test(newAttrs)) newAttrs += ' width="100%"';
-
-      // Enhanced style attributes for iOS Safari
-      const iosStyles = [
-        'max-width: 100%',
-        'height: auto',
-        'width: 100%',
-        '-webkit-user-select: none',
-        '-webkit-touch-callout: none',
-        '-webkit-tap-highlight-color: transparent',
-        'content-visibility: auto'
-      ].join(';');
-
-      // Either append to existing style or create new style attribute
-      if (/\bstyle=["']([^"']*)["']/.test(newAttrs)) {
-        newAttrs = newAttrs.replace(/\bstyle=["']([^"']*)["']/, 
-          (m, existing) => `style="${existing};${iosStyles}"`);
-      } else {
-        newAttrs += ` style="${iosStyles}"`;
+      if (!/\bstyle=/.test(newAttrs)) {
+        newAttrs += ' style="max-width: 100%; height: auto;"';
       }
-
-      // Additional iOS optimization attributes  
-      newAttrs += ' role="presentation"';
-      newAttrs += ' draggable="false"';
-      newAttrs += ' crossorigin="anonymous"';
     }
 
     return `<img${newAttrs}>`;
@@ -167,6 +142,9 @@ export default function BlogDetailMobile({
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollWrapRef = useRef(null);
 
+  // Auto-hide khi cuộn (Android)
+  const [autoHideHeader, setAutoHideHeader] = useState(true);
+
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
@@ -177,60 +155,43 @@ export default function BlogDetailMobile({
       // Detect if blog ID changed
       const blogChanged = prevBlogIdRef.current !== blog.id;
 
-      // Add delay for iOS Safari to prevent rendering issues
-      const applyChanges = async () => {
-        if (isIOS()) {
-          await new Promise(resolve => setTimeout(resolve, 100)); 
+      if (blogChanged) {
+        // Blog changed - clear everything immediately
+        setCachedDisplayContent(null);
+        setCachedLanguage(language);
+        prevBlogIdRef.current = blog.id;
+
+        // Reset scroll position when switching blogs
+        if (scrollWrapRef.current) {
+          scrollWrapRef.current.scrollTop = 0;
         }
 
-        if (blogChanged) {
-          // Save old content before clearing cache
-          const prevContent = _mobileCache.blogContent.get(prevBlogIdRef.current);
+        // Clear ALL cache to prevent showing old content
+        _mobileCache.blogContent.clear();
 
-          // Blog changed - clear everything immediately
-          setCachedDisplayContent(null);
-          setCachedLanguage(language);
-          prevBlogIdRef.current = blog.id;
-
-          // Reset scroll position when switching blogs
-          if (scrollWrapRef.current) {
-            scrollWrapRef.current.scrollTop = 0;
-          }
-
-          // Clear ALL cache AFTER saving old content
-          _mobileCache.blogContent.clear();
-
-          // Restore previous content to cache if exists
-          if (prevContent) {
-            _mobileCache.blogContent.set(prevBlogIdRef.current, prevContent);
-          }
-
-          // Show original content immediately - don't wait for translation
+        // Show original content immediately - don't wait for translation
+        if (blog?.content) {
+          setCachedDisplayContent(blog.content);
+        }
+      } else {
+        // Same blog - check if we have valid cache
+        const cached = _mobileCache.blogContent.get(blog.id);
+        if (
+          cached?.displayContent &&
+          cached?.language === language &&
+          cached?.content === blog?.content
+        ) {
+          // Use cached content
+          setCachedDisplayContent(cached.displayContent);
+          setCachedLanguage(cached.language);
+        } else {
+          // Clear cache and show original content
+          _mobileCache.blogContent.delete(blog.id);
           if (blog?.content) {
             setCachedDisplayContent(blog.content);
           }
-        } else {
-          // Same blog - check if we have valid cache
-          const cached = _mobileCache.blogContent.get(blog.id);
-          if (
-            cached?.displayContent &&
-            cached?.language === language &&
-            cached?.content === blog?.content
-          ) {
-            // Use cached content
-            setCachedDisplayContent(cached.displayContent);
-            setCachedLanguage(cached.language);
-          } else {
-            // Clear cache and show original content
-            _mobileCache.blogContent.delete(blog.id);
-            if (blog?.content) {
-              setCachedDisplayContent(blog.content);
-            }
-          }
         }
-      };
-
-      applyChanges();
+      }
     }
   }, [blog?.id, language, blog?.content]);
 
@@ -424,11 +385,7 @@ export default function BlogDetailMobile({
                   size="small"
                   value={cachedLanguage}
                   onChange={(val) => setLanguage(val)}
-                  options={[
-                    { label: "日", value: "ja" },
-                    { label: "EN", value: "en" },
-                    { label: "VI", value: "vi" },
-                  ]}
+                  options={[$1]}
                 />
 
                 <Button
@@ -436,6 +393,16 @@ export default function BlogDetailMobile({
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
                 />
+
+                {/* Nút bật/tắt auto-hide khi cuộn (Android only) */}
+                {isAndroid() && (
+                  <Button
+                    type="text"
+                    onClick={() => setAutoHideHeader((v) => !v)}
+                    title={autoHideHeader ? "Tắt auto-hide khi cuộn" : "Bật auto-hide khi cuộn"}
+                    icon={autoHideHeader ? <PushpinFilled /> : <PushpinOutlined />}
+                  />
+                )}
               </Space>
             </Space>
           </div>
@@ -454,6 +421,7 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
+      autoHideHeader,
     ]
   );
 
@@ -595,8 +563,8 @@ export default function BlogDetailMobile({
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Chỉ auto-hide trên Android
-    if (!isAndroid()) return;
+    // Chỉ auto-hide trên Android, khi bật autoHideHeader
+    if (!isAndroid() || !autoHideHeader) return;
 
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
@@ -631,7 +599,7 @@ export default function BlogDetailMobile({
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling]);
+  }, [isScrolling, autoHideHeader]);
 
   // Setup scroll handlers
   useEffect(() => {
@@ -773,34 +741,24 @@ export default function BlogDetailMobile({
       {NavigationBar}
       {AuthorBar}
 
-      {/* scroll container - enhanced for iOS */}
+      {/* scroll container */}
       <div
         ref={scrollWrapRef}
         style={{
-          height: 'calc(100dvh - 48px)', // Trừ đi chiều cao của NavigationBar
-          minHeight: 'calc(100dvh - 48px)',
-          maxHeight: 'calc(100dvh - 48px)',
-          overflow: 'auto',
-          background: 'rgba(253, 246, 227, 0.8)',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'none', // Prevent bounce effect on all platforms
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          width: '100%',
-          position: 'relative',
-          display: 'flex', 
-          flexDirection: 'column',
-          flexGrow: 1,
-          touchAction: 'pan-y', // Better touch handling
-          paddingTop: isHeaderVisible ? '40px' : '0', // Adjust padding for AuthorBar
-          transition: 'padding-top 0.3s ease',
-          WebkitBackfaceVisibility: 'hidden',
-          WebkitTransform: 'translate3d(0,0,0)',
-          transform: 'translate3d(0,0,0)',
-          willChange: 'transform',
-          contain: 'paint layout style',
-          marginBottom: 0,
-          paddingBottom: 0
+          height: "100dvh",
+          overflow: "auto",
+          background: "rgba(253, 246, 227, 0.8)",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          width: "100%",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          touchAction: "pan-y",
+          paddingTop: isHeaderVisible ? "88px" : "48px",
+          transition: "padding-top 0.3s ease",
         }}
       >
         <ProCard
@@ -1011,33 +969,24 @@ export default function BlogDetailMobile({
           }
 
           html, body, #root { 
-            height: 100dvh;
+            height: 100%; 
+            min-height: 100vh;
             min-height: 100dvh;
-            max-height: 100dvh;
             background: #fdf6e3;
             margin: 0;
             padding: 0;
             width: 100%;
             max-width: 100vw;
-            overflow: hidden;
-            position: fixed;
-            inset: 0;
+            overflow-x: hidden;
           }
           body { 
             margin: 0; 
             padding: 0;
             overscroll-behavior: none;
-            position: fixed;
-            width: 100%;
-            height: 100%;
           }
           #root {
             display: flex;
             flex-direction: column;
-            height: 100dvh;
-            position: fixed;
-            inset: 0;
-            overflow: hidden;
           }
           .ant-pro-page-container { 
             padding: 0 !important;
