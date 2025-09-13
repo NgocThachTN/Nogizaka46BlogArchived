@@ -208,6 +208,14 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         }
         setError(null);
 
+        // Thêm delay nhỏ cho iOS để tránh race condition
+        if (
+          navigator.userAgent.includes("iPhone") ||
+          navigator.userAgent.includes("iPad")
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
         // Fetch song song với timeout
         const fetchWithTimeout = (promise, timeout = 100000) => {
           return Promise.race([

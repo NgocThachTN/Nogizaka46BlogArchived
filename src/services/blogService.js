@@ -1,8 +1,10 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
+import { fetchWithProxy } from "../api/proxy.js";
+import { shouldUseProxy, getUserAgent } from "../utils/deviceDetection.js";
 
 const BASE_URL = "https://www.nogizaka46.com";
-const BLOG_URL = `${BASE_URL}/s/n46/diary/MEMBER/list`;
+const BLOG_URL = `/s/n46/diary/MEMBER/list`;
 
 // Lightweight in-memory cache for blog details to speed up navigation
 const _detailCache = new Map(); // key: blogId -> blog detail object
@@ -43,19 +45,41 @@ export const fetchAllBlogs = async (memberCode) => {
 // Fetch một trang blog
 const fetchBlogPage = async (page, memberCode) => {
   try {
-    const response = await axios.get(BLOG_URL, {
-      params: {
-        ct: memberCode,
-        page: page,
-        ima: Math.floor(Date.now() / 1000), // Timestamp hiện tại
-      },
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      },
-    });
+    // Sử dụng proxy để tránh CORS issues trên iOS
+    const params = {
+      ct: memberCode,
+      page: page,
+      ima: Math.floor(Date.now() / 1000), // Timestamp hiện tại
+    };
 
-    const $ = cheerio.load(response.data);
+    let htmlData;
+    if (shouldUseProxy()) {
+      try {
+        // Sử dụng proxy cho iOS Safari
+        htmlData = await fetchWithProxy(BLOG_URL, params);
+      } catch (proxyError) {
+        console.warn("Proxy failed, trying direct request:", proxyError);
+        // Fallback về direct request nếu proxy fail
+        const response = await axios.get(`${BASE_URL}${BLOG_URL}`, {
+          params,
+          headers: {
+            "User-Agent": getUserAgent(),
+          },
+        });
+        htmlData = response.data;
+      }
+    } else {
+      // Sử dụng direct request cho các browser khác
+      const response = await axios.get(`${BASE_URL}${BLOG_URL}`, {
+        params,
+        headers: {
+          "User-Agent": getUserAgent(),
+        },
+      });
+      htmlData = response.data;
+    }
+
+    const $ = cheerio.load(htmlData);
     const blogs = [];
 
     $("a.bl--card").each((_, element) => {
@@ -94,22 +118,52 @@ const fetchBlogPage = async (page, memberCode) => {
 // Fetch chi tiết một blog
 export const fetchBlogDetail = async (blogId) => {
   try {
-    // Fetch blog content
-    const response = await axios.get(
-      `${BASE_URL}/s/n46/diary/detail/${blogId}`,
-      {
-        params: {
-          cd: "MEMBER",
-          ima: Math.floor(Date.now() / 1000),
-        },
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-      }
-    );
+    // Fetch blog content sử dụng proxy
+    const params = {
+      cd: "MEMBER",
+      ima: Math.floor(Date.now() / 1000),
+    };
 
-    const $ = cheerio.load(response.data);
+    let htmlData;
+    if (shouldUseProxy()) {
+      try {
+        // Sử dụng proxy cho iOS Safari
+        htmlData = await fetchWithProxy(
+          `/s/n46/diary/detail/${blogId}`,
+          params
+        );
+      } catch (proxyError) {
+        console.warn(
+          "Proxy failed for blog detail, trying direct request:",
+          proxyError
+        );
+        // Fallback về direct request
+        const response = await axios.get(
+          `${BASE_URL}/s/n46/diary/detail/${blogId}`,
+          {
+            params,
+            headers: {
+              "User-Agent": getUserAgent(),
+            },
+          }
+        );
+        htmlData = response.data;
+      }
+    } else {
+      // Sử dụng direct request cho các browser khác
+      const response = await axios.get(
+        `${BASE_URL}/s/n46/diary/detail/${blogId}`,
+        {
+          params,
+          headers: {
+            "User-Agent": getUserAgent(),
+          },
+        }
+      );
+      htmlData = response.data;
+    }
+
+    const $ = cheerio.load(htmlData);
 
     // Try multiple selectors for title - prioritize meta tags
     let title = $('meta[property="og:title"]').attr("content")?.trim();
@@ -216,21 +270,43 @@ export const fetchBlogDetail = async (blogId) => {
     const author = $(".bd--prof__name").text().trim();
     console.log("Author name from blog:", author);
 
-    // Fetch member info to get correct image
-    const memberResponse = await axios.get(
-      `${BASE_URL}/s/n46/api/list/member?callback=res`,
-      {
-        responseType: "text",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
+    // Fetch member info to get correct image sử dụng proxy
+    let memberData;
+    if (shouldUseProxy()) {
+      try {
+        memberData = await fetchWithProxy("/s/n46/api/list/member", {
+          callback: "res",
+        });
+      } catch (proxyError) {
+        console.warn(
+          "Proxy failed for member info, trying direct request:",
+          proxyError
+        );
+        const response = await axios.get(
+          `${BASE_URL}/s/n46/api/list/member?callback=res`,
+          {
+            responseType: "text",
+            headers: {
+              "User-Agent": getUserAgent(),
+            },
+          }
+        );
+        memberData = response.data;
       }
-    );
+    } else {
+      const response = await axios.get(
+        `${BASE_URL}/s/n46/api/list/member?callback=res`,
+        {
+          responseType: "text",
+          headers: {
+            "User-Agent": getUserAgent(),
+          },
+        }
+      );
+      memberData = response.data;
+    }
 
-    const jsonStr = memberResponse.data
-      .replace(/^res\(/, "")
-      .replace(/\);?$/, "");
+    const jsonStr = memberData.replace(/^res\(/, "").replace(/\);?$/, "");
     const memberApi = JSON.parse(jsonStr);
     const memberInfo = memberApi.data.find((m) => m.code === memberCode);
 
@@ -268,17 +344,42 @@ export const getImageUrl = (imagePath) => {
 export const fetchMemberInfo = async (memberCode) => {
   try {
     console.log("Fetching member info for code:", memberCode);
-    const response = await axios.get(
-      `${BASE_URL}/s/n46/api/list/member?callback=res`,
-      {
-        responseType: "text",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
+    let memberData;
+    if (shouldUseProxy()) {
+      try {
+        memberData = await fetchWithProxy("/s/n46/api/list/member", {
+          callback: "res",
+        });
+      } catch (proxyError) {
+        console.warn(
+          "Proxy failed for member info, trying direct request:",
+          proxyError
+        );
+        const response = await axios.get(
+          `${BASE_URL}/s/n46/api/list/member?callback=res`,
+          {
+            responseType: "text",
+            headers: {
+              "User-Agent": getUserAgent(),
+            },
+          }
+        );
+        memberData = response.data;
       }
-    );
-    const jsonStr = response.data.replace(/^res\(/, "").replace(/\);?$/, "");
+    } else {
+      const response = await axios.get(
+        `${BASE_URL}/s/n46/api/list/member?callback=res`,
+        {
+          responseType: "text",
+          headers: {
+            "User-Agent": getUserAgent(),
+          },
+        }
+      );
+      memberData = response.data;
+    }
+
+    const jsonStr = memberData.replace(/^res\(/, "").replace(/\);?$/, "");
     const api = JSON.parse(jsonStr);
     console.log("Looking for member with code:", memberCode);
     const member = api.data.find((m) => String(m.code) === String(memberCode));
@@ -302,17 +403,42 @@ export const fetchMemberInfoByName = async (memberName) => {
   try {
     if (!memberName) return null;
     console.log("Fetching member info for name:", memberName);
-    const response = await axios.get(
-      `${BASE_URL}/s/n46/api/list/member?callback=res`,
-      {
-        responseType: "text",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
+    let memberData;
+    if (shouldUseProxy()) {
+      try {
+        memberData = await fetchWithProxy("/s/n46/api/list/member", {
+          callback: "res",
+        });
+      } catch (proxyError) {
+        console.warn(
+          "Proxy failed for member info by name, trying direct request:",
+          proxyError
+        );
+        const response = await axios.get(
+          `${BASE_URL}/s/n46/api/list/member?callback=res`,
+          {
+            responseType: "text",
+            headers: {
+              "User-Agent": getUserAgent(),
+            },
+          }
+        );
+        memberData = response.data;
       }
-    );
-    const jsonStr = response.data.replace(/^res\(/, "").replace(/\);?$/, "");
+    } else {
+      const response = await axios.get(
+        `${BASE_URL}/s/n46/api/list/member?callback=res`,
+        {
+          responseType: "text",
+          headers: {
+            "User-Agent": getUserAgent(),
+          },
+        }
+      );
+      memberData = response.data;
+    }
+
+    const jsonStr = memberData.replace(/^res\(/, "").replace(/\);?$/, "");
     const api = JSON.parse(jsonStr);
     const normalize = (s) => (s || "").replace(/\s+/g, "").trim();
     const target = normalize(memberName);
