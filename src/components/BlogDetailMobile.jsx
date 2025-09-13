@@ -74,9 +74,9 @@ function optimizeHtmlForMobile(html) {
     let newAttrs = attrs || "";
 
     // Common attributes for all platforms
-    if (!/\bloading=/.test(newAttrs)) newAttrs += ' loading="lazy"'; 
+    if (!/\bloading=/.test(newAttrs)) newAttrs += ' loading="lazy"';
     if (!/\bdecoding=/.test(newAttrs)) newAttrs += ' decoding="async"';
-    if (!/\breferrerpolicy=/.test(newAttrs)) 
+    if (!/\breferrerpolicy=/.test(newAttrs))
       newAttrs += ' referrerpolicy="no-referrer"';
 
     // iOS-specific optimizations
@@ -86,24 +86,26 @@ function optimizeHtmlForMobile(html) {
 
       // Enhanced style attributes for iOS Safari
       const iosStyles = [
-        'max-width: 100%',
-        'height: auto',
-        'width: 100%',
-        '-webkit-user-select: none',
-        '-webkit-touch-callout: none',
-        '-webkit-tap-highlight-color: transparent',
-        'content-visibility: auto'
-      ].join(';');
+        "max-width: 100%",
+        "height: auto",
+        "width: 100%",
+        "-webkit-user-select: none",
+        "-webkit-touch-callout: none",
+        "-webkit-tap-highlight-color: transparent",
+        "content-visibility: auto",
+      ].join(";");
 
       // Either append to existing style or create new style attribute
       if (/\bstyle=["']([^"']*)["']/.test(newAttrs)) {
-        newAttrs = newAttrs.replace(/\bstyle=["']([^"']*)["']/, 
-          (m, existing) => `style="${existing};${iosStyles}"`);
+        newAttrs = newAttrs.replace(
+          /\bstyle=["']([^"']*)["']/,
+          (m, existing) => `style="${existing};${iosStyles}"`
+        );
       } else {
         newAttrs += ` style="${iosStyles}"`;
       }
 
-      // Additional iOS optimization attributes  
+      // Additional iOS optimization attributes
       newAttrs += ' role="presentation"';
       newAttrs += ' draggable="false"';
       newAttrs += ' crossorigin="anonymous"';
@@ -171,61 +173,73 @@ export default function BlogDetailMobile({
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
 
-  // ---- Clear old content immediately when blog changes ----
+  // ---- Handle blog content changes with iOS optimization ----
   useLayoutEffect(() => {
     if (blog?.id) {
       // Detect if blog ID changed
       const blogChanged = prevBlogIdRef.current !== blog.id;
+      const cached = _mobileCache.blogContent.get(blog.id);
 
-      // Add delay for iOS Safari to prevent rendering issues
       const applyChanges = async () => {
-        if (isIOS()) {
-          await new Promise(resolve => setTimeout(resolve, 100)); 
-        }
+        try {
+          // Special handling for iOS
+          if (isIOS()) {
+            // Ensure we have some content to show while loading
+            if (blogChanged && blog?.content) {
+              setCachedDisplayContent(blog.content);
+              setCachedLanguage(language);
+            }
+            
+            // Small delay for iOS Safari to stabilize
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
 
-        if (blogChanged) {
-          // Save old content before clearing cache
-          const prevContent = _mobileCache.blogContent.get(prevBlogIdRef.current);
-
-          // Blog changed - clear everything immediately
-          setCachedDisplayContent(null);
-          setCachedLanguage(language);
+          // Update cache references
           prevBlogIdRef.current = blog.id;
 
-          // Reset scroll position when switching blogs
-          if (scrollWrapRef.current) {
+          // Reset scroll position for blog changes
+          if (blogChanged && scrollWrapRef.current) {
             scrollWrapRef.current.scrollTop = 0;
           }
 
-          // Clear ALL cache AFTER saving old content
-          _mobileCache.blogContent.clear();
-
-          // Restore previous content to cache if exists
-          if (prevContent) {
-            _mobileCache.blogContent.set(prevBlogIdRef.current, prevContent);
+          // Content management
+          if (blogChanged) {
+            // Only clear specific blog cache, not everything
+            if (cached) {
+              _mobileCache.blogContent.delete(blog.id);
+            }
+            
+            // Set new content
+            if (blog?.content) {
+              _mobileCache.blogContent.set(blog.id, {
+                content: blog.content,
+                displayContent: blog.content,  // Start with original
+                language: language,
+                ts: Date.now()
+              });
+              
+              setCachedDisplayContent(blog.content);
+              setCachedLanguage(language);
+            }
+          } else {
+            // Same blog - use cache if valid
+            if (cached?.displayContent && 
+                cached.language === language && 
+                cached.content === blog?.content) {
+              setCachedDisplayContent(cached.displayContent);
+              setCachedLanguage(cached.language);
+            } else if (blog?.content) {
+              // Cache miss - set original content
+              setCachedDisplayContent(blog.content);
+              setCachedLanguage(language);
+            }
           }
-
-          // Show original content immediately - don't wait for translation
+        } catch (error) {
+          console.warn('Error handling blog content:', error);
+          // Fallback - show original content
           if (blog?.content) {
             setCachedDisplayContent(blog.content);
-          }
-        } else {
-          // Same blog - check if we have valid cache
-          const cached = _mobileCache.blogContent.get(blog.id);
-          if (
-            cached?.displayContent &&
-            cached?.language === language &&
-            cached?.content === blog?.content
-          ) {
-            // Use cached content
-            setCachedDisplayContent(cached.displayContent);
-            setCachedLanguage(cached.language);
-          } else {
-            // Clear cache and show original content
-            _mobileCache.blogContent.delete(blog.id);
-            if (blog?.content) {
-              setCachedDisplayContent(blog.content);
-            }
+            setCachedLanguage(language);
           }
         }
       };
@@ -241,17 +255,18 @@ export default function BlogDetailMobile({
         try {
           // Add delay for iOS Safari
           if (isIOS()) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
-          
+
           // First get existing cache
           const existingCache = _mobileCache.blogContent.get(blog.id);
-          
-          // Only update if content changed
-          if (!existingCache || 
-              existingCache.content !== blog.content ||
-              existingCache.language !== language) {
 
+          // Only update if content changed
+          if (
+            !existingCache ||
+            existingCache.content !== blog.content ||
+            existingCache.language !== language
+          ) {
             _mobileCache.blogContent.set(blog.id, {
               content: blog.content,
               displayContent,
@@ -489,14 +504,12 @@ export default function BlogDetailMobile({
           size="small"
           style={{
             ...jpFont,
-            background:
-              isHeaderVisible
-                ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
-                : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
-            borderBottom:
-              isHeaderVisible
-                ? "1px solid rgba(139, 69, 19, 0.2)"
-                : "1px solid rgba(139, 69, 19, 0)",
+            background: isHeaderVisible
+              ? "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0) 0%, rgba(244, 241, 232, 0) 100%)",
+            borderBottom: isHeaderVisible
+              ? "1px solid rgba(139, 69, 19, 0.2)"
+              : "1px solid rgba(139, 69, 19, 0)",
             zIndex: 998,
             position: "fixed",
             top: 48,
@@ -556,7 +569,9 @@ export default function BlogDetailMobile({
                       alignItems: "center",
                     }}
                   >
-                    <CalendarOutlined style={{ marginRight: 4, fontSize: "10px" }} />
+                    <CalendarOutlined
+                      style={{ marginRight: 4, fontSize: "10px" }}
+                    />
                     <Text>{blog.date}</Text>
                   </div>
                 </div>
@@ -797,30 +812,51 @@ export default function BlogDetailMobile({
       {NavigationBar}
       {AuthorBar}
 
-      {/* scroll container - enhanced for iOS */}
+      {/* Scroll container optimized for iOS */}
       <div
         ref={scrollWrapRef}
         style={{
-          height: isIOS() ? '-webkit-fill-available' : '100dvh',
+          // Dynamic height handling for iOS
+          height: isIOS() ? '100%' : '100dvh',
           minHeight: isIOS() ? '-webkit-fill-available' : '100dvh',
-          overflow: 'auto',
-          background: 'rgba(253, 246, 227, 0.8)',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: isIOS() ? 'none' : 'contain', // Prevent bounce effect on iOS
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
+          maxHeight: isIOS() ? '-webkit-fill-available' : '100dvh',
+          
+          // Basic setup
           width: '100%',
           position: 'relative',
-          display: 'flex', 
+          display: 'flex',
           flexDirection: 'column',
-          touchAction: isIOS() ? 'manipulation' : 'pan-y', // Better touch handling on iOS
-          paddingTop: isHeaderVisible ? '88px' : '48px',
-          transition: 'padding-top 0.3s ease',
-          WebkitBackfaceVisibility: 'hidden', // Reduce flickering on iOS
-          WebkitTransform: 'translate3d(0,0,0)', // Force GPU acceleration
+          
+          // Scroll behavior
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'none',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          
+          // iOS optimizations
+          WebkitBackfaceVisibility: 'hidden',
+          WebkitTransform: 'translate3d(0,0,0)',
           transform: 'translate3d(0,0,0)',
-          willChange: 'transform', // Optimize animations
-          contain: 'paint layout style', // Reduce paint area
+          
+          // Visual style
+          background: 'rgba(253, 246, 227, 0.8)',
+          paddingTop: isHeaderVisible ? '88px' : '48px',
+          transition: isIOS() ? 'none' : 'padding-top 0.3s ease',
+          
+          // Touch handling
+          touchAction: 'manipulation',
+          
+          // Performance hints
+          willChange: 'transform',
+          contain: 'paint layout style',
+          
+          // Safari-specific fixes
+          ...(isIOS() ? {
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTapHighlightColor: 'transparent',
+          } : {})
         }}
       >
         <ProCard
@@ -833,6 +869,10 @@ export default function BlogDetailMobile({
             maxWidth: "100%",
             ...jpFont,
             position: "relative",
+            ...(isIOS() ? {
+              WebkitBackfaceVisibility: 'hidden',
+              WebkitTransform: 'translate3d(0,0,0)',
+            } : {})
           }}
           bodyStyle={{
             padding: "0 0 0",
@@ -877,7 +917,10 @@ export default function BlogDetailMobile({
                       justifyContent: "center",
                     }}
                   >
-                    <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} spin />
+                    <LoadingOutlined
+                      style={{ fontSize: 24, color: "#8b4513" }}
+                      spin
+                    />
                   </div>
 
                   <div>
