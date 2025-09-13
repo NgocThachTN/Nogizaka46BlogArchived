@@ -162,12 +162,6 @@ export default function BlogDetailMobile({
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollThreshold = 5; // Minimum scroll distance to trigger hide/show
 
-  // Force header visibility control for Android
-  const forceHeaderVisibility = useCallback((visible) => {
-    console.log("Force header visibility:", visible);
-    setIsHeaderVisible(visible);
-  }, []);
-
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
@@ -438,14 +432,6 @@ export default function BlogDetailMobile({
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
                 />
-                {/* Debug button for Android testing */}
-                <Button
-                  type="text"
-                  onClick={() => forceHeaderVisibility(!isHeaderVisible)}
-                  style={{ fontSize: "12px", padding: "2px 4px" }}
-                >
-                  {isHeaderVisible ? "Hide" : "Show"}
-                </Button>
               </Space>
             </Space>
           </div>
@@ -464,7 +450,6 @@ export default function BlogDetailMobile({
       navLock,
       navTopBtnStyle,
       navigate,
-      forceHeaderVisibility,
       isHeaderVisible,
     ]
   );
