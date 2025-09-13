@@ -120,32 +120,50 @@ export default function BlogDetailMobile({
   loading,
   translating,
   language,
-  setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
-  displayTitle, // Title (JP/EN/VI) render ra
-  displayContent, // HTML (JP/EN/VI) render ra
+  setLanguage,
+  displayTitle,
+  displayContent,
   prevId,
   nextId,
   fastGo,
   pendingNavId,
   navLock,
-  memberInfo, // Add memberInfo prop
+  memberInfo,
 }) {
   const navigate = useNavigate();
 
-  // Enhanced mobile state management with loading protection
+  // Simplify state management and always show content
   const [isPending] = useTransition();
-  const [cachedDisplayContent, setCachedDisplayContent] = useState(displayContent || blog?.content);
+  const [cachedDisplayContent, setCachedDisplayContent] = useState(null);
   const [cachedLanguage, setCachedLanguage] = useState(language);
-  
+
+  // Immediately set content when blog or displayContent changes
+  useEffect(() => {
+    if (blog?.content) {
+      // On iOS, we prioritize showing any content immediately
+      if (isIOS()) {
+        setCachedDisplayContent(displayContent || blog.content);
+        return;
+      }
+
+      // For other platforms, we can be more selective
+      if (displayContent && language !== "ja") {
+        setCachedDisplayContent(displayContent);
+      } else {
+        setCachedDisplayContent(blog.content);
+      }
+    }
+  }, [blog?.content, displayContent, language]);
+
   // Force exit loading if stuck
   useEffect(() => {
     if (!displayContent && blog?.content && loading) {
       const forceLoadTimer = setTimeout(() => {
-        console.warn('Force loading content from blog');
+        console.warn("Force loading content from blog");
         setCachedDisplayContent(blog.content);
         setCachedLanguage(language);
       }, 2000);
-      
+
       return () => clearTimeout(forceLoadTimer);
     }
   }, [displayContent, blog?.content, loading, language]);
@@ -191,8 +209,8 @@ export default function BlogDetailMobile({
 
     // Luôn hiển thị content gốc ngay lập tức để tránh màn hình trắng
     setCachedDisplayContent(blog.content);
-    setCachedLanguage('ja'); // Bắt đầu với tiếng Nhật
-    
+    setCachedLanguage("ja"); // Bắt đầu với tiếng Nhật
+
     // Reset scroll
     if (scrollWrapRef.current) {
       scrollWrapRef.current.scrollTop = 0;
@@ -200,7 +218,6 @@ export default function BlogDetailMobile({
 
     // Cập nhật cache ID
     prevBlogIdRef.current = blog.id;
-
   }, [blog?.id, blog?.content]);
 
   // ---- Simplified translation handling ----
@@ -266,9 +283,20 @@ export default function BlogDetailMobile({
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 30));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
 
-  // Optimized HTML with lazy images - sử dụng cached content
+  // Optimized HTML with special handling for iOS
   const optimizedHtml = useMemo(() => {
-    return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
+    let content = "";
+
+    // For iOS, we need to ensure we have some content
+    if (isIOS()) {
+      content = cachedDisplayContent || blog?.content || "";
+      // Force image optimization for iOS
+      return optimizeHtmlForMobile(content);
+    }
+
+    // For other platforms, use normal flow
+    content = cachedDisplayContent || blog?.content || "";
+    return content ? optimizeHtmlForMobile(content) : "";
   }, [cachedDisplayContent, blog?.content]);
 
   // Fixed Navigation Bar (always visible)
@@ -611,8 +639,8 @@ export default function BlogDetailMobile({
     });
   }, [cachedDisplayContent]);
 
-  // Simple loading state - no timeouts needed
-  if (loading && !blog?.content) {
+  // Only show loading when we have absolutely no content
+  if (!blog?.content && !cachedDisplayContent) {
     return (
       <PageContainer
         header={false}
@@ -719,46 +747,48 @@ export default function BlogDetailMobile({
         ref={scrollWrapRef}
         style={{
           // Dynamic height handling for iOS
-          height: isIOS() ? '100%' : '100dvh',
-          minHeight: isIOS() ? '-webkit-fill-available' : '100dvh',
-          maxHeight: isIOS() ? '-webkit-fill-available' : '100dvh',
-          
+          height: isIOS() ? "100%" : "100dvh",
+          minHeight: isIOS() ? "-webkit-fill-available" : "100dvh",
+          maxHeight: isIOS() ? "-webkit-fill-available" : "100dvh",
+
           // Basic setup
-          width: '100%',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          
+          width: "100%",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+
           // Scroll behavior
-          overflow: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'none',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          
+          overflow: "auto",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "none",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+
           // iOS optimizations
-          WebkitBackfaceVisibility: 'hidden',
-          WebkitTransform: 'translate3d(0,0,0)',
-          transform: 'translate3d(0,0,0)',
-          
+          WebkitBackfaceVisibility: "hidden",
+          WebkitTransform: "translate3d(0,0,0)",
+          transform: "translate3d(0,0,0)",
+
           // Visual style
-          background: 'rgba(253, 246, 227, 0.8)',
-          paddingTop: isHeaderVisible ? '88px' : '48px',
-          transition: isIOS() ? 'none' : 'padding-top 0.3s ease',
-          
+          background: "rgba(253, 246, 227, 0.8)",
+          paddingTop: isHeaderVisible ? "88px" : "48px",
+          transition: isIOS() ? "none" : "padding-top 0.3s ease",
+
           // Touch handling
-          touchAction: 'manipulation',
-          
+          touchAction: "manipulation",
+
           // Performance hints
-          willChange: 'transform',
-          contain: 'paint layout style',
-          
+          willChange: "transform",
+          contain: "paint layout style",
+
           // Safari-specific fixes
-          ...(isIOS() ? {
-            WebkitTouchCallout: 'none',
-            WebkitUserSelect: 'none',
-            WebkitTapHighlightColor: 'transparent',
-          } : {})
+          ...(isIOS()
+            ? {
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                WebkitTapHighlightColor: "transparent",
+              }
+            : {}),
         }}
       >
         <ProCard
@@ -771,10 +801,12 @@ export default function BlogDetailMobile({
             maxWidth: "100%",
             ...jpFont,
             position: "relative",
-            ...(isIOS() ? {
-              WebkitBackfaceVisibility: 'hidden',
-              WebkitTransform: 'translate3d(0,0,0)',
-            } : {})
+            ...(isIOS()
+              ? {
+                  WebkitBackfaceVisibility: "hidden",
+                  WebkitTransform: "translate3d(0,0,0)",
+                }
+              : {}),
           }}
           bodyStyle={{
             padding: "0 0 0",
@@ -846,24 +878,43 @@ export default function BlogDetailMobile({
             </div>
           )}
 
-          {/* Content - Title moved to author section */}
-          <div style={{ padding: "12px 12px 0 12px" }}>
-            {/* Nội dung */}
+          {/* Content container with iOS optimizations */}
+          <div
+            style={{
+              padding: "12px 12px 0 12px",
+              ...(isIOS()
+                ? {
+                    WebkitOverflowScrolling: "touch",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: "translate3d(0,0,0)",
+                  }
+                : {}),
+            }}
+          >
+            {/* Blog content with enhanced iOS support */}
             <div
               className="jp-prose"
               style={{
                 fontSize,
                 lineHeight: 1.9,
-                transition: "font-size 0.2s ease",
+                transition: isIOS() ? "none" : "font-size 0.2s ease",
                 width: "100%",
                 maxWidth: "100%",
                 overflowWrap: "break-word",
                 wordWrap: "break-word",
                 hyphens: "auto",
                 paddingBottom: "20px",
+                ...(isIOS()
+                  ? {
+                      WebkitBackfaceVisibility: "hidden",
+                      WebkitTransform: "translate3d(0,0,0)",
+                      position: "relative",
+                      zIndex: 1,
+                    }
+                  : {}),
               }}
               dangerouslySetInnerHTML={{
-                __html: optimizedHtml,
+                __html: optimizedHtml || blog?.content || "",
               }}
             />
           </div>
@@ -897,9 +948,9 @@ export default function BlogDetailMobile({
               value={cachedLanguage}
               onChange={(val) => setLanguage(val)}
               options={[
-                { label: "Nhật", value: "ja" },
-                { label: "English", value: "en" },
-                { label: "Tiếng Việt", value: "vi" },
+                { value: "ja", label: "Nhật" },
+                { value: "en", label: "English" },
+                { value: "vi", label: "Tiếng Việt" },
               ]}
             />
             <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
