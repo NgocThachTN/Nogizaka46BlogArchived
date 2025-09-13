@@ -102,7 +102,7 @@ function optimizeHtmlForMobile(html) {
 
 export default function BlogDetailMobile({
   blog,
-  loading,
+  // loading, // Removed - using mobileLoading instead
   translating,
   language,
   setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
@@ -122,6 +122,9 @@ export default function BlogDetailMobile({
   const [cachedDisplayContent, setCachedDisplayContent] =
     useState(displayContent);
   const [cachedLanguage, setCachedLanguage] = useState(language);
+
+  // Mobile-specific loading state - override parent loading when we have content
+  const [mobileLoading, setMobileLoading] = useState(true);
 
   // Track previous blog ID to detect blog changes
   const prevBlogIdRef = useRef(blog?.id);
@@ -150,7 +153,12 @@ export default function BlogDetailMobile({
     []
   );
 
+  // progress đọc (%)
+  const [readPct, setReadPct] = useState(0);
   const scrollWrapRef = useRef(null);
+  const lastTotalRef = useRef(0);
+  const lastScrolledRef = useRef(0);
+  const lastPctRef = useRef(0);
   const throttledUpdateRef = useRef(null);
 
   // Header visibility state for scroll-based hiding
@@ -171,6 +179,7 @@ export default function BlogDetailMobile({
         // Blog changed - clear everything immediately
         setCachedDisplayContent(null);
         setCachedLanguage(language);
+        setMobileLoading(true); // Reset loading state
         prevBlogIdRef.current = blog.id;
 
         // Reset scroll position when switching blogs
@@ -184,7 +193,11 @@ export default function BlogDetailMobile({
         // Show original content immediately - don't wait for translation
         if (blog?.content) {
           setCachedDisplayContent(blog.content);
+          setMobileLoading(false); // Content is ready
         }
+
+        // Force reset read progress
+        setReadPct(0);
       } else {
         // Same blog - check if we have valid cache
         const cached = _mobileCache.blogContent.get(blog.id);
@@ -196,80 +209,204 @@ export default function BlogDetailMobile({
           // Use cached content
           setCachedDisplayContent(cached.displayContent);
           setCachedLanguage(cached.language);
+          setMobileLoading(false); // Content is ready
         } else {
           // Clear cache and show original content
           _mobileCache.blogContent.delete(blog.id);
           if (blog?.content) {
             setCachedDisplayContent(blog.content);
+            setMobileLoading(false); // Content is ready
           }
         }
       }
     }
   }, [blog?.id, language, blog?.content]);
 
+  // ---- iOS-specific delay and content loading optimization ----
+  useEffect(() => {
+    if (!blog?.id) return;
+
+    const loadContent = async () => {
+      try {
+        // iOS-specific delay to prevent race conditions
+        if (isIOS()) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        // Check if we have fresh cache
+        const now = Date.now();
+        const cached = _mobileCache.blogContent.get(blog.id);
+        const isFresh = cached && now - cached.ts < CACHE_STALE_MS;
+
+        if (isFresh && cached.language === language) {
+          // Use cached content immediately
+          setCachedDisplayContent(cached.displayContent);
+          setCachedLanguage(cached.language);
+          setMobileLoading(false); // Content is ready
+          return;
+        }
+
+        // If no fresh cache, show original content immediately
+        if (blog?.content) {
+          setCachedDisplayContent(blog.content);
+          setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
+        }
+      } catch (e) {
+        console.error("Error loading content:", e);
+        // Fallback to original content
+        if (blog?.content) {
+          setCachedDisplayContent(blog.content);
+          setMobileLoading(false); // Content is ready
+        }
+      }
+    };
+
+    loadContent();
+  }, [blog?.id, language, blog?.content]);
+
+  // ---- Force show content when blog is available, even if parent is still loading ----
+  useEffect(() => {
+    if (blog?.id && blog?.content && !cachedDisplayContent) {
+      // iOS-specific delay for immediate content display
+      const showContent = async () => {
+        try {
+          if (isIOS()) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+
+          console.log("iOS: Force showing content", {
+            blogId: blog.id,
+            hasContent: !!blog.content,
+          });
+          setCachedDisplayContent(blog.content);
+          setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
+        } catch (e) {
+          console.error("Error showing content:", e);
+          setCachedDisplayContent(blog.content);
+          setMobileLoading(false); // Content is ready
+        }
+      };
+
+      showContent();
+    }
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
+
+  // ---- Emergency fallback: Force show content immediately if blog exists ----
+  useEffect(() => {
+    if (blog?.id && blog?.content && !cachedDisplayContent) {
+      console.log("iOS: Emergency fallback - showing content immediately");
+      setCachedDisplayContent(blog.content);
+      setCachedLanguage(language);
+      setMobileLoading(false);
+    }
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
+
+  // ---- iOS-specific immediate content display ----
+  useLayoutEffect(() => {
+    if (blog?.id && blog?.content && !cachedDisplayContent) {
+      console.log("iOS: useLayoutEffect - showing content immediately");
+      setCachedDisplayContent(blog.content);
+      setCachedLanguage(language);
+      setMobileLoading(false);
+    }
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
+
   // ---- Cache management và smooth updates ----
   useEffect(() => {
     if (displayContent && !translating && blog?.id) {
-      // Clear any existing cache for this blog first to prevent stale content
-      _mobileCache.blogContent.delete(blog.id);
-
-      // Cache new content với timestamp
-      _mobileCache.blogContent.set(blog.id, {
-        content: blog.content,
-        displayContent,
-        language,
-        ts: Date.now(),
-      });
-
-      // Update cached state immediately (not in transition) to prevent flicker
-      setCachedDisplayContent(displayContent);
-      setCachedLanguage(language);
-
-      // Force scroll to top immediately for new content
-      if (scrollWrapRef.current) {
-        // Disable smooth scrolling temporarily
-        scrollWrapRef.current.style.scrollBehavior = "auto";
-        scrollWrapRef.current.scrollTop = 0;
-
-        // Re-enable smooth scrolling after scroll
-        requestAnimationFrame(() => {
-          if (scrollWrapRef.current) {
-            scrollWrapRef.current.style.scrollBehavior = "smooth";
+      // iOS-specific delay for content updates
+      const updateContent = async () => {
+        try {
+          // iOS delay to prevent race conditions
+          if (isIOS()) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
           }
-        });
-      }
 
-      // Simple image handling - no delays or complex logic
-      if (scrollWrapRef.current) {
-        const images = scrollWrapRef.current.getElementsByTagName("img");
-        Array.from(images).forEach((img) => {
-          img.style.opacity = "1";
-          img.style.transition = "none";
-        });
-      }
+          // Clear any existing cache for this blog first to prevent stale content
+          _mobileCache.blogContent.delete(blog.id);
+
+          // Cache new content với timestamp
+          _mobileCache.blogContent.set(blog.id, {
+            content: blog.content,
+            displayContent,
+            language,
+            ts: Date.now(),
+          });
+
+          // Update cached state immediately (not in transition) to prevent flicker
+          setCachedDisplayContent(displayContent);
+          setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
+
+          // Reset read progress
+          setReadPct(0);
+
+          // Force scroll to top immediately for new content
+          if (scrollWrapRef.current) {
+            // Disable smooth scrolling temporarily
+            scrollWrapRef.current.style.scrollBehavior = "auto";
+            scrollWrapRef.current.scrollTop = 0;
+
+            // Re-enable smooth scrolling after scroll
+            requestAnimationFrame(() => {
+              if (scrollWrapRef.current) {
+                scrollWrapRef.current.style.scrollBehavior = "smooth";
+              }
+            });
+          }
+
+          // Simple image handling - no delays or complex logic
+          if (scrollWrapRef.current) {
+            const images = scrollWrapRef.current.getElementsByTagName("img");
+            Array.from(images).forEach((img) => {
+              img.style.opacity = "1";
+              img.style.transition = "none";
+            });
+          }
+        } catch (e) {
+          console.error("Error updating content:", e);
+          // Fallback to immediate update
+          setCachedDisplayContent(displayContent);
+          setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
+        }
+      };
+
+      updateContent();
     }
   }, [displayContent, translating, language, blog?.id, blog?.content]);
-
-  // ---- Handle translation state changes to prevent white space ----
-  useEffect(() => {
-    if (translating && scrollWrapRef.current) {
-      // Ensure container maintains proper height during translation
-      const container = scrollWrapRef.current;
-      container.style.minHeight = "100dvh";
-      container.style.maxHeight = "100dvh";
-    }
-  }, [translating]);
 
   // ---- Force clear content when displayContent changes from parent ----
   useEffect(() => {
     if (displayContent && blog?.id) {
-      // This ensures that when parent provides new displayContent,
-      // we immediately show it instead of cached content
-      setCachedDisplayContent(displayContent);
-      setCachedLanguage(language);
+      // iOS-specific delay for content clearing
+      const clearAndSetContent = async () => {
+        try {
+          // iOS delay to prevent race conditions
+          if (isIOS()) {
+            await new Promise((resolve) => setTimeout(resolve, 30));
+          }
 
-      // Clear any existing cache for this blog to prevent conflicts
-      _mobileCache.blogContent.delete(blog.id);
+          // This ensures that when parent provides new displayContent,
+          // we immediately show it instead of cached content
+          setCachedDisplayContent(displayContent);
+          setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
+
+          // Clear any existing cache for this blog to prevent conflicts
+          _mobileCache.blogContent.delete(blog.id);
+        } catch (e) {
+          console.error("Error clearing and setting content:", e);
+          // Fallback to immediate update
+          setCachedDisplayContent(displayContent);
+          setCachedLanguage(language);
+          setMobileLoading(false); // Content is ready
+        }
+      };
+
+      clearAndSetContent();
     }
   }, [displayContent, language, blog?.id]);
 
@@ -290,11 +427,13 @@ export default function BlogDetailMobile({
       }
     };
 
-    // Debounce scroll position saving
+    // iOS-optimized debounce scroll position saving
     let saveTimeout = null;
     const debouncedSave = () => {
       if (saveTimeout) clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(onStore, 500);
+      // iOS needs longer debounce time
+      const delay = isIOS() ? 800 : 500;
+      saveTimeout = setTimeout(onStore, delay);
     };
 
     const wrap = scrollWrapRef.current;
@@ -320,9 +459,30 @@ export default function BlogDetailMobile({
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
 
   // Optimized HTML with lazy images - sử dụng cached content
-  const optimizedHtml = useMemo(() => {
-    return optimizeHtmlForMobile(cachedDisplayContent || blog?.content || "");
-  }, [cachedDisplayContent, blog?.content]);
+  // const optimizedHtml = useMemo(() => {
+  //   const content = cachedDisplayContent || blog?.content || "";
+  //   console.log("iOS: optimizedHtml useMemo", {
+  //     hasCachedContent: !!cachedDisplayContent,
+  //     hasBlogContent: !!blog?.content,
+  //     contentLength: content.length
+  //   });
+  //   return optimizeHtmlForMobile(content);
+  // }, [cachedDisplayContent, blog?.content]);
+
+  // Force content display for iOS
+  const finalDisplayContent = useMemo(() => {
+    if (blog?.id && blog?.content) {
+      console.log("iOS: finalDisplayContent useMemo - blog content available");
+      if (!cachedDisplayContent) {
+        // Force set content immediately
+        setCachedDisplayContent(blog.content);
+        setCachedLanguage(language);
+        setMobileLoading(false);
+      }
+      return blog.content;
+    }
+    return cachedDisplayContent || "";
+  }, [blog?.id, blog?.content, cachedDisplayContent, language]);
 
   // Debug logging removed for performance
 
@@ -582,14 +742,36 @@ export default function BlogDetailMobile({
     [blog, displayTitle, memberInfo, isHeaderVisible, setDrawerVisible]
   );
 
-  // Create a single throttled updater for header visibility
+  // Create a single throttled updater for scroll progress and header visibility
   useEffect(() => {
     throttledUpdateRef.current = throttle(() => {
+      const wrap = scrollWrapRef.current;
+      if (!wrap) return;
+      const total = wrap.scrollHeight - wrap.clientHeight;
+      const scrolled = wrap.scrollTop;
+      const lastTotal = lastTotalRef.current;
+      const lastScrolled = lastScrolledRef.current;
+
+      // Update read progress
+      if (
+        Math.abs(total - lastTotal) > 1 ||
+        Math.abs(scrolled - lastScrolled) > 1
+      ) {
+        const pct =
+          total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
+        if (Math.abs(pct - lastPctRef.current) > 0.5) {
+          setReadPct(pct);
+          lastPctRef.current = pct;
+        }
+        lastTotalRef.current = total;
+        lastScrolledRef.current = scrolled;
+      }
+
       // Header visibility is now handled by separate mobile-optimized effect
     }, 100);
   }, [scrollThreshold]);
 
-  // Android-optimized scroll handler
+  // iOS/Android-optimized scroll handler
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
@@ -602,14 +784,16 @@ export default function BlogDetailMobile({
     const currentScrollY = wrap.scrollTop;
     const currentTime = Date.now();
 
-    // Debounce scroll events
+    // iOS-optimized debounce scroll events
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
 
+    // iOS needs longer debounce time
+    const debounceTime = isIOS() ? 200 : 150;
     scrollTimeout.current = setTimeout(() => {
       setIsScrolling(false);
-    }, 150);
+    }, debounceTime);
 
     if (!isScrolling) {
       setIsScrolling(true);
@@ -617,34 +801,28 @@ export default function BlogDetailMobile({
       return;
     }
 
-    // Only process if enough time has passed
-    if (currentTime - lastScrollTime.current < 50) return;
+    // iOS needs longer processing interval
+    const processingInterval = isIOS() ? 80 : 50;
+    if (currentTime - lastScrollTime.current < processingInterval) return;
 
     const scrollDifference = currentScrollY - (lastScrollY.current || 0);
 
-    if (Math.abs(scrollDifference) > 5) {
-      console.log("Scroll detected:", {
-        currentScrollY,
-        lastScrollY: lastScrollY.current,
-        scrollDifference,
-        isHeaderVisible,
-      });
-
+    // iOS needs larger scroll threshold
+    const scrollThreshold = isIOS() ? 8 : 5;
+    if (Math.abs(scrollDifference) > scrollThreshold) {
       if (scrollDifference > 0) {
         // Scroll down (kéo xuống) - hiện header
-        console.log("Showing header - scrolling down");
         setIsHeaderVisible(true);
       } else {
         // Scroll up (kéo lên) - ẩn header
-        console.log("Hiding header - scrolling up");
         setIsHeaderVisible(false);
       }
       lastScrollY.current = currentScrollY;
       lastScrollTime.current = currentTime;
     }
-  }, [isScrolling, isHeaderVisible]);
+  }, [isScrolling]);
 
-  // Setup scroll handlers for Android
+  // Setup scroll handlers for iOS/Android
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
@@ -660,40 +838,120 @@ export default function BlogDetailMobile({
       handleScroll();
     };
 
+    // iOS-optimized scroll handler setup
+    const scrollOptions = {
+      passive: true,
+      // iOS needs capture phase for better performance
+      capture: isIOS(),
+    };
+
     // Setup scroll handler
-    wrap.addEventListener("scroll", combinedScrollHandler, { passive: true });
+    wrap.addEventListener("scroll", combinedScrollHandler, scrollOptions);
 
-    // Setup wheel events for better Android support
-    wrap.addEventListener("wheel", combinedScrollHandler, { passive: true });
+    // Setup wheel events for better support
+    wrap.addEventListener("wheel", combinedScrollHandler, scrollOptions);
 
-    // Initialize
-    combinedScrollHandler();
+    // iOS-specific touch events
+    if (isIOS()) {
+      wrap.addEventListener("touchstart", combinedScrollHandler, scrollOptions);
+      wrap.addEventListener("touchend", combinedScrollHandler, scrollOptions);
+    }
+
+    // Initialize with delay for iOS
+    if (isIOS()) {
+      setTimeout(combinedScrollHandler, 100);
+    } else {
+      combinedScrollHandler();
+    }
 
     // Cleanup
     return () => {
-      wrap.removeEventListener("scroll", combinedScrollHandler);
-      wrap.removeEventListener("wheel", combinedScrollHandler);
+      wrap.removeEventListener("scroll", combinedScrollHandler, scrollOptions);
+      wrap.removeEventListener("wheel", combinedScrollHandler, scrollOptions);
+      if (isIOS()) {
+        wrap.removeEventListener(
+          "touchstart",
+          combinedScrollHandler,
+          scrollOptions
+        );
+        wrap.removeEventListener(
+          "touchend",
+          combinedScrollHandler,
+          scrollOptions
+        );
+      }
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
     };
   }, [handleScroll]);
 
-  // Simple image handling - no complex logic
+  // iOS-optimized image handling
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap || !cachedDisplayContent) return;
 
-    // Simple image visibility - no transitions or complex logic
-    const images = wrap.getElementsByTagName("img");
-    Array.from(images).forEach((img) => {
-      img.style.opacity = "1";
-      img.style.transition = "none"; // Disable transitions
-    });
+    // iOS-optimized image handling
+    const handleImages = async () => {
+      try {
+        // iOS delay for image processing
+        if (isIOS()) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+
+        const images = wrap.getElementsByTagName("img");
+        Array.from(images).forEach((img) => {
+          // iOS-specific image optimizations
+          if (isIOS()) {
+            img.style.webkitTransform = "translateZ(0)";
+            img.style.webkitBackfaceVisibility = "hidden";
+            img.style.webkitPerspective = "1000";
+          }
+
+          img.style.opacity = "1";
+          img.style.transition = "none"; // Disable transitions
+          img.style.pointerEvents = "none"; // Prevent iOS zoom
+          img.style.touchAction = "manipulation"; // Prevent iOS zoom
+        });
+      } catch (e) {
+        console.error("Error handling images:", e);
+        // Fallback to simple handling
+        const images = wrap.getElementsByTagName("img");
+        Array.from(images).forEach((img) => {
+          img.style.opacity = "1";
+          img.style.transition = "none";
+        });
+      }
+    };
+
+    handleImages();
   }, [cachedDisplayContent]);
 
-  // Loading skeleton (ngon hơn Spin)
-  if (loading) {
+  // Debug logging for iOS
+  useEffect(() => {
+    if (isIOS()) {
+      console.log("BlogDetailMobile iOS Debug:", {
+        blogId: blog?.id,
+        hasBlog: !!blog,
+        hasContent: !!blog?.content,
+        mobileLoading,
+        cachedDisplayContent: !!cachedDisplayContent,
+        displayContent: !!displayContent,
+        translating,
+      });
+    }
+  }, [
+    blog?.id,
+    blog?.content,
+    mobileLoading,
+    cachedDisplayContent,
+    displayContent,
+    translating,
+    blog,
+  ]);
+
+  // Loading skeleton (ngon hơn Spin) - chỉ hiển thị khi không có content
+  if (!cachedDisplayContent && !blog?.content) {
     return (
       <PageContainer
         header={false}
@@ -725,6 +983,15 @@ export default function BlogDetailMobile({
         </ProCard>
       </PageContainer>
     );
+  }
+
+  // iOS Emergency fallback: Force show content if blog exists but no cached content
+  if (blog?.id && blog?.content && !cachedDisplayContent) {
+    console.log("iOS: Render fallback - forcing content display");
+    // Force update state immediately
+    setCachedDisplayContent(blog.content);
+    setCachedLanguage(language);
+    setMobileLoading(false);
   }
 
   if (!blog) {
@@ -795,11 +1062,11 @@ export default function BlogDetailMobile({
       {NavigationBar}
       {AuthorBar}
 
-      {/* scroll container */}
+      {/* scroll container để bắt progress */}
       <div
         ref={scrollWrapRef}
         style={{
-          height: "100dvh", // Full viewport height
+          height: "100dvh",
           overflow: "auto",
           background: "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
@@ -814,9 +1081,6 @@ export default function BlogDetailMobile({
           paddingTop: isHeaderVisible ? "88px" : "48px",
           // Simplified transition
           transition: "padding-top 0.3s ease",
-          // Fix white space issue during translation
-          minHeight: "100dvh",
-          maxHeight: "100dvh",
         }}
       >
         <ProCard
@@ -829,18 +1093,11 @@ export default function BlogDetailMobile({
             maxWidth: "100%",
             ...jpFont,
             position: "relative",
-            // Fix white space during translation
-            minHeight: "100%",
-            display: "flex",
-            flexDirection: "column",
           }}
           bodyStyle={{
-            padding: "0 0 0",
+            padding: "0 0 80px",
             margin: 0,
             width: "100%",
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
           }}
         >
           {/* Translation Loading Overlay */}
@@ -855,13 +1112,6 @@ export default function BlogDetailMobile({
                 justifyContent: "center",
                 zIndex: 10,
                 backdropFilter: "blur(3px)",
-                // Fix white space issue
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                width: "100%",
-                height: "100%",
               }}
             >
               <ProCard
@@ -915,15 +1165,7 @@ export default function BlogDetailMobile({
           )}
 
           {/* Content - Title moved to author section */}
-          <div
-            style={{
-              padding: "12px 12px 0 12px",
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0, // Prevent flex item from growing beyond container
-            }}
-          >
+          <div style={{ padding: "12px" }}>
             {/* Nội dung */}
             <div
               className="jp-prose"
@@ -936,13 +1178,9 @@ export default function BlogDetailMobile({
                 overflowWrap: "break-word",
                 wordWrap: "break-word",
                 hyphens: "auto",
-                paddingBottom: "20px",
-                // Fix white space during translation
-                flex: 1,
-                minHeight: 0,
               }}
               dangerouslySetInnerHTML={{
-                __html: optimizedHtml,
+                __html: optimizeHtmlForMobile(finalDisplayContent),
               }}
             />
           </div>
@@ -1018,6 +1256,30 @@ export default function BlogDetailMobile({
         </Space>
       </Drawer>
 
+      {/* Progress đọc ở mép dưới màn hình */}
+      <Affix offsetBottom={0}>
+        <div
+          style={{
+            height: 3,
+            width: "100%",
+            background: "rgba(139, 69, 19, 0.1)",
+            willChange: "transform",
+            transform: "translateZ(0)",
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: "100%",
+              background: "#8b4513",
+              transform: `translateX(${readPct - 100}%)`,
+              willChange: "transform",
+              transition: "transform 0.1s ease-out",
+            }}
+          />
+        </div>
+      </Affix>
+
       {/* Full-bleed overrides */}
       <style>{`
           /* Hide scrollbar for Chrome, Safari and Opera */
@@ -1036,16 +1298,23 @@ export default function BlogDetailMobile({
             -webkit-overflow-scrolling: touch;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            /* iOS-specific fixes */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
           }
           
           /* Prevent iOS zoom on double tap */
           * {
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
           }
 
-          /* Minimal touch optimization */
-          * {
-            -webkit-tap-highlight-color: transparent;
+          /* iOS scroll optimization */
+          .ant-pro-page-container-children-container {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
           }
 
           html, body, #root { 
@@ -1067,17 +1336,6 @@ export default function BlogDetailMobile({
           #root {
             display: flex;
             flex-direction: column;
-          }
-          /* Fix white space during translation */
-          .ant-pro-page-container-children-container {
-            flex: 1 !important;
-            margin: 0 !important; 
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: 100vw !important;
-            min-height: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
           }
           .ant-pro-page-container { 
             padding: 0 !important;
@@ -1105,21 +1363,6 @@ export default function BlogDetailMobile({
             background: #fdf6e3;
             width: 100% !important;
           }
-          .ant-pro-card {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-          .ant-pro-card-body {
-            margin: 0 !important;
-            padding: 0 !important;
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            min-height: 0 !important;
-          }
           .jp-prose img {
             border-radius: 12px;
             margin: 14px auto;
@@ -1128,22 +1371,27 @@ export default function BlogDetailMobile({
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid rgba(0,0,0,0.06);
             display: block;
-            /* Minimal CSS to prevent jank */
+            /* iOS-optimized CSS */
             pointer-events: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-user-drag: none;
             user-select: none;
-            /* Simple hardware acceleration */
+            /* iOS hardware acceleration */
             transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            -webkit-perspective: 1000;
+            /* iOS-specific optimizations */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            /* Prevent iOS zoom and improve performance */
+            touch-action: manipulation;
             /* No transitions or complex properties */
             opacity: 1;
             background: rgba(0,0,0,0.05);
-            /* iOS-specific optimizations */
-            -webkit-backface-visibility: hidden;
-            -webkit-transform: translateZ(0);
-            -webkit-perspective: 1000;
-            /* Prevent iOS zoom on double tap */
-            touch-action: manipulation;
+            /* iOS scroll optimization */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
           }
           .jp-prose p {
             margin: 0.85em 0;
