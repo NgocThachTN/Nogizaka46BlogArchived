@@ -358,10 +358,20 @@ export const getImageUrl = (imagePath) => {
 // Fetch thông tin member từ code
 export const fetchMemberInfo = async (memberCode) => {
   try {
-    console.log("Fetching member info for code:", memberCode);
+    console.log(
+      "Fetching member info for code:",
+      memberCode,
+      "Type:",
+      typeof memberCode
+    );
+    console.log("isIOS():", isIOS());
+    console.log("isSafari():", isSafari());
 
-    // Xử lý member đặc biệt 40008 (6期生リレー)
-    if (String(memberCode) === "40008") {
+    // Xử lý member đặc biệt 40008 (6期生リレー) - cải thiện cho iOS
+    const normalizedCode = String(memberCode).trim();
+    console.log("Normalized code:", normalizedCode);
+
+    if (normalizedCode === "40008" || normalizedCode === "40008.0") {
       const specialMember = {
         code: "40008",
         name: "6期生リレー",
@@ -369,7 +379,7 @@ export const fetchMemberInfo = async (memberCode) => {
         groupcode: "6期生",
         graduation: "NO",
       };
-      console.log("Returning special member:", specialMember);
+      console.log("Returning special member for iOS:", specialMember);
       return specialMember;
     }
 
@@ -432,13 +442,25 @@ export const fetchMemberInfo = async (memberCode) => {
     console.log("API data length:", api.data?.length || 0);
     console.log("Looking for member with code:", memberCode);
 
-    const member = api.data.find((m) => String(m.code) === String(memberCode));
+    // Cải thiện tìm kiếm member cho iOS
+    const member = api.data.find((m) => {
+      const memberCodeStr = String(m.code).trim();
+      const searchCodeStr = String(memberCode).trim();
+      console.log("Comparing:", memberCodeStr, "===", searchCodeStr);
+      return memberCodeStr === searchCodeStr;
+    });
     console.log("Found member:", member);
 
     if (!member) {
       console.log(
         "All available members:",
         api.data.map((m) => ({ code: m.code, name: m.name }))
+      );
+      console.log(
+        "Searching for code:",
+        memberCode,
+        "Type:",
+        typeof memberCode
       );
     }
     return member || null;
@@ -459,8 +481,20 @@ export const fetchMemberInfoByName = async (memberName) => {
     if (!memberName) return null;
     console.log("Fetching member info for name:", memberName);
 
-    // Xử lý member đặc biệt 6期生リレー
-    if (memberName === "6期生リレー" || memberName === "6th Gen Relay") {
+    // Xử lý member đặc biệt 6期生リレー - cải thiện cho iOS
+    const normalizedName = (memberName || "").trim();
+    console.log(
+      "Fetching member info for name:",
+      normalizedName,
+      "Type:",
+      typeof memberName
+    );
+
+    if (
+      normalizedName === "6期生リレー" ||
+      normalizedName === "6th Gen Relay" ||
+      normalizedName.includes("6期生")
+    ) {
       const specialMember = {
         code: "40008",
         name: "6期生リレー",
@@ -468,7 +502,7 @@ export const fetchMemberInfoByName = async (memberName) => {
         groupcode: "6期生",
         graduation: "NO",
       };
-      console.log("Returning special member by name:", specialMember);
+      console.log("Returning special member by name for iOS:", specialMember);
       return specialMember;
     }
     let memberData;

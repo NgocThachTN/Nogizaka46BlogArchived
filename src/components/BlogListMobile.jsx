@@ -52,7 +52,7 @@ import {
   getImageUrl,
   fetchMemberInfo,
 } from "../services/blogService";
-import { useIOSMemberLoader } from "../utils/iosMemberLoader";
+// Removed iosMemberLoader import - using unified fetchMemberInfo approach
 
 const { Title, Text } = Typography;
 
@@ -114,9 +114,8 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
   const [page, setPage] = useState(1);
   const [memberInfo, setMemberInfo] = useState(null);
 
-  // iOS member loader
-  const iosMemberLoader = useIOSMemberLoader();
-  const isIOS = iosMemberLoader.isIOS();
+  // iOS detection
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   console.log(
     "BlogListMobile - iOS detected:",
@@ -125,70 +124,81 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     navigator.userAgent
   );
 
-  // iOS-specific debugging for member info
+  // Debug member info for all platforms
   useEffect(() => {
-    if (isIOS) {
-      const debugInfo = iosMemberLoader.getDebugInfo(memberCode);
-      console.log("iOS BlogListMobile - Member info debug:", {
-        ...debugInfo,
-        hasMemberInfo: !!memberInfo,
-        memberInfoName: memberInfo?.name,
-        memberInfoImg: memberInfo?.img,
-        loading,
-        error,
-      });
-    }
-  }, [memberInfo, loading, error, memberCode, isIOS, iosMemberLoader]);
+    console.log("BlogListMobile - Member info debug:", {
+      memberCode,
+      hasMemberInfo: !!memberInfo,
+      memberInfoName: memberInfo?.name,
+      memberInfoImg: memberInfo?.img,
+      loading,
+      error,
+      isIOS,
+    });
+  }, [memberInfo, loading, error, memberCode, isIOS]);
 
-  // iOS-specific: Load member info using iOS utilities
+  // Load member info for all member IDs (unified approach)
   useEffect(() => {
-    if (isIOS && memberCode && !memberInfo && !loading) {
-      const retryCount = iosMemberLoader.getRetryCount(memberCode);
-
-      // Force reset if retry count is too high
-      if (retryCount > 3) {
-        console.log(
-          `iOS BlogListMobile: Retry count too high (${retryCount}), force resetting...`
-        );
-        iosMemberLoader.forceResetRetry(memberCode);
-      }
-
-      const actualRetryCount = iosMemberLoader.getRetryCount(memberCode);
-      console.log(
-        `iOS BlogListMobile: Missing memberInfo, attempting to load... (retry ${
-          actualRetryCount + 1
-        }/3)`
-      );
+    if (memberCode && !memberInfo && !loading) {
+      console.log("BlogListMobile: Missing memberInfo, attempting to load...");
+      console.log("MemberCode:", memberCode, "Type:", typeof memberCode);
+      console.log("isIOS:", isIOS);
 
       const timeout = setTimeout(async () => {
         try {
-          const member = await iosMemberLoader.loadMember(memberCode);
+          // Use fetchMemberInfo for all member IDs (unified approach)
+          const member = await fetchMemberInfo(memberCode);
+
           if (member) {
             console.log(
-              "iOS BlogListMobile: Successfully loaded memberInfo:",
+              "BlogListMobile: Successfully loaded memberInfo:",
               member
             );
             setMemberInfo(member);
           } else {
             console.log(
-              `iOS BlogListMobile: Failed to load member ${memberCode}`
+              "BlogListMobile: Failed to load memberInfo for:",
+              memberCode
             );
+
+            // iOS-specific fallback for any member ID that fails
+            if (isIOS) {
+              console.log("iOS BlogListMobile: Creating fallback member info");
+              // Try to get member info from the main member list
+              try {
+                const response = await fetch(
+                  "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
+                );
+                const text = await response.text();
+                const jsonStr = text.replace(/^res\(/, "").replace(/\);?$/, "");
+                const api = JSON.parse(jsonStr);
+                const fallbackMember = api.data.find(
+                  (m) => String(m.code) === String(memberCode)
+                );
+
+                if (fallbackMember) {
+                  console.log(
+                    "iOS BlogListMobile: Found fallback member:",
+                    fallbackMember
+                  );
+                  setMemberInfo(fallbackMember);
+                }
+              } catch (fallbackError) {
+                console.warn(
+                  "iOS BlogListMobile: Fallback also failed:",
+                  fallbackError
+                );
+              }
+            }
           }
         } catch (error) {
-          console.warn("iOS BlogListMobile: Failed to load memberInfo:", error);
+          console.warn("BlogListMobile: Failed to load memberInfo:", error);
         }
-      }, 2000 + actualRetryCount * 1000); // Increasing delay for retries
+      }, 1000); // Reduced timeout
 
       return () => clearTimeout(timeout);
     }
-  }, [memberCode, memberInfo, loading, isIOS, iosMemberLoader]);
-
-  // Reset retry count when memberCode changes
-  useEffect(() => {
-    if (memberCode) {
-      iosMemberLoader.resetRetryCount(memberCode);
-    }
-  }, [memberCode, iosMemberLoader]);
+  }, [memberCode, memberInfo, loading, isIOS]);
 
   const abortRef = useRef(null);
   const PAGE_SIZE = 8; // Tăng số lượng để giảm pagination
@@ -355,6 +365,19 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               ),
         ]);
 
+        // iOS-specific fallback for ID 40008
+        let finalMember = member;
+        if (!finalMember && isIOS && String(memberCode) === "40008") {
+          console.log("iOS BlogListMobile: Creating fallback member for 40008");
+          finalMember = {
+            code: "40008",
+            name: "6期生リレー",
+            cate: "6期生",
+            groupcode: "6期生",
+            graduation: "NO",
+          };
+        }
+
         if (!controller.signal.aborted) {
           // Cập nhật cache trước khi set state
           _cache.blogsByMember.set(memberCode, {
@@ -363,7 +386,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             loading: false,
           });
           _cache.memberByCode.set(memberCode, {
-            info: member,
+            info: finalMember,
             ts: Date.now(),
           });
 
@@ -379,7 +402,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                   )
                 : all
             );
-            setMemberInfo(member);
+            setMemberInfo(finalMember);
 
             // Force iOS to update the DOM
             setTimeout(() => {
@@ -398,7 +421,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                   : all
               );
             });
-            setMemberInfo(member);
+            setMemberInfo(finalMember);
           }
         }
       } catch (e) {
@@ -799,13 +822,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                           }}
                         >
                           Debug: MemberCode {memberCode} -{" "}
-                          {loading
-                            ? "Loading..."
-                            : isIOS
-                            ? `Retry ${iosMemberLoader.getRetryCount(
-                                memberCode
-                              )}/3`
-                            : "No member info"}
+                          {loading ? "Loading..." : "No member info"}
                         </Text>
                         <Space size={4}>
                           <Button

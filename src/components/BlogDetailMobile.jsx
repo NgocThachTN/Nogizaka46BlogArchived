@@ -754,18 +754,71 @@ export default function BlogDetailMobile({
   useEffect(() => {
     if (blog?.id && !memberInfo && !loading) {
       console.log("Missing memberInfo, attempting to load...");
+      console.log(
+        "Blog memberCode:",
+        blog.memberCode,
+        "Type:",
+        typeof blog.memberCode
+      );
+      console.log("Blog author:", blog.author);
+      console.log("isIOS():", isIOS());
+
       const timeout = setTimeout(async () => {
         try {
           let member = null;
 
           // Try to load by memberCode first
           if (blog.memberCode) {
+            console.log("Trying to load by memberCode:", blog.memberCode);
             member = await fetchMemberInfo(blog.memberCode);
+            console.log("fetchMemberInfo result:", member);
           }
 
           // Fallback to loading by author name
           if (!member && blog.author) {
+            console.log("Trying to load by author name:", blog.author);
             member = await fetchMemberInfoByName(blog.author);
+            console.log("fetchMemberInfoByName result:", member);
+          }
+
+          // iOS-specific fallback for any member ID that fails
+          if (!member && isIOS()) {
+            console.log(
+              "iOS fallback: Attempting to load member info directly"
+            );
+            try {
+              const response = await fetch(
+                "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
+              );
+              const text = await response.text();
+              const jsonStr = text.replace(/^res\(/, "").replace(/\);?$/, "");
+              const api = JSON.parse(jsonStr);
+              const fallbackMember = api.data.find(
+                (m) => String(m.code) === String(blog.memberCode)
+              );
+
+              if (fallbackMember) {
+                console.log("iOS fallback: Found member:", fallbackMember);
+                member = fallbackMember;
+              } else if (
+                blog.memberCode === "40008" ||
+                blog.author?.includes("6期生")
+              ) {
+                console.log("iOS fallback: Creating special member for 40008");
+                member = {
+                  code: "40008",
+                  name: "6期生リレー",
+                  cate: "6期生",
+                  groupcode: "6期生",
+                  graduation: "NO",
+                };
+              }
+            } catch (fallbackError) {
+              console.warn(
+                "iOS fallback: Failed to load member info:",
+                fallbackError
+              );
+            }
           }
 
           if (member) {
