@@ -596,9 +596,37 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     setNavIds(newNavIds);
   }, []);
 
-  // Fast navigation function
-  const fastGo = useCallback(
-    (blogId) => {
+  // Fast navigation function - using useRef to avoid iOS uninitialized variable error
+  const fastGo = useRef((blogId) => {
+    if (navLock || !blogId) return;
+
+    console.log("BlogListMobile: Navigating to blog", blogId);
+
+    setNavLock(true);
+    setPendingNavId(blogId);
+
+    // Save current scroll position
+    _cache.scrollY.set(memberCode, window.scrollY);
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if (isIOS) {
+      // iOS Safari: Add small delay to ensure state is saved
+      setTimeout(() => {
+        navigate(`/blog/${blogId}`);
+        setNavLock(false);
+        setPendingNavId(null);
+      }, 50);
+    } else {
+      navigate(`/blog/${blogId}`);
+      setNavLock(false);
+      setPendingNavId(null);
+    }
+  });
+
+  // Update fastGo function when dependencies change
+  useEffect(() => {
+    fastGo.current = (blogId) => {
       if (navLock || !blogId) return;
 
       console.log("BlogListMobile: Navigating to blog", blogId);
@@ -623,12 +651,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         setNavLock(false);
         setPendingNavId(null);
       }
-    },
-    [navigate, memberCode, navLock]
-  );
+    };
+  }, [navigate, memberCode, navLock]);
 
   const onOpen = (id) => {
-    fastGo(id);
+    fastGo.current(id);
   };
 
   // Lazy loading cho images
@@ -1341,7 +1368,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                                 disabled={navLock}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  fastGo(blogNav.prevId);
+                                  fastGo.current(blogNav.prevId);
                                 }}
                                 onMouseEnter={() =>
                                   prefetchBlogDetail(blogNav.prevId)
@@ -1379,7 +1406,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                                 disabled={navLock}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  fastGo(blogNav.nextId);
+                                  fastGo.current(blogNav.nextId);
                                 }}
                                 onMouseEnter={() =>
                                   prefetchBlogDetail(blogNav.nextId)
