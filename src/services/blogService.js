@@ -277,18 +277,32 @@ export const fetchBlogDetail = async (blogId) => {
     const author = $(".bd--prof__name").text().trim();
     console.log("Author name from blog:", author);
 
-    // Fetch member info to get correct image sử dụng proxy
-    let memberData;
-    if (shouldUseProxy()) {
-      try {
-        memberData = await fetchWithProxy("/s/n46/api/list/member", {
-          callback: "res",
-        });
-      } catch (proxyError) {
-        console.warn(
-          "Proxy failed for member info, trying direct request:",
-          proxyError
-        );
+    // Try to fetch member info for avatar image, but don't block on failure
+    let memberImage = null;
+    try {
+      let memberData;
+      if (shouldUseProxy()) {
+        try {
+          memberData = await fetchWithProxy("/s/n46/api/list/member", {
+            callback: "res",
+          });
+        } catch (proxyError) {
+          console.warn(
+            "Proxy failed for member info, trying direct request:",
+            proxyError
+          );
+          const response = await axios.get(
+            `${BASE_URL}/s/n46/api/list/member?callback=res`,
+            {
+              responseType: "text",
+              headers: {
+                "User-Agent": getUserAgent(),
+              },
+            }
+          );
+          memberData = response.data;
+        }
+      } else {
         const response = await axios.get(
           `${BASE_URL}/s/n46/api/list/member?callback=res`,
           {
@@ -300,22 +314,16 @@ export const fetchBlogDetail = async (blogId) => {
         );
         memberData = response.data;
       }
-    } else {
-      const response = await axios.get(
-        `${BASE_URL}/s/n46/api/list/member?callback=res`,
-        {
-          responseType: "text",
-          headers: {
-            "User-Agent": getUserAgent(),
-          },
-        }
-      );
-      memberData = response.data;
-    }
 
-    const jsonStr = memberData.replace(/^res\(/, "").replace(/\);?$/, "");
-    const memberApi = JSON.parse(jsonStr);
-    const memberInfo = memberApi.data.find((m) => m.code === memberCode);
+      if (memberData) {
+        const jsonStr = memberData.replace(/^res\(/, "").replace(/\);?$/, "");
+        const memberApi = JSON.parse(jsonStr);
+        const memberInfo = memberApi.data.find((m) => m.code === memberCode);
+        memberImage = memberInfo?.img || null;
+      }
+    } catch (memberError) {
+      console.warn("Failed to fetch member info:", memberError);
+    }
 
     // Get original URL
     const originalUrl = `${BASE_URL}/s/n46/diary/detail/${blogId}?cd=MEMBER`;
@@ -327,7 +335,7 @@ export const fetchBlogDetail = async (blogId) => {
       content: content.html() || "",
       memberCode,
       author,
-      memberImage: memberInfo?.img || null,
+      memberImage,
       originalUrl,
     };
 
