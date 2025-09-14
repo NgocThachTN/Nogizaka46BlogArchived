@@ -29,12 +29,6 @@ export const prefetchBlogDetail = async (blogId) => {
 // Fetch tất cả các blog của member
 export const fetchAllBlogs = async (memberCode) => {
   try {
-    // Xử lý member đặc biệt 40008 (特別メンバー) - không có blog thực tế
-    if (String(memberCode) === "40008") {
-      console.log("Special member 40008 - returning empty blog list");
-      return [];
-    }
-
     let allBlogs = [];
     let currentPage = 0;
     let hasNextPage = true;
@@ -366,21 +360,14 @@ export const fetchMemberInfo = async (memberCode) => {
   try {
     console.log("Fetching member info for code:", memberCode);
 
-    // Xử lý member đặc biệt 40008 (特別メンバー)
+    // Xử lý member đặc biệt 40008 (6期生リレー)
     if (String(memberCode) === "40008") {
       const specialMember = {
         code: "40008",
-        name: "特別メンバー",
-        english_name: "Special Member",
-        kana: "とくべつめんばー",
+        name: "6期生リレー",
         cate: "6期生",
         groupcode: "6期生",
-        img: "https://via.placeholder.com/300x300?text=Special+Member",
-        birthday: "2000/01/01",
-        blood: "A型",
-        constellation: "やぎ座",
         graduation: "NO",
-        link: "https://www.nogizaka46.com",
       };
       console.log("Returning special member:", specialMember);
       return specialMember;

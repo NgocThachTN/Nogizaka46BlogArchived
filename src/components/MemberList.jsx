@@ -143,29 +143,25 @@ const MemberList = ({ language = "ja", setLanguage }) => {
         // Lọc thành viên còn hoạt động
         const active = (api.data || []).filter((m) => m.graduation === "NO");
 
+        // Thêm member đặc biệt 6期生リレー vào danh sách API
+        const specialMember = {
+          code: "40008",
+          name: "6期生リレー",
+          cate: "6期生",
+          groupcode: "6期生",
+          graduation: "NO",
+        };
+
+        // Kết hợp dữ liệu API với member đặc biệt
+        const allMembers = [...active, specialMember];
+
         // Ảnh placeholder nếu lỗi
-        const normalized = active.map((m) => ({
+        const normalized = allMembers.map((m) => ({
           ...m,
           img: m.img || "https://via.placeholder.com/300x300?text=No+Image",
         }));
 
-        // Thêm card member đặc biệt với id 40008
-        const specialMember = {
-          code: "40008",
-          name: "特別メンバー",
-          english_name: "Special Member",
-          kana: "とくべつめんばー",
-          cate: "6期生",
-          groupcode: "6期生",
-          img: "https://via.placeholder.com/300x300?text=Special+Member",
-          birthday: "2000/01/01",
-          blood: "A型",
-          constellation: "やぎ座",
-          graduation: "NO",
-          link: "https://www.nogizaka46.com",
-        };
-
-        setMembers([...normalized, specialMember]);
+        setMembers(normalized);
       } catch (e) {
         console.error(e);
         notification.error({
