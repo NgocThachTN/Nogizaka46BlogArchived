@@ -36,9 +36,9 @@
 - **i18n** – JA/EN/VI  
 - **Gemini API** – automatic translations
 ## 🛠 Scripts
-
-- `dev` – start dev server  
-- `build` – create production build  
+-- `npm i` – install essential library 
+- `npm run dev` – start dev server  
+- `npm run build` – create production build  
 - `preview` – serve built app  
 - `lint` – optional (if configured)
 
