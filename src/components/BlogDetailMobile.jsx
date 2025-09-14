@@ -41,6 +41,7 @@ import {
 } from "react";
 import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
 import { isIOS, isIOS18Plus, isIPhoneXS } from "../utils/deviceDetection";
+import { useIOSMemberLoader } from "../utils/iosMemberLoader";
 
 const { Title, Text } = Typography;
 
@@ -163,6 +164,9 @@ export default function BlogDetailMobile({
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
+
+  // iOS member loader
+  const iosMemberLoader = useIOSMemberLoader();
 
   // Removed unused navTopBtnStyle
 
@@ -742,29 +746,23 @@ export default function BlogDetailMobile({
     }
   }, [blog?.content, cachedDisplayContent, loading]);
 
-  // iOS-specific: Force load memberInfo if missing
+  // iOS-specific: Force load memberInfo if missing using iOS utilities
   useEffect(() => {
     if (isIOS() && blog?.id && !memberInfo && !loading) {
       console.log("iOS: Missing memberInfo, attempting to load...");
       const timeout = setTimeout(async () => {
         try {
-          // Try to fetch member info directly
-          const { fetchMemberInfo, fetchMemberInfoByName } = await import(
-            "../services/blogService"
+          const member = await iosMemberLoader.loadMember(
+            blog.memberCode,
+            blog.author
           );
-          let member = null;
-
-          if (blog.memberCode) {
-            member = await fetchMemberInfo(blog.memberCode);
-          }
-          if (!member && blog.author) {
-            member = await fetchMemberInfoByName(blog.author);
-          }
 
           if (member) {
             console.log("iOS: Successfully loaded memberInfo:", member);
             // Force re-render by updating a dummy state
             setRetryCount((prev) => prev + 1);
+          } else {
+            console.log("iOS: Failed to load memberInfo");
           }
         } catch (error) {
           console.warn("iOS: Failed to load memberInfo:", error);
@@ -773,7 +771,14 @@ export default function BlogDetailMobile({
 
       return () => clearTimeout(timeout);
     }
-  }, [blog?.id, memberInfo, loading, blog?.author, blog?.memberCode]);
+  }, [
+    blog?.id,
+    memberInfo,
+    loading,
+    blog?.author,
+    blog?.memberCode,
+    iosMemberLoader,
+  ]);
 
   // Loading skeleton
   if (loading) {

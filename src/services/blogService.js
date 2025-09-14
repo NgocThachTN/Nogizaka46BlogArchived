@@ -1,7 +1,12 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { fetchWithProxy } from "../api/proxy.js";
-import { shouldUseProxy, getUserAgent } from "../utils/deviceDetection.js";
+import {
+  shouldUseProxy,
+  getUserAgent,
+  isIOS,
+  isSafari,
+} from "../utils/deviceDetection.js";
 
 const BASE_URL = "https://www.nogizaka46.com";
 const BLOG_URL = `/s/n46/diary/MEMBER/list`;
@@ -20,7 +25,7 @@ export const prefetchBlogDetail = async (blogId) => {
   } catch {
     return undefined;
   }
-}
+};
 // Fetch tất cả các blog của member
 export const fetchAllBlogs = async (memberCode) => {
   try {
@@ -40,7 +45,7 @@ export const fetchAllBlogs = async (memberCode) => {
     console.error("Error fetching all blogs:", error);
     return [];
   }
-}
+};
 
 // Fetch một trang blog
 const fetchBlogPage = async (page, memberCode) => {
@@ -50,7 +55,7 @@ const fetchBlogPage = async (page, memberCode) => {
       ct: memberCode,
       page: page,
       ima: Math.floor(Date.now() / 1000), // Timestamp hiện tại
-    }
+    };
 
     let htmlData;
     if (shouldUseProxy()) {
@@ -108,12 +113,12 @@ const fetchBlogPage = async (page, memberCode) => {
     return {
       blogs,
       nextPage: hasNextPage,
-    }
+    };
   } catch (error) {
     console.error(`Error fetching blog page ${page}:`, error);
-    return { blogs: [], nextPage: false }
+    return { blogs: [], nextPage: false };
   }
-}
+};
 
 // Fetch chi tiết một blog
 export const fetchBlogDetail = async (blogId) => {
@@ -122,7 +127,7 @@ export const fetchBlogDetail = async (blogId) => {
     const params = {
       cd: "MEMBER",
       ima: Math.floor(Date.now() / 1000),
-    }
+    };
 
     let htmlData;
     if (shouldUseProxy()) {
@@ -322,7 +327,7 @@ export const fetchBlogDetail = async (blogId) => {
       author,
       memberImage: memberInfo?.img || null,
       originalUrl,
-    }
+    };
 
     // cache the result for instant reuse
     _detailCache.set(String(blogId), detail);
@@ -331,25 +336,31 @@ export const fetchBlogDetail = async (blogId) => {
     console.error("Error fetching blog detail:", error);
     return null;
   }
-}
+};
 
 // Helper function to get image URL
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "";
   if (imagePath.startsWith("http")) return imagePath;
   return `${BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
-}
+};
 
 // Fetch thông tin member từ code
 export const fetchMemberInfo = async (memberCode) => {
   try {
     console.log("Fetching member info for code:", memberCode);
+    console.log("shouldUseProxy():", shouldUseProxy());
+    console.log("isIOS():", isIOS());
+    console.log("isSafari():", isSafari());
+
     let memberData;
     if (shouldUseProxy()) {
+      console.log("Using proxy for member info...");
       try {
         memberData = await fetchWithProxy("/s/n46/api/list/member", {
           callback: "res",
         });
+        console.log("Proxy success, data length:", memberData?.length || 0);
       } catch (proxyError) {
         console.warn(
           "Proxy failed for member info, trying direct request:",
@@ -365,8 +376,13 @@ export const fetchMemberInfo = async (memberCode) => {
           }
         );
         memberData = response.data;
+        console.log(
+          "Direct request success, data length:",
+          memberData?.length || 0
+        );
       }
     } else {
+      console.log("Using direct request for member info...");
       const response = await axios.get(
         `${BASE_URL}/s/n46/api/list/member?callback=res`,
         {
@@ -377,11 +393,21 @@ export const fetchMemberInfo = async (memberCode) => {
         }
       );
       memberData = response.data;
+      console.log(
+        "Direct request success, data length:",
+        memberData?.length || 0
+      );
     }
 
+    console.log("Raw member data preview:", memberData?.substring(0, 200));
+
     const jsonStr = memberData.replace(/^res\(/, "").replace(/\);?$/, "");
+    console.log("Parsed JSON string length:", jsonStr.length);
+
     const api = JSON.parse(jsonStr);
+    console.log("API data length:", api.data?.length || 0);
     console.log("Looking for member with code:", memberCode);
+
     const member = api.data.find((m) => String(m.code) === String(memberCode));
     console.log("Found member:", member);
 
@@ -394,9 +420,14 @@ export const fetchMemberInfo = async (memberCode) => {
     return member || null;
   } catch (error) {
     console.error("Error fetching member info:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return null;
   }
-}
+};
 
 // Fetch member info by exact name match (fallback when code is missing)
 export const fetchMemberInfoByName = async (memberName) => {
@@ -448,4 +479,4 @@ export const fetchMemberInfoByName = async (memberName) => {
     console.error("Error fetching member by name:", error);
     return null;
   }
-}
+};
