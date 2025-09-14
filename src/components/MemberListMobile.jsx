@@ -190,17 +190,10 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         // Thêm card member đặc biệt với id 40008
         const specialMember = {
           code: "40008",
-          name: "特別メンバー",
-          english_name: "Special Member",
-          kana: "とくべつめんばー",
+          name: "6期生リレー",
           cate: "6期生",
           groupcode: "6期生",
-          img: "https://via.placeholder.com/320x320?text=Special+Member",
-          birthday: "2000/01/01",
-          blood: "A型",
-          constellation: "やぎ座",
           graduation: "NO",
-          link: "https://www.nogizaka46.com",
         };
 
         if (!canceled) setMembers([...normalized, specialMember]);
