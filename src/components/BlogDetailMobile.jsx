@@ -39,9 +39,13 @@ import {
   useLayoutEffect,
   useTransition,
 } from "react";
-import { getCachedBlogDetail, getImageUrl } from "../services/blogService";
+import {
+  getCachedBlogDetail,
+  getImageUrl,
+  fetchMemberInfo,
+  fetchMemberInfoByName,
+} from "../services/blogService";
 import { isIOS, isIOS18Plus, isIPhoneXS } from "../utils/deviceDetection";
-import { useIOSMemberLoader } from "../utils/iosMemberLoader";
 
 const { Title, Text } = Typography;
 
@@ -166,8 +170,7 @@ export default function BlogDetailMobile({
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
 
-  // iOS member loader
-  const iosMemberLoader = useIOSMemberLoader();
+  // iOS member loader - removed as we now use fetchMemberInfo for all member IDs
 
   // Removed unused navTopBtnStyle
 
@@ -747,35 +750,40 @@ export default function BlogDetailMobile({
     }
   }, [blog?.content, cachedDisplayContent, loading]);
 
-  // iOS-specific: Force load memberInfo if missing using iOS utilities
+  // Load memberInfo for all member IDs (not just iOS)
   useEffect(() => {
-    if (isIOS() && blog?.id && !memberInfo && !loading) {
-      console.log("iOS: Missing memberInfo, attempting to load...");
+    if (blog?.id && !memberInfo && !loading) {
+      console.log("Missing memberInfo, attempting to load...");
       const timeout = setTimeout(async () => {
         try {
-          const member = await iosMemberLoader.loadMember(
-            blog.memberCode,
-            blog.author
-          );
+          let member = null;
+
+          // Try to load by memberCode first
+          if (blog.memberCode) {
+            member = await fetchMemberInfo(blog.memberCode);
+          }
+
+          // Fallback to loading by author name
+          if (!member && blog.author) {
+            member = await fetchMemberInfoByName(blog.author);
+          }
 
           if (member) {
-            console.log("iOS: Successfully loaded memberInfo:", member);
-            // IMPORTANT: Set the memberInfo state to trigger re-render
-            // This was missing before!
+            console.log("Successfully loaded memberInfo:", member);
             if (setMemberInfo) {
               setMemberInfo(member);
             } else {
               console.warn(
-                "iOS: setMemberInfo not provided, cannot update memberInfo"
+                "setMemberInfo not provided, cannot update memberInfo"
               );
             }
           } else {
-            console.log("iOS: Failed to load memberInfo");
+            console.log("Failed to load memberInfo");
           }
         } catch (error) {
-          console.warn("iOS: Failed to load memberInfo:", error);
+          console.warn("Failed to load memberInfo:", error);
         }
-      }, 3000); // 3 second timeout
+      }, 2000); // 2 second timeout
 
       return () => clearTimeout(timeout);
     }
@@ -785,7 +793,6 @@ export default function BlogDetailMobile({
     loading,
     blog?.author,
     blog?.memberCode,
-    iosMemberLoader,
     setMemberInfo,
   ]);
 

@@ -355,14 +355,6 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               ),
         ]);
 
-        console.log("BlogListMobile - Loaded data:", {
-          memberCode,
-          blogsCount: all?.length || 0,
-          memberInfo: member,
-          hasMemberName: !!member?.name,
-          memberName: member?.name,
-        });
-
         if (!controller.signal.aborted) {
           // Cập nhật cache trước khi set state
           _cache.blogsByMember.set(memberCode, {
@@ -788,17 +780,15 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       }}
                     >
                       {memberInfo?.name ||
-                        (isIOS && memberCode
+                        (memberCode
                           ? `Member ${memberCode}`
-                          : isIOS
-                          ? "Loading member..."
                           : currentLanguage === "ja"
                           ? "読み込み中..."
                           : currentLanguage === "vi"
                           ? "Đang tải..."
                           : "Loading...")}
                     </Title>
-                    {isIOS && !memberInfo && (
+                    {!memberInfo && (
                       <div style={{ marginTop: 4 }}>
                         <Text
                           style={{
@@ -811,9 +801,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                           Debug: MemberCode {memberCode} -{" "}
                           {loading
                             ? "Loading..."
-                            : `Retry ${iosMemberLoader.getRetryCount(
+                            : isIOS
+                            ? `Retry ${iosMemberLoader.getRetryCount(
                                 memberCode
-                              )}/3`}
+                              )}/3`
+                            : "No member info"}
                         </Text>
                         <Space size={4}>
                           <Button
@@ -825,7 +817,8 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                                   "Manual retry triggered for memberCode:",
                                   memberCode
                                 );
-                                const member = await iosMemberLoader.forceRetry(
+                                // Use fetchMemberInfo for all member IDs, not just iOS
+                                const member = await fetchMemberInfo(
                                   memberCode
                                 );
 
@@ -839,9 +832,6 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                                   console.log(
                                     "Manual retry failed - no member data returned"
                                   );
-                                  const debugInfo =
-                                    iosMemberLoader.getDebugInfo(memberCode);
-                                  console.log("Debug info:", debugInfo);
                                 }
                               } catch (error) {
                                 console.warn(
@@ -864,11 +854,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                             size="small"
                             onClick={() => {
                               console.log(
-                                "Force reset retry count for memberCode:",
+                                "Force reset for memberCode:",
                                 memberCode
                               );
-                              iosMemberLoader.forceResetRetry(memberCode);
-                              // Force re-render
+                              // Clear cache and force reload
+                              _cache.memberByCode.delete(memberCode);
                               setMemberInfo(null);
                             }}
                             style={{
