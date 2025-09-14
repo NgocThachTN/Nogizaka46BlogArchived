@@ -599,7 +599,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             <Space direction="vertical" align="center" size={16}>
               <Spin size="large" />
               <Text style={{ ...jpFont, color: colors.textSecondary }}>
-                {t.loading[currentLanguage]}
+                {t.loading[currentLanguage] || "Loading..."}
               </Text>
               {isIOS && (
                 <Text
@@ -777,7 +777,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       {memberInfo?.name ||
                         (isIOS
                           ? "Loading member..."
-                          : t.loading[currentLanguage])}
+                          : t.loading[currentLanguage] || "Loading...")}
                     </Title>
                     {isIOS && !memberInfo && (
                       <div style={{ marginTop: 4 }}>
