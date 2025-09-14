@@ -171,6 +171,82 @@ export class IOSMemberLoader {
   }
 
   /**
+   * Method 2.5: Try iOS-specific workaround with different headers
+   */
+  async tryIOSWorkaround(memberCode) {
+    console.log(`iOS: Trying iOS workaround for member ${memberCode}`);
+    try {
+      // Try with different User-Agent and headers
+      const response = await fetch(
+        `https://www.nogizaka46.com/s/n46/api/list/member?callback=res`,
+        {
+          method: "GET",
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            Accept: "*/*",
+            "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
+          },
+          mode: "cors",
+          credentials: "omit",
+        }
+      );
+
+      console.log("iOS: Workaround response status:", response.status);
+      console.log("iOS: Workaround response ok:", response.ok);
+
+      if (response.ok) {
+        const data = await response.text();
+        console.log("iOS: Workaround data length:", data.length);
+        console.log("iOS: Workaround data preview:", data.substring(0, 200));
+
+        const jsonStr = data.replace(/^res\(/, "").replace(/\);?$/, "");
+        console.log(
+          "iOS: Workaround parsed JSON string length:",
+          jsonStr.length
+        );
+
+        const api = JSON.parse(jsonStr);
+        console.log("iOS: Workaround API data length:", api.data?.length || 0);
+
+        const member = api.data.find(
+          (m) => String(m.code) === String(memberCode)
+        );
+        console.log("iOS: Found member in workaround method:", member);
+
+        if (member) {
+          console.log("iOS: Workaround method successful:", member);
+          this.setCachedMember(memberCode, member);
+          this.resetRetryCount(memberCode);
+          return member;
+        } else {
+          console.log("iOS: Member not found in workaround method data");
+        }
+      } else {
+        console.log(
+          "iOS: Workaround failed - response not ok:",
+          response.status
+        );
+      }
+      return null;
+    } catch (error) {
+      console.warn("iOS: Workaround method failed with error:", error);
+      console.warn("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+      return null;
+    }
+  }
+
+  /**
    * Method 3: Try fetch by name (fallback)
    */
   async tryNameMethod(memberName) {
@@ -195,20 +271,56 @@ export class IOSMemberLoader {
   async testProxyService() {
     console.log("iOS: Testing proxy service...");
     try {
-      const response = await fetch(
+      const testUrl =
         "/api/proxy?url=" +
-          encodeURIComponent(
-            "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
-          )
-      );
+        encodeURIComponent(
+          "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
+        );
+
+      console.log("iOS: Testing proxy URL:", testUrl);
+
+      const response = await fetch(testUrl, {
+        method: "GET",
+        headers: {
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+        },
+        mode: "cors",
+        credentials: "omit",
+      });
+
       console.log("iOS: Proxy test response status:", response.status);
       console.log("iOS: Proxy test response ok:", response.ok);
+      console.log(
+        "iOS: Proxy test response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (response.ok) {
         const data = await response.text();
         console.log("iOS: Proxy test data length:", data.length);
         console.log("iOS: Proxy test data preview:", data.substring(0, 200));
-        return true;
+
+        // Test if data can be parsed
+        try {
+          const jsonStr = data.replace(/^res\(/, "").replace(/\);?$/, "");
+          const api = JSON.parse(jsonStr);
+          console.log(
+            "iOS: Proxy test - parsed API data length:",
+            api.data?.length || 0
+          );
+          console.log(
+            "iOS: Proxy test - sample members:",
+            api.data
+              ?.slice(0, 3)
+              .map((m) => ({ code: m.code, name: m.name })) || []
+          );
+          return true;
+        } catch (parseError) {
+          console.warn("iOS: Proxy test - data parsing failed:", parseError);
+          return false;
+        }
       } else {
         console.log(
           "iOS: Proxy test failed - response not ok:",
@@ -218,6 +330,11 @@ export class IOSMemberLoader {
       }
     } catch (error) {
       console.warn("iOS: Proxy test failed with error:", error);
+      console.warn("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
       return false;
     }
   }
@@ -277,6 +394,12 @@ export class IOSMemberLoader {
     if (!member) {
       console.log("iOS: Trying direct method...");
       member = await this.tryDirectMethod(memberCode);
+    }
+
+    // Method 2.5: iOS workaround
+    if (!member) {
+      console.log("iOS: Trying iOS workaround method...");
+      member = await this.tryIOSWorkaround(memberCode);
     }
 
     // Method 3: By name (if provided)
