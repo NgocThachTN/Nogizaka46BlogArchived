@@ -725,11 +725,20 @@ export default function BlogDetailMobile({
       console.log("iOS: Force loading content after timeout");
       const timeout = setTimeout(() => {
         if (!cachedDisplayContent && blog?.content) {
+          console.log("iOS: Setting cached content from force load");
           setCachedDisplayContent(blog.content);
         }
-      }, 2000); // 2 second timeout
+      }, 1000); // Reduced timeout to 1 second
 
       return () => clearTimeout(timeout);
+    }
+  }, [blog?.content, cachedDisplayContent, loading]);
+
+  // Additional iOS fix: Force set content immediately if available
+  useEffect(() => {
+    if (isIOS() && blog?.content && !cachedDisplayContent && !loading) {
+      console.log("iOS: Immediate content set");
+      setCachedDisplayContent(blog.content);
     }
   }, [blog?.content, cachedDisplayContent, loading]);
 
@@ -768,6 +777,11 @@ export default function BlogDetailMobile({
 
   // Loading skeleton
   if (loading) {
+    console.log("iOS BlogDetailMobile: Loading state -", {
+      loading,
+      hasBlog: !!blog,
+      blogId: blog?.id,
+    });
     return (
       <PageContainer
         header={false}
@@ -802,6 +816,11 @@ export default function BlogDetailMobile({
   }
 
   if (!blog) {
+    console.log("iOS BlogDetailMobile: No blog -", {
+      loading,
+      hasBlog: !!blog,
+      blogId: blog?.id,
+    });
     return (
       <PageContainer
         header={false}
@@ -845,7 +864,13 @@ export default function BlogDetailMobile({
 
   // iOS fallback: Show content even without memberInfo
   if (isIOS() && blog?.content && !memberInfo && !loading) {
-    console.log("iOS: Showing content without memberInfo");
+    console.log("iOS: Showing content without memberInfo -", {
+      hasBlog: !!blog,
+      hasContent: !!blog?.content,
+      hasMemberInfo: !!memberInfo,
+      loading,
+      cachedDisplayContent: !!cachedDisplayContent,
+    });
     return (
       <PageContainer
         header={false}
@@ -1070,6 +1095,15 @@ export default function BlogDetailMobile({
       </PageContainer>
     );
   }
+
+  console.log("iOS BlogDetailMobile: Normal render -", {
+    hasBlog: !!blog,
+    hasContent: !!blog?.content,
+    hasMemberInfo: !!memberInfo,
+    loading,
+    cachedDisplayContent: !!cachedDisplayContent,
+    optimizedHtml: !!optimizedHtml,
+  });
 
   return (
     <PageContainer

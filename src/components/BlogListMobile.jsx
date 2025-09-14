@@ -138,6 +138,57 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     navigator.userAgent
   );
 
+  // iOS-specific debugging for member info
+  useEffect(() => {
+    if (isIOS) {
+      console.log("iOS BlogListMobile - Member info debug:", {
+        memberCode,
+        hasMemberInfo: !!memberInfo,
+        memberInfoName: memberInfo?.name,
+        memberInfoImg: memberInfo?.img,
+        loading,
+        error,
+      });
+    }
+  }, [memberInfo, loading, error, memberCode, isIOS]);
+
+  // iOS-specific: Force load member info if missing
+  useEffect(() => {
+    if (
+      isIOS &&
+      memberCode &&
+      !memberInfo &&
+      !loading &&
+      memberInfoRetryCount < 3
+    ) {
+      console.log(
+        `iOS BlogListMobile: Missing memberInfo, attempting to load... (retry ${
+          memberInfoRetryCount + 1
+        }/3)`
+      );
+      const timeout = setTimeout(async () => {
+        try {
+          const member = await fetchMemberInfo(memberCode);
+          if (member) {
+            console.log(
+              "iOS BlogListMobile: Successfully loaded memberInfo:",
+              member
+            );
+            setMemberInfo(member);
+            setMemberInfoRetryCount(0); // Reset retry count on success
+          } else {
+            setMemberInfoRetryCount((prev) => prev + 1);
+          }
+        } catch (error) {
+          console.warn("iOS BlogListMobile: Failed to load memberInfo:", error);
+          setMemberInfoRetryCount((prev) => prev + 1);
+        }
+      }, 2000 + memberInfoRetryCount * 1000); // Increasing delay for retries
+
+      return () => clearTimeout(timeout);
+    }
+  }, [memberCode, memberInfo, loading, isIOS, memberInfoRetryCount]);
+
   const [blogs, setBlogs] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -150,6 +201,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
 
   const [page, setPage] = useState(1);
   const [memberInfo, setMemberInfo] = useState(null);
+  const [memberInfoRetryCount, setMemberInfoRetryCount] = useState(0);
 
   const abortRef = useRef(null);
   const PAGE_SIZE = 8; // Tăng số lượng để giảm pagination
@@ -278,7 +330,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         if (isIOS) {
           // Add more delay for iOS to stabilize
-          await new Promise((resolve) => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 300));
 
           // Force layout recalc on iOS with multiple techniques
           document.body.style.willChange = "transform";
@@ -722,8 +774,58 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         fontWeight: 700,
                       }}
                     >
-                      {memberInfo?.name || t.loading[currentLanguage]}
+                      {memberInfo?.name ||
+                        (isIOS
+                          ? "Loading member..."
+                          : t.loading[currentLanguage])}
                     </Title>
+                    {isIOS && !memberInfo && (
+                      <div style={{ marginTop: 4 }}>
+                        <Text
+                          style={{
+                            ...jpFont,
+                            fontSize: 10,
+                            color: colors.textSecondary,
+                            fontStyle: "italic",
+                          }}
+                        >
+                          Debug: MemberCode {memberCode} -{" "}
+                          {loading
+                            ? "Loading..."
+                            : `Retry ${memberInfoRetryCount}/3`}
+                        </Text>
+                        {memberInfoRetryCount < 3 && (
+                          <Button
+                            type="link"
+                            size="small"
+                            onClick={async () => {
+                              try {
+                                const member = await fetchMemberInfo(
+                                  memberCode
+                                );
+                                if (member) {
+                                  setMemberInfo(member);
+                                  setMemberInfoRetryCount(0);
+                                } else {
+                                  setMemberInfoRetryCount((prev) => prev + 1);
+                                }
+                              } catch (error) {
+                                console.warn("Manual retry failed:", error);
+                                setMemberInfoRetryCount((prev) => prev + 1);
+                              }
+                            }}
+                            style={{
+                              padding: 0,
+                              height: "auto",
+                              fontSize: 10,
+                              color: colors.primary,
+                            }}
+                          >
+                            Retry Now
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </Space>
                 </Space>
                 <Space>
