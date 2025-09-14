@@ -194,17 +194,9 @@ export default function BlogDetailMobile({
         // Clear ALL cache to prevent showing old content
         _mobileCache.blogContent.clear();
 
-        // Show original content immediately - don't wait for translation
+        // Show original content immediately - simplified for iOS
         if (blog?.content) {
-          // iOS Safari specific: Add delay based on iOS version
-          if (isIOS()) {
-            const delay = isIOS18Plus() ? 100 : 50; // Longer delay for iOS 18+
-            setTimeout(() => {
-              setCachedDisplayContent(blog.content);
-            }, delay);
-          } else {
-            setCachedDisplayContent(blog.content);
-          }
+          setCachedDisplayContent(blog.content);
         }
       } else {
         // Same blog - check if we have valid cache
@@ -221,15 +213,7 @@ export default function BlogDetailMobile({
           // Clear cache and show original content
           _mobileCache.blogContent.delete(blog.id);
           if (blog?.content) {
-            // iOS Safari specific: Add delay based on iOS version
-            if (isIOS()) {
-              const delay = isIOS18Plus() ? 100 : 50; // Longer delay for iOS 18+
-              setTimeout(() => {
-                setCachedDisplayContent(blog.content);
-              }, delay);
-            } else {
-              setCachedDisplayContent(blog.content);
-            }
+            setCachedDisplayContent(blog.content);
           }
         }
       }
@@ -250,25 +234,14 @@ export default function BlogDetailMobile({
         ts: Date.now(),
       });
 
-      // iOS Safari specific: Add delay to prevent rendering issues
-      const updateContent = async () => {
-        if (isIOS()) {
-          // Longer delay for iOS 18+ to ensure proper rendering
-          const delay = isIOS18Plus() ? 200 : 150;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-
-        setCachedDisplayContent(displayContent);
-        setCachedLanguage(language);
-      };
-
-      updateContent();
+      // Simplified content update for iOS
+      setCachedDisplayContent(displayContent);
+      setCachedLanguage(language);
 
       // Force scroll to top with iOS optimizations
       if (scrollWrapRef.current) {
         if (isIOS()) {
-          // iOS smooth scroll workaround with better timing for iOS 18
-          const scrollDelay = isIOS18Plus() ? 150 : 100;
+          // iOS smooth scroll workaround
           scrollWrapRef.current.style.overflow = "hidden";
           scrollWrapRef.current.scrollTop = 0;
           setTimeout(() => {
@@ -276,7 +249,7 @@ export default function BlogDetailMobile({
               scrollWrapRef.current.style.overflow = "auto";
               scrollWrapRef.current.style.WebkitOverflowScrolling = "touch";
             }
-          }, scrollDelay);
+          }, 100);
         } else {
           scrollWrapRef.current.style.scrollBehavior = "auto";
           scrollWrapRef.current.scrollTop = 0;
@@ -315,26 +288,9 @@ export default function BlogDetailMobile({
   // ---- Force clear content when displayContent changes from parent ----
   useEffect(() => {
     if (displayContent && blog?.id) {
-      // iOS Safari specific: Validate content before setting
-      if (isIOS()) {
-        // Check if content is valid HTML
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = displayContent;
-        const hasValidContent =
-          tempDiv.children.length > 0 || tempDiv.textContent.trim().length > 0;
-
-        if (hasValidContent) {
-          setCachedDisplayContent(displayContent);
-          setCachedLanguage(language);
-          _mobileCache.blogContent.delete(blog.id);
-        } else {
-          console.warn("iOS Safari: Invalid content detected, skipping update");
-        }
-      } else {
-        setCachedDisplayContent(displayContent);
-        setCachedLanguage(language);
-        _mobileCache.blogContent.delete(blog.id);
-      }
+      setCachedDisplayContent(displayContent);
+      setCachedLanguage(language);
+      _mobileCache.blogContent.delete(blog.id);
     }
   }, [displayContent, language, blog?.id]);
 
@@ -398,11 +354,27 @@ export default function BlogDetailMobile({
         iosVersion: isIOS18Plus() ? "18+" : "17-",
         device: isIPhoneXS() ? "iPhone XS" : "Other iPhone",
         userAgent: navigator.userAgent,
+        // Debug author and title info
+        hasBlog: !!blog,
+        blogId: blog?.id,
+        blogTitle: blog?.title,
+        blogAuthor: blog?.author,
+        hasMemberInfo: !!memberInfo,
+        memberInfoName: memberInfo?.name,
+        displayTitle: displayTitle,
+        hasDisplayTitle: !!displayTitle,
       });
     }
 
     return optimizeHtmlForMobile(content);
-  }, [cachedDisplayContent, blog?.content, cachedLanguage, translating]);
+  }, [
+    cachedDisplayContent,
+    cachedLanguage,
+    translating,
+    blog,
+    displayTitle,
+    memberInfo,
+  ]);
 
   // Fixed Navigation Bar (always visible) - Clean Android design
   const NavigationBar = useMemo(
@@ -650,7 +622,7 @@ export default function BlogDetailMobile({
                 />
                 <div>
                   <Text strong style={{ color: "#3c2415", fontSize: "13px" }}>
-                    {memberInfo?.name || blog.author}
+                    {memberInfo?.name || blog?.author || "Unknown Author"}
                   </Text>
                   <div
                     style={{
@@ -691,7 +663,7 @@ export default function BlogDetailMobile({
                     whiteSpace: "normal",
                   }}
                 >
-                  {displayTitle || blog?.title || "Không có title"}
+                  {displayTitle || blog?.title || "Loading title..."}
                 </Text>
               </div>
 
@@ -746,6 +718,53 @@ export default function BlogDetailMobile({
       img.style.transition = "none"; // Disable transitions
     });
   }, [cachedDisplayContent]);
+
+  // iOS-specific: Force content load if stuck
+  useEffect(() => {
+    if (isIOS() && blog?.content && !cachedDisplayContent && !loading) {
+      console.log("iOS: Force loading content after timeout");
+      const timeout = setTimeout(() => {
+        if (!cachedDisplayContent && blog?.content) {
+          setCachedDisplayContent(blog.content);
+        }
+      }, 2000); // 2 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [blog?.content, cachedDisplayContent, loading]);
+
+  // iOS-specific: Force load memberInfo if missing
+  useEffect(() => {
+    if (isIOS() && blog?.id && !memberInfo && !loading) {
+      console.log("iOS: Missing memberInfo, attempting to load...");
+      const timeout = setTimeout(async () => {
+        try {
+          // Try to fetch member info directly
+          const { fetchMemberInfo, fetchMemberInfoByName } = await import(
+            "../services/blogService"
+          );
+          let member = null;
+
+          if (blog.memberCode) {
+            member = await fetchMemberInfo(blog.memberCode);
+          }
+          if (!member && blog.author) {
+            member = await fetchMemberInfoByName(blog.author);
+          }
+
+          if (member) {
+            console.log("iOS: Successfully loaded memberInfo:", member);
+            // Force re-render by updating a dummy state
+            setRetryCount((prev) => prev + 1);
+          }
+        } catch (error) {
+          console.warn("iOS: Failed to load memberInfo:", error);
+        }
+      }, 3000); // 3 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [blog?.id, memberInfo, loading, blog?.author, blog?.memberCode]);
 
   // Loading skeleton
   if (loading) {
@@ -820,6 +839,234 @@ export default function BlogDetailMobile({
             </Title>
           </Card>
         </ProCard>
+      </PageContainer>
+    );
+  }
+
+  // iOS fallback: Show content even without memberInfo
+  if (isIOS() && blog?.content && !memberInfo && !loading) {
+    console.log("iOS: Showing content without memberInfo");
+    return (
+      <PageContainer
+        header={false}
+        ghost
+        token={{
+          paddingInlinePageContainerContent: 0,
+          paddingBlockPageContainerContent: 0,
+          paddingInlinePageContainer: 0,
+          pageContainer: {
+            paddingBlock: 0,
+            paddingInline: 0,
+          },
+        }}
+        style={{
+          padding: 0,
+          margin: 0,
+          background: "rgba(253, 246, 227, 0.8)",
+          height: "100dvh",
+          maxHeight: "100dvh",
+          width: "100vw",
+          maxWidth: "100%",
+          overflow: "hidden",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          flexDirection: "column",
+          WebkitOverflowScrolling: "touch",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
+          WebkitBackfaceVisibility: "hidden",
+          backfaceVisibility: "hidden",
+        }}
+      >
+        {NavigationBar}
+
+        {/* Simplified Author Bar for iOS fallback */}
+        <div
+          style={{
+            ...jpFont,
+            background:
+              "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
+            borderBottom: "1px solid rgba(139, 69, 19, 0.15)",
+            zIndex: 998,
+            position: "fixed",
+            top: 44,
+            left: 0,
+            right: 0,
+            width: "100%",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            margin: 0,
+            borderRadius: 0,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          }}
+        >
+          <div
+            style={{
+              padding: "6px 12px",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontSize: "13px",
+            }}
+          >
+            <Space align="center" size="small">
+              <Avatar
+                src="https://via.placeholder.com/300x300?text=No+Image"
+                size={32}
+                style={{
+                  border: "1px solid #fff",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+                }}
+              />
+              <div>
+                <Text strong style={{ color: "#3c2415", fontSize: "13px" }}>
+                  {blog?.author || "Unknown Author"}
+                </Text>
+                <div
+                  style={{
+                    color: "#5d4e37",
+                    marginTop: 1,
+                    fontSize: "11px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <CalendarOutlined
+                    style={{ marginRight: 4, fontSize: "10px" }}
+                  />
+                  <Text>{blog?.date || "Unknown Date"}</Text>
+                </div>
+              </div>
+            </Space>
+
+            <div
+              style={{
+                flex: 1,
+                textAlign: "right",
+                paddingLeft: 8,
+                paddingRight: 4,
+                minWidth: 0,
+              }}
+            >
+              <Text
+                strong
+                style={{
+                  color: "#3c2415",
+                  fontSize: "12px",
+                  lineHeight: 1.2,
+                  display: "block",
+                  wordWrap: "break-word",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                }}
+              >
+                {displayTitle || blog?.title || "Loading title..."}
+              </Text>
+            </div>
+
+            <Button
+              type="text"
+              size="small"
+              icon={<InfoCircleOutlined />}
+              onClick={() => setDrawerVisible(true)}
+              style={{
+                color: "#5d4e37",
+                flexShrink: 0,
+                padding: "4px 6px",
+                height: "auto",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* scroll container */}
+        <div
+          ref={scrollWrapRef}
+          style={{
+            height: "calc(100dvh - 84px)",
+            maxHeight: "calc(100dvh - 84px)",
+            overflow: "auto",
+            background: "rgba(253, 246, 227, 0.8)",
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "none",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            width: "100%",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            touchAction: "pan-y",
+            paddingTop: 0,
+            marginTop: "84px",
+            marginBottom: 0,
+            flexShrink: 1,
+            WebkitBackfaceVisibility: "hidden",
+            WebkitTransform: "translate3d(0,0,0)",
+            transform: "translate3d(0,0,0)",
+            willChange: "transform",
+            contain: "paint layout style",
+          }}
+        >
+          <ProCard
+            ghost
+            style={{
+              background: "rgba(253, 246, 227, 0.8)",
+              padding: 0,
+              flex: 1,
+              width: "100%",
+              maxWidth: "100%",
+              ...jpFont,
+              position: "relative",
+              WebkitTransform: "translateZ(0)",
+              transform: "translateZ(0)",
+              WebkitBackfaceVisibility: "hidden",
+              backfaceVisibility: "hidden",
+            }}
+            bodyStyle={{
+              padding: "0 0 0",
+              margin: 0,
+              width: "100%",
+            }}
+          >
+            {/* Content */}
+            <div
+              style={{
+                padding: "12px 12px 0 12px",
+                WebkitTransform: "translateZ(0)",
+                transform: "translateZ(0)",
+                WebkitBackfaceVisibility: "hidden",
+                backfaceVisibility: "hidden",
+              }}
+            >
+              <div
+                className="jp-prose"
+                style={{
+                  fontSize,
+                  lineHeight: 1.9,
+                  transition: "font-size 0.2s ease",
+                  width: "100%",
+                  maxWidth: "100%",
+                  overflowWrap: "break-word",
+                  wordWrap: "break-word",
+                  hyphens: "auto",
+                  paddingBottom: "20px",
+                  WebkitTransform: "translateZ(0)",
+                  transform: "translateZ(0)",
+                  WebkitBackfaceVisibility: "hidden",
+                  backfaceVisibility: "hidden",
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: optimizedHtml,
+                }}
+              />
+            </div>
+          </ProCard>
+        </div>
       </PageContainer>
     );
   }
@@ -1029,6 +1276,16 @@ export default function BlogDetailMobile({
                 <div style={{ fontSize: "14px", marginTop: 8, color: "#999" }}>
                   Nếu nội dung không hiển thị, vui lòng thử tải lại trang
                 </div>
+                <div style={{ fontSize: "12px", marginTop: 8, color: "#ccc" }}>
+                  Debug:{" "}
+                  {blog?.content
+                    ? `Content: ${blog.content.length} chars`
+                    : "No content"}{" "}
+                  | {memberInfo ? `Author: ${memberInfo.name}` : "No author"} |{" "}
+                  {displayTitle
+                    ? `Title: ${displayTitle.substring(0, 20)}...`
+                    : "No title"}
+                </div>
                 {retryCount < 3 && (
                   <Button
                     type="primary"
@@ -1045,6 +1302,17 @@ export default function BlogDetailMobile({
                     Thử lại ({retryCount}/3)
                   </Button>
                 )}
+                <Button
+                  type="default"
+                  size="small"
+                  style={{ marginTop: 8, marginLeft: 8 }}
+                  onClick={() => {
+                    // Force reload the page
+                    window.location.reload();
+                  }}
+                >
+                  Tải lại trang
+                </Button>
               </div>
             )}
           </div>
