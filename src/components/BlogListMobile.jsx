@@ -596,9 +596,14 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     setNavIds(newNavIds);
   }, []);
 
-  // Fast navigation function - using useRef to avoid iOS uninitialized variable error
-  const fastGo = useRef((blogId) => {
-    if (navLock || !blogId) return;
+  // Fast navigation function - using regular function to avoid iOS uninitialized variable error
+  const fastGo = (blogId) => {
+    // Safety checks for iOS
+    if (!blogId || navLock) return;
+    if (typeof navigate !== "function") {
+      console.warn("BlogListMobile: navigate function not available");
+      return;
+    }
 
     console.log("BlogListMobile: Navigating to blog", blogId);
 
@@ -613,49 +618,31 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     if (isIOS) {
       // iOS Safari: Add small delay to ensure state is saved
       setTimeout(() => {
-        navigate(`/blog/${blogId}`);
-        setNavLock(false);
-        setPendingNavId(null);
-      }, 50);
-    } else {
-      navigate(`/blog/${blogId}`);
-      setNavLock(false);
-      setPendingNavId(null);
-    }
-  });
-
-  // Update fastGo function when dependencies change
-  useEffect(() => {
-    fastGo.current = (blogId) => {
-      if (navLock || !blogId) return;
-
-      console.log("BlogListMobile: Navigating to blog", blogId);
-
-      setNavLock(true);
-      setPendingNavId(blogId);
-
-      // Save current scroll position
-      _cache.scrollY.set(memberCode, window.scrollY);
-
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-      if (isIOS) {
-        // iOS Safari: Add small delay to ensure state is saved
-        setTimeout(() => {
+        try {
           navigate(`/blog/${blogId}`);
           setNavLock(false);
           setPendingNavId(null);
-        }, 50);
-      } else {
+        } catch (error) {
+          console.error("BlogListMobile: Navigation error on iOS:", error);
+          setNavLock(false);
+          setPendingNavId(null);
+        }
+      }, 50);
+    } else {
+      try {
         navigate(`/blog/${blogId}`);
         setNavLock(false);
         setPendingNavId(null);
+      } catch (error) {
+        console.error("BlogListMobile: Navigation error:", error);
+        setNavLock(false);
+        setPendingNavId(null);
       }
-    };
-  }, [navigate, memberCode, navLock]);
+    }
+  };
 
   const onOpen = (id) => {
-    fastGo.current(id);
+    fastGo(id);
   };
 
   // Lazy loading cho images
@@ -1368,7 +1355,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                                 disabled={navLock}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  fastGo.current(blogNav.prevId);
+                                  fastGo(blogNav.prevId);
                                 }}
                                 onMouseEnter={() =>
                                   prefetchBlogDetail(blogNav.prevId)
@@ -1406,7 +1393,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                                 disabled={navLock}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  fastGo.current(blogNav.nextId);
+                                  fastGo(blogNav.nextId);
                                 }}
                                 onMouseEnter={() =>
                                   prefetchBlogDetail(blogNav.nextId)
