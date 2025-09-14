@@ -97,13 +97,15 @@ const fetchBlogPage = async (page, memberCode) => {
       const imgElement = $(element).find(".m--bg.js-bg");
       const img = imgElement.attr("data-src") || "";
 
+      const author = $(element).find(".bl--card__name").text().trim();
+
       blogs.push({
         id: blogId,
         title,
         date,
         link: `${BASE_URL}${link}`,
         thumbnail: img,
-        author: "一ノ瀬 美空",
+        author,
       });
     });
 
