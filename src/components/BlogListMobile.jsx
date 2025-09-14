@@ -31,7 +31,6 @@ import {
   BookOutlined,
   StarOutlined,
   GlobalOutlined,
-  LoadingOutlined,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -47,14 +46,11 @@ import {
   useLayoutEffect,
   useDeferredValue,
   useTransition,
-  useCallback,
 } from "react";
 import {
   fetchAllBlogs,
   getImageUrl,
   fetchMemberInfo,
-  getCachedBlogDetail,
-  prefetchBlogDetail,
 } from "../services/blogService";
 // Removed iosMemberLoader import - using unified fetchMemberInfo approach
 
@@ -110,11 +106,6 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState(new Set());
-
-  // Navigation state for blog navigation
-  const [navIds, setNavIds] = useState(new Map()); // key: blogId -> { prevId, nextId }
-  const [navLock, setNavLock] = useState(false);
-  const [pendingNavId, setPendingNavId] = useState(null);
 
   // Tìm kiếm mượt: defer + debounce
   const [q, setQ] = useState("");
@@ -494,13 +485,6 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     };
   }, [memberCode]);
 
-  // Calculate navigation IDs when blogs change
-  useEffect(() => {
-    if (blogs.length > 0) {
-      calculateNavigationIds(blogs);
-    }
-  }, [blogs, calculateNavigationIds]);
-
   // Debounce nhập liệu
   useEffect(() => {
     const h = setTimeout(() => {
@@ -565,70 +549,20 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
   //   [blogs]
   // );
 
-  // Calculate navigation IDs for all blogs
-  const calculateNavigationIds = useCallback((blogList) => {
-    const newNavIds = new Map();
-
-    console.log(
-      "BlogListMobile: Calculating navigation IDs for",
-      blogList.length,
-      "blogs"
-    );
-
-    blogList.forEach((blog, index) => {
-      // In blog list, index 0 is newest, higher index is older
-      // prevId = older blog (higher index)
-      // nextId = newer blog (lower index)
-      const prevId =
-        index < blogList.length - 1 ? blogList[index + 1]?.id : null; // Older blog
-      const nextId = index > 0 ? blogList[index - 1]?.id : null; // Newer blog
-
-      newNavIds.set(blog.id, { prevId, nextId });
-
-      // Debug log for first few blogs
-      if (index < 3) {
-        console.log(
-          `BlogListMobile: Blog ${index} (${blog.id}) - prevId: ${prevId}, nextId: ${nextId}`
-        );
-      }
-    });
-
-    setNavIds(newNavIds);
-  }, []);
-
-  // Fast navigation function - simplified to avoid iOS issues
-  const fastGo = useCallback(
-    (blogId) => {
-      if (!blogId || navLock) return;
-
-      console.log("BlogListMobile: Navigating to blog", blogId);
-
-      setNavLock(true);
-      setPendingNavId(blogId);
-
-      // Save current scroll position
-      _cache.scrollY.set(memberCode, window.scrollY);
-
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-      if (isIOS) {
-        // iOS Safari: Add small delay to ensure state is saved
-        setTimeout(() => {
-          navigate(`/blog/${blogId}`);
-          setNavLock(false);
-          setPendingNavId(null);
-        }, 50);
-      } else {
-        navigate(`/blog/${blogId}`);
-        setNavLock(false);
-        setPendingNavId(null);
-      }
-    },
-    [navigate, memberCode, navLock]
-  );
-
   const onOpen = (id) => {
-    fastGo(id);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    // Save scroll position
+    _cache.scrollY.set(memberCode, window.scrollY);
+
+    if (isIOS) {
+      // iOS Safari: Add small delay to ensure state is saved
+      setTimeout(() => {
+        navigate(`/blog/${id}`);
+      }, 50);
+    } else {
+      navigate(`/blog/${id}`);
+    }
   };
 
   // Lazy loading cho images
@@ -1325,94 +1259,6 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       >
                         いいね
                       </Button>
-
-                      {/* Navigation buttons */}
-                      {(() => {
-                        const blogNav = navIds.get(blog.id);
-                        if (!blogNav || (!blogNav.prevId && !blogNav.nextId))
-                          return null;
-
-                        return (
-                          <Space size={2}>
-                            {blogNav.prevId && (
-                              <Button
-                                type="text"
-                                size="small"
-                                disabled={navLock}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  fastGo(blogNav.prevId);
-                                }}
-                                onMouseEnter={() =>
-                                  prefetchBlogDetail(blogNav.prevId)
-                                }
-                                style={{
-                                  color: colors.primary,
-                                  fontSize: 10,
-                                  height: 20,
-                                  padding: "0 4px",
-                                  minWidth: 18,
-                                  background: "rgba(139, 69, 19, 0.1)",
-                                  border: "1px solid rgba(139, 69, 19, 0.2)",
-                                  borderRadius: 4,
-                                }}
-                                title={
-                                  currentLanguage === "ja"
-                                    ? "前の記事"
-                                    : currentLanguage === "vi"
-                                    ? "Bài trước"
-                                    : "Previous"
-                                }
-                              >
-                                {pendingNavId === blogNav.prevId &&
-                                !getCachedBlogDetail(blogNav.prevId) ? (
-                                  <LoadingOutlined style={{ fontSize: 8 }} />
-                                ) : (
-                                  "‹"
-                                )}
-                              </Button>
-                            )}
-                            {blogNav.nextId && (
-                              <Button
-                                type="text"
-                                size="small"
-                                disabled={navLock}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  fastGo(blogNav.nextId);
-                                }}
-                                onMouseEnter={() =>
-                                  prefetchBlogDetail(blogNav.nextId)
-                                }
-                                style={{
-                                  color: colors.primary,
-                                  fontSize: 10,
-                                  height: 20,
-                                  padding: "0 4px",
-                                  minWidth: 18,
-                                  background: "rgba(139, 69, 19, 0.1)",
-                                  border: "1px solid rgba(139, 69, 19, 0.2)",
-                                  borderRadius: 4,
-                                }}
-                                title={
-                                  currentLanguage === "ja"
-                                    ? "次の記事"
-                                    : currentLanguage === "vi"
-                                    ? "Bài sau"
-                                    : "Next"
-                                }
-                              >
-                                {pendingNavId === blogNav.nextId &&
-                                !getCachedBlogDetail(blogNav.nextId) ? (
-                                  <LoadingOutlined style={{ fontSize: 8 }} />
-                                ) : (
-                                  "›"
-                                )}
-                              </Button>
-                            )}
-                          </Space>
-                        );
-                      })()}
                     </Space>
                   </div>
                 </div>
