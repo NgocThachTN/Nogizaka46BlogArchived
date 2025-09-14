@@ -29,17 +29,28 @@ export const prefetchBlogDetail = async (blogId) => {
 // Fetch tất cả các blog của member
 export const fetchAllBlogs = async (memberCode) => {
   try {
+    console.log("fetchAllBlogs: Starting fetch for memberCode:", memberCode);
     let allBlogs = [];
     let currentPage = 0;
     let hasNextPage = true;
 
     while (hasNextPage) {
+      console.log(
+        `fetchAllBlogs: Fetching page ${currentPage} for memberCode ${memberCode}`
+      );
       const { blogs, nextPage } = await fetchBlogPage(currentPage, memberCode);
+      console.log(
+        `fetchAllBlogs: Page ${currentPage} returned ${blogs.length} blogs`
+      );
       allBlogs = [...allBlogs, ...blogs];
       hasNextPage = nextPage;
       currentPage++;
     }
 
+    console.log(
+      `fetchAllBlogs: Total blogs fetched for memberCode ${memberCode}:`,
+      allBlogs.length
+    );
     return allBlogs;
   } catch (error) {
     console.error("Error fetching all blogs:", error);
@@ -50,12 +61,16 @@ export const fetchAllBlogs = async (memberCode) => {
 // Fetch một trang blog
 const fetchBlogPage = async (page, memberCode) => {
   try {
+    console.log(
+      `fetchBlogPage: Fetching page ${page} for memberCode ${memberCode}`
+    );
     // Sử dụng proxy để tránh CORS issues trên iOS
     const params = {
       ct: memberCode,
       page: page,
       ima: Math.floor(Date.now() / 1000), // Timestamp hiện tại
     };
+    console.log("fetchBlogPage: Params:", params);
 
     let htmlData;
     if (shouldUseProxy()) {
@@ -87,9 +102,22 @@ const fetchBlogPage = async (page, memberCode) => {
     const $ = cheerio.load(htmlData);
     const blogs = [];
 
+    console.log(
+      `fetchBlogPage: Found ${
+        $("a.bl--card").length
+      } blog cards on page ${page}`
+    );
+
     $("a.bl--card").each((_, element) => {
       const link = $(element).attr("href");
-      const blogId = link.match(/detail\/(\d+)/)[1];
+      const blogIdMatch = link?.match(/detail\/(\d+)/);
+
+      if (!blogIdMatch) {
+        console.warn("Could not extract blogId from link:", link);
+        return; // Skip this blog if we can't extract ID
+      }
+
+      const blogId = blogIdMatch[1];
       const title = $(element).find(".bl--card__ttl").text().trim();
       const date = $(element).find(".bl--card__date").text().trim();
 
@@ -111,6 +139,10 @@ const fetchBlogPage = async (page, memberCode) => {
 
     // Kiểm tra có trang tiếp theo không - tìm nút ">" trong pagination
     const hasNextPage = $(".pager li.next a").length > 0;
+
+    console.log(
+      `fetchBlogPage: Page ${page} completed - ${blogs.length} blogs, hasNextPage: ${hasNextPage}`
+    );
 
     return {
       blogs,
