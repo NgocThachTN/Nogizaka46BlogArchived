@@ -45,7 +45,6 @@ export const getUserAgent = () => {
   }
 };
 
-// Check if we should use proxy (iOS Safari has stricter CORS)
-export const shouldUseProxy = () => {
-  return isIOS() || isSafari();
-};
+// Always use the proxy to avoid CORS issues across browsers
+// This fixes missing data on iOS where direct requests are blocked
+export const shouldUseProxy = () => true;
