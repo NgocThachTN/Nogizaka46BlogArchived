@@ -137,68 +137,8 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
     });
   }, [memberInfo, loading, error, memberCode, isIOS]);
 
-  // Load member info for all member IDs (unified approach)
-  useEffect(() => {
-    if (memberCode && !memberInfo && !loading) {
-      console.log("BlogListMobile: Missing memberInfo, attempting to load...");
-      console.log("MemberCode:", memberCode, "Type:", typeof memberCode);
-      console.log("isIOS:", isIOS);
-
-      const timeout = setTimeout(async () => {
-        try {
-          // Use fetchMemberInfo for all member IDs (unified approach)
-          const member = await fetchMemberInfo(memberCode);
-
-          if (member) {
-            console.log(
-              "BlogListMobile: Successfully loaded memberInfo:",
-              member
-            );
-            setMemberInfo(member);
-          } else {
-            console.log(
-              "BlogListMobile: Failed to load memberInfo for:",
-              memberCode
-            );
-
-            // iOS-specific fallback for any member ID that fails
-            if (isIOS) {
-              console.log("iOS BlogListMobile: Creating fallback member info");
-              // Try to get member info from the main member list
-              try {
-                const response = await fetch(
-                  "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
-                );
-                const text = await response.text();
-                const jsonStr = text.replace(/^res\(/, "").replace(/\);?$/, "");
-                const api = JSON.parse(jsonStr);
-                const fallbackMember = api.data.find(
-                  (m) => String(m.code) === String(memberCode)
-                );
-
-                if (fallbackMember) {
-                  console.log(
-                    "iOS BlogListMobile: Found fallback member:",
-                    fallbackMember
-                  );
-                  setMemberInfo(fallbackMember);
-                }
-              } catch (fallbackError) {
-                console.warn(
-                  "iOS BlogListMobile: Fallback also failed:",
-                  fallbackError
-                );
-              }
-            }
-          }
-        } catch (error) {
-          console.warn("BlogListMobile: Failed to load memberInfo:", error);
-        }
-      }, 1000); // Reduced timeout
-
-      return () => clearTimeout(timeout);
-    }
-  }, [memberCode, memberInfo, loading, isIOS]);
+  // This useEffect is removed - member info loading is now handled in the main load function
+  // to ensure consistent behavior for all member IDs
 
   const abortRef = useRef(null);
   const PAGE_SIZE = 8; // Tăng số lượng để giảm pagination
@@ -350,6 +290,13 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           ]);
         };
 
+        console.log(
+          "BlogListMobile: Starting fetch for memberCode:",
+          memberCode
+        );
+        console.log("isFreshB:", isFreshB, "isFreshM:", isFreshM);
+        console.log("cachedB exists:", !!cachedB, "cachedM exists:", !!cachedM);
+
         const [all, member] = await Promise.all([
           isFreshB
             ? Promise.resolve(cachedB.list)
@@ -365,23 +312,86 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               ),
         ]);
 
-        // iOS-specific fallback for ID 40008
+        console.log(
+          "BlogListMobile: Fetch results - blogs:",
+          all?.length || 0,
+          "member:",
+          !!member
+        );
+
+        // Enhanced fallback for member info (all platforms)
         let finalMember = member;
-        if (!finalMember && isIOS && String(memberCode) === "40008") {
-          console.log("iOS BlogListMobile: Creating fallback member for 40008");
-          finalMember = {
-            code: "40008",
-            name: "6期生リレー",
-            cate: "6期生",
-            groupcode: "6期生",
-            graduation: "NO",
-          };
+        if (!finalMember) {
+          console.log(
+            "BlogListMobile: No member info from fetchMemberInfo, trying fallback..."
+          );
+
+          if (String(memberCode) === "40008") {
+            console.log("BlogListMobile: Creating special member for 40008");
+            finalMember = {
+              code: "40008",
+              name: "6期生リレー",
+              cate: "6期生",
+              groupcode: "6期生",
+              graduation: "NO",
+            };
+          } else {
+            // Try to get member info from direct API call
+            try {
+              console.log(
+                "BlogListMobile: Trying direct API call for member:",
+                memberCode
+              );
+              const response = await fetch(
+                "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
+              );
+              const text = await response.text();
+              const jsonStr = text.replace(/^res\(/, "").replace(/\);?$/, "");
+              const api = JSON.parse(jsonStr);
+              finalMember = api.data.find(
+                (m) => String(m.code) === String(memberCode)
+              );
+              console.log("BlogListMobile: Direct API result:", finalMember);
+            } catch (fallbackError) {
+              console.warn(
+                "BlogListMobile: Direct API fallback failed:",
+                fallbackError
+              );
+            }
+          }
+        }
+
+        // Enhanced fallback for blogs if empty (all platforms)
+        let finalBlogs = all;
+        if (!finalBlogs || finalBlogs.length === 0) {
+          console.log("BlogListMobile: No blogs found, trying fallback...");
+          try {
+            // Try direct API call for blogs
+            const response = await fetch(
+              `https://www.nogizaka46.com/s/n46/api/diary/MEMBER/list?ct=${memberCode}&callback=res`
+            );
+            const text = await response.text();
+            const jsonStr = text.replace(/^res\(/, "").replace(/\);?$/, "");
+            const api = JSON.parse(jsonStr);
+            if (api.data && Array.isArray(api.data)) {
+              finalBlogs = api.data;
+              console.log(
+                "BlogListMobile: Found fallback blogs:",
+                finalBlogs.length
+              );
+            }
+          } catch (fallbackError) {
+            console.warn(
+              "BlogListMobile: Fallback blogs fetch failed:",
+              fallbackError
+            );
+          }
         }
 
         if (!controller.signal.aborted) {
           // Cập nhật cache trước khi set state
           _cache.blogsByMember.set(memberCode, {
-            list: all,
+            list: finalBlogs,
             ts: Date.now(),
             loading: false,
           });
@@ -390,17 +400,24 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             ts: Date.now(),
           });
 
+          console.log(
+            "BlogListMobile: Setting state - blogs:",
+            finalBlogs?.length || 0,
+            "member:",
+            !!finalMember
+          );
+
           // iOS-specific state updates
           if (isIOS) {
-            setBlogs(all);
+            setBlogs(finalBlogs || []);
             setFiltered(
               deferredQ
-                ? all.filter((f) =>
+                ? (finalBlogs || []).filter((f) =>
                     (f.title + f.author)
                       .toLowerCase()
                       .includes(deferredQ.toLowerCase())
                   )
-                : all
+                : finalBlogs || []
             );
             setMemberInfo(finalMember);
 
@@ -410,15 +427,15 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             }, 50);
           } else {
             startTransition(() => {
-              setBlogs(all);
+              setBlogs(finalBlogs || []);
               setFiltered(
                 deferredQ
-                  ? all.filter((f) =>
+                  ? (finalBlogs || []).filter((f) =>
                       (f.title + f.author)
                         .toLowerCase()
                         .includes(deferredQ.toLowerCase())
                     )
-                  : all
+                  : finalBlogs || []
               );
             });
             setMemberInfo(finalMember);
@@ -515,8 +532,17 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
 
   const current = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page, PAGE_SIZE]);
+    const result = filtered.slice(start, start + PAGE_SIZE);
+    console.log(
+      "BlogListMobile: Current blogs to render:",
+      result.length,
+      "from filtered:",
+      filtered.length,
+      "total blogs:",
+      blogs.length
+    );
+    return result;
+  }, [filtered, page, PAGE_SIZE, blogs.length]);
 
   // const newestDate = useMemo(
   //   () => (blogs[0]?.date ? blogs[0].date : "-"),
@@ -1008,7 +1034,19 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           transform: "translateZ(0)",
         }}
       >
-        {current.length === 0 ? (
+        {(() => {
+          console.log(
+            "BlogListMobile: Render check - current.length:",
+            current.length,
+            "loading:",
+            loading,
+            "blogs.length:",
+            blogs.length,
+            "filtered.length:",
+            filtered.length
+          );
+          return current.length === 0;
+        })() ? (
           <Card
             style={{
               borderRadius: 20,
