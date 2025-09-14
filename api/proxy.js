@@ -1,5 +1,17 @@
 // Vercel API route để proxy requests và tránh CORS
 export default async function handler(req, res) {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Accept, Accept-Language, User-Agent"
+    );
+    res.setHeader("Access-Control-Max-Age", "86400");
+    return res.status(200).end();
+  }
+
   // Chỉ cho phép GET requests
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -48,7 +60,12 @@ export default async function handler(req, res) {
     // Set CORS headers để cho phép tất cả origins
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Accept, Accept-Language, User-Agent"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", "false");
+    res.setHeader("Access-Control-Max-Age", "86400");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=300"); // Cache 5 phút
 
@@ -59,7 +76,12 @@ export default async function handler(req, res) {
     // Set CORS headers ngay cả khi có lỗi
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Accept, Accept-Language, User-Agent"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", "false");
+    res.setHeader("Access-Control-Max-Age", "86400");
 
     return res.status(500).json({
       error: "Internal server error",
