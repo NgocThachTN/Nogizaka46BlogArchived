@@ -459,21 +459,14 @@ export const fetchMemberInfoByName = async (memberName) => {
     if (!memberName) return null;
     console.log("Fetching member info for name:", memberName);
 
-    // Xử lý member đặc biệt 特別メンバー
-    if (memberName === "特別メンバー" || memberName === "Special Member") {
+    // Xử lý member đặc biệt 6期生リレー
+    if (memberName === "6期生リレー" || memberName === "6th Gen Relay") {
       const specialMember = {
         code: "40008",
-        name: "特別メンバー",
-        english_name: "Special Member",
-        kana: "とくべつめんばー",
+        name: "6期生リレー",
         cate: "6期生",
         groupcode: "6期生",
-        img: "https://via.placeholder.com/300x300?text=Special+Member",
-        birthday: "2000/01/01",
-        blood: "A型",
-        constellation: "やぎ座",
         graduation: "NO",
-        link: "https://www.nogizaka46.com",
       };
       console.log("Returning special member by name:", specialMember);
       return specialMember;
