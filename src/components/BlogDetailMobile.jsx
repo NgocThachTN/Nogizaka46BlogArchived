@@ -361,7 +361,7 @@ export default function BlogDetailMobile({
         blogAuthor: blog?.author,
         hasMemberInfo: !!memberInfo,
         memberInfoName: memberInfo?.name,
-        displayTitle: displayTitle,
+        displayTitle: displayTitle || "No title",
         hasDisplayTitle: !!displayTitle,
       });
     }
@@ -1095,15 +1095,6 @@ export default function BlogDetailMobile({
       </PageContainer>
     );
   }
-
-  console.log("iOS BlogDetailMobile: Normal render -", {
-    hasBlog: !!blog,
-    hasContent: !!blog?.content,
-    hasMemberInfo: !!memberInfo,
-    loading,
-    cachedDisplayContent: !!cachedDisplayContent,
-    optimizedHtml: !!optimizedHtml,
-  });
 
   return (
     <PageContainer
