@@ -84,7 +84,11 @@ const t = {
     en: "Nogizaka46 Blog",
     vi: "Blog Nogizaka46",
   },
-  totalBlogs: { ja: "総メンバー数", en: "Total Members", vi: "Tổng Số Thành Viên " },
+  totalBlogs: {
+    ja: "総メンバー数",
+    en: "Total Members",
+    vi: "Tổng Số Thành Viên ",
+  },
 };
 
 /** JP font */
@@ -182,7 +186,24 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
           ...m,
           img: m.img || "https://via.placeholder.com/320x320?text=No+Image",
         }));
-        if (!canceled) setMembers(normalized);
+
+        // Thêm card member đặc biệt với id 40008
+        const specialMember = {
+          code: "40008",
+          name: "特別メンバー",
+          english_name: "Special Member",
+          kana: "とくべつめんばー",
+          cate: "6期生",
+          groupcode: "6期生",
+          img: "https://via.placeholder.com/320x320?text=Special+Member",
+          birthday: "2000/01/01",
+          blood: "A型",
+          constellation: "やぎ座",
+          graduation: "NO",
+          link: "https://www.nogizaka46.com",
+        };
+
+        if (!canceled) setMembers([...normalized, specialMember]);
       } catch (e) {
         console.error(e);
         message.error("データを取得できませんでした。");
@@ -245,6 +266,135 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
   };
 
   /** Member card */
+  // Tạo card đặc biệt cho gen 6 blog
+  const Gen6BlogCard = () => (
+    <Card
+      hoverable
+      onClick={() =>
+        window.open(
+          "https://www.nogizaka46.com/s/n46/diary/MEMBER/list?ima=1941&ct=40008",
+          "_blank",
+          "noopener,noreferrer"
+        )
+      }
+      style={{
+        borderRadius: 12,
+        overflow: "hidden",
+        background:
+          "linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)",
+        boxShadow: "0 1px 6px rgba(147, 51, 234, 0.15)",
+        marginBottom: 8,
+        contain: "layout paint style",
+        width: "100%",
+        maxWidth: "100%",
+        border: "2px solid rgba(147, 51, 234, 0.2)",
+      }}
+      bodyStyle={{ padding: 0 }}
+    >
+      <div style={{ display: "flex", height: 96 }}>
+        {/* Image */}
+        <div
+          style={{
+            width: 96,
+            height: 96,
+            background: "linear-gradient(135deg, #9333ea 0%, #7c28ea 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              color: "white",
+              fontSize: "32px",
+              fontWeight: "bold",
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            }}
+          >
+            📝
+          </div>
+        </div>
+        {/* Content */}
+        <div
+          style={{
+            flex: 1,
+            padding: "12px 16px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            minWidth: 0,
+          }}
+        >
+          <Text
+            strong
+            style={{
+              ...jpFont,
+              fontSize: 14,
+              color: "#9333ea",
+              marginBottom: 4,
+              display: "block",
+            }}
+          >
+            {currentLanguage === "ja"
+              ? "6期生ブログ"
+              : currentLanguage === "en"
+              ? "6th Gen Blog"
+              : "Blog Thế hệ 6"}
+          </Text>
+          <Text
+            type="secondary"
+            style={{
+              fontSize: 11,
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
+            {currentLanguage === "ja"
+              ? "6期生リレー公式ブログ"
+              : currentLanguage === "en"
+              ? "6th Gen Relay Official Blog"
+              : "Blog chính thức 6期生"}
+          </Text>
+          <Space size={4} wrap>
+            <Tag
+              style={{
+                background: "rgba(147, 51, 234, 0.1)",
+                border: "1px solid rgba(147, 51, 234, 0.3)",
+                borderRadius: 8,
+                fontSize: 10,
+                padding: "1px 6px",
+              }}
+            >
+              {currentLanguage === "ja"
+                ? "6期生"
+                : currentLanguage === "en"
+                ? "6th Gen"
+                : "Thế hệ 6"}
+            </Tag>
+            <Tag
+              style={{
+                background: "rgba(147, 51, 234, 0.05)",
+                border: "1px solid rgba(147, 51, 234, 0.2)",
+                borderRadius: 8,
+                fontSize: 10,
+                padding: "1px 6px",
+              }}
+            >
+              📝{" "}
+              {currentLanguage === "ja"
+                ? "ブログ"
+                : currentLanguage === "en"
+                ? "Blog"
+                : "Blog"}
+            </Tag>
+          </Space>
+        </div>
+      </div>
+    </Card>
+  );
+
   const MemberCard = ({ m }) => {
     const age = getAge(m.birthday);
     return (
@@ -661,6 +811,8 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                 ),
                 children: (
                   <div style={{ padding: "4px 0" }}>
+                    {/* Thêm card gen 6 blog nếu đây là gen 6 */}
+                    {gen === "6期生" && <Gen6BlogCard />}
                     {items.map((m) => (
                       <MemberCard key={m.code} m={m} />
                     ))}

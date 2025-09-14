@@ -149,7 +149,23 @@ const MemberList = ({ language = "ja", setLanguage }) => {
           img: m.img || "https://via.placeholder.com/300x300?text=No+Image",
         }));
 
-        setMembers(normalized);
+        // Thêm card member đặc biệt với id 40008
+        const specialMember = {
+          code: "40008",
+          name: "特別メンバー",
+          english_name: "Special Member",
+          kana: "とくべつめんばー",
+          cate: "6期生",
+          groupcode: "6期生",
+          img: "https://via.placeholder.com/300x300?text=Special+Member",
+          birthday: "2000/01/01",
+          blood: "A型",
+          constellation: "やぎ座",
+          graduation: "NO",
+          link: "https://www.nogizaka46.com",
+        };
+
+        setMembers([...normalized, specialMember]);
       } catch (e) {
         console.error(e);
         notification.error({
