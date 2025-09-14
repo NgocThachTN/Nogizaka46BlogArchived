@@ -270,13 +270,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
   const Gen6BlogCard = () => (
     <Card
       hoverable
-      onClick={() =>
-        window.open(
-          "https://www.nogizaka46.com/s/n46/diary/MEMBER/list?ima=1941&ct=40008",
-          "_blank",
-          "noopener,noreferrer"
-        )
-      }
+      onClick={() => navigate(`/blogs/40008`)}
       style={{
         borderRadius: 12,
         overflow: "hidden",
