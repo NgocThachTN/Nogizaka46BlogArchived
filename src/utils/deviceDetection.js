@@ -6,6 +6,24 @@ export const isIOS = () => {
   );
 };
 
+// Check for iOS 18+ specific features
+export const isIOS18Plus = () => {
+  const userAgent = navigator.userAgent;
+  const match = userAgent.match(/OS (\d+)_/);
+  return match && parseInt(match[1], 10) >= 18;
+};
+
+// Check for iPhone XS specifically
+export const isIPhoneXS = () => {
+  return (
+    /iPhone/.test(navigator.userAgent) &&
+    (navigator.userAgent.includes("iPhone12,1") ||
+      navigator.userAgent.includes("iPhone12,2") ||
+      navigator.userAgent.includes("iPhone12,3") ||
+      navigator.userAgent.includes("iPhone12,4"))
+  );
+};
+
 export const isSafari = () => {
   return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 };

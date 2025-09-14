@@ -1,4 +1,6 @@
 // Proxy API để tránh CORS issues trên iOS Safari
+import { isIOS18Plus } from "../utils/deviceDetection.js";
+
 const BASE_URL = "https://www.nogizaka46.com";
 
 // Helper function để tạo proxy URL
@@ -17,22 +19,33 @@ export const fetchWithProxy = async (path, params = {}, retries = 3) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      const timeout = isIOS18Plus() ? 25000 : 20000; // 25s timeout for iOS 18+
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
       const response = await fetch(proxyUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "User-Agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
           "Cache-Control": "public, max-age=300",
           "X-Requested-With": "XMLHttpRequest",
-          Pragma: "no-cache"
+          Pragma: "no-cache",
+          // iOS Safari specific headers
+          "Accept-Encoding": "gzip, deflate, br",
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-Site": "same-origin",
         },
         credentials: "omit",
         mode: "cors",
         signal: controller.signal,
+        // iOS Safari specific options
+        cache: "default",
+        redirect: "follow",
       });
 
       clearTimeout(timeoutId);
@@ -44,7 +57,11 @@ export const fetchWithProxy = async (path, params = {}, retries = 3) => {
       const data = await response.text();
 
       // Kiểm tra nếu response có vẻ hợp lệ (không phải error page)
-      if (data.includes("<!DOCTYPE html") || data.includes("<html")) {
+      if (
+        data.includes("<!DOCTYPE html") ||
+        data.includes("<html") ||
+        data.includes("<body")
+      ) {
         return data;
       } else {
         throw new Error("Invalid response format");
@@ -57,10 +74,9 @@ export const fetchWithProxy = async (path, params = {}, retries = 3) => {
         throw error;
       }
 
-      // Exponential backoff
-      await new Promise((resolve) =>
-        setTimeout(resolve, Math.pow(2, attempt) * 1000)
-      );
+      // Exponential backoff with longer delays for iOS
+      const delay = Math.pow(2, attempt) * 1000 + attempt * 500;
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 };
