@@ -388,7 +388,13 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
       } catch (e) {
         if (e.name !== "AbortError") {
           console.error(e);
-          setError(currentLanguage === "ja" ? "エラーが発生しました" : currentLanguage === "vi" ? "Đã xảy ra lỗi" : "An error occurred");
+          setError(
+            currentLanguage === "ja"
+              ? "エラーが発生しました"
+              : currentLanguage === "vi"
+              ? "Đã xảy ra lỗi"
+              : "An error occurred"
+          );
         }
       } finally {
         if (!abortRef.current?.signal.aborted) setLoading(false);
@@ -570,7 +576,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             <Space direction="vertical" align="center" size={16}>
               <Spin size="large" />
               <Text style={{ ...jpFont, color: colors.textSecondary }}>
-                {currentLanguage === "ja" ? "読み込み中..." : currentLanguage === "vi" ? "Đang tải..." : "Loading..."}
+                {currentLanguage === "ja"
+                  ? "読み込み中..."
+                  : currentLanguage === "vi"
+                  ? "Đang tải..."
+                  : "Loading..."}
               </Text>
               {isIOS && (
                 <Text
@@ -651,7 +661,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                   borderRadius: 12,
                 }}
               >
-                {currentLanguage === "ja" ? "再試行" : currentLanguage === "vi" ? "Thử lại" : "Retry"}
+                {currentLanguage === "ja"
+                  ? "再試行"
+                  : currentLanguage === "vi"
+                  ? "Thử lại"
+                  : "Retry"}
               </Button>
             </Space>
           </ProCard>
@@ -732,7 +746,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         fontWeight: 500,
                       }}
                     >
-                      {currentLanguage === "ja" ? "ブログ記事" : currentLanguage === "vi" ? "Bài viết blog" : "Blog Article"}
+                      {currentLanguage === "ja"
+                        ? "ブログ記事"
+                        : currentLanguage === "vi"
+                        ? "Bài viết blog"
+                        : "Blog Article"}
                     </Text>
                     <Title
                       level={4}
@@ -748,7 +766,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       {memberInfo?.name ||
                         (isIOS
                           ? "Loading member..."
-                          : currentLanguage === "ja" ? "読み込み中..." : currentLanguage === "vi" ? "Đang tải..." : "Loading...")}
+                          : currentLanguage === "ja"
+                          ? "読み込み中..."
+                          : currentLanguage === "vi"
+                          ? "Đang tải..."
+                          : "Loading...")}
                     </Title>
                     {isIOS && !memberInfo && (
                       <div style={{ marginTop: 4 }}>
@@ -879,7 +901,13 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             <Input
               allowClear
               prefix={<SearchOutlined style={{ color: colors.primary }} />}
-              placeholder={currentLanguage === "ja" ? "ブログを検索..." : currentLanguage === "vi" ? "Tìm kiếm blog..." : "Search blogs..."}
+              placeholder={
+                currentLanguage === "ja"
+                  ? "ブログを検索..."
+                  : currentLanguage === "vi"
+                  ? "Tìm kiếm blog..."
+                  : "Search blogs..."
+              }
               value={q}
               onChange={(e) => setQ(e.target.value)}
               size="large"
@@ -928,7 +956,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             <Empty
               description={
                 <Text style={{ ...jpFont, color: colors.textSecondary }}>
-                  {currentLanguage === "ja" ? "ブログが見つかりません" : currentLanguage === "vi" ? "Không tìm thấy blog" : "No blogs found"}
+                  {currentLanguage === "ja"
+                    ? "ブログが見つかりません"
+                    : currentLanguage === "vi"
+                    ? "Không tìm thấy blog"
+                    : "No blogs found"}
                 </Text>
               }
             />
