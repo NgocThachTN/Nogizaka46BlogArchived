@@ -100,7 +100,21 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
   const navigate = useNavigate();
   const { memberCode } = useParams();
 
-  // Debug iOS detection
+  const [blogs, setBlogs] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [imagesLoaded, setImagesLoaded] = useState(new Set());
+
+  // Tìm kiếm mượt: defer + debounce
+  const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
+
+  const [page, setPage] = useState(1);
+  const [memberInfo, setMemberInfo] = useState(null);
+  const [memberInfoRetryCount, setMemberInfoRetryCount] = useState(0);
+
+  // Debug iOS detection - moved after state declarations
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   console.log(
     "BlogListMobile - iOS detected:",
@@ -159,20 +173,6 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
       return () => clearTimeout(timeout);
     }
   }, [memberCode, memberInfo, loading, isIOS, memberInfoRetryCount]);
-
-  const [blogs, setBlogs] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [imagesLoaded, setImagesLoaded] = useState(new Set());
-
-  // Tìm kiếm mượt: defer + debounce
-  const [q, setQ] = useState("");
-  const deferredQ = useDeferredValue(q);
-
-  const [page, setPage] = useState(1);
-  const [memberInfo, setMemberInfo] = useState(null);
-  const [memberInfoRetryCount, setMemberInfoRetryCount] = useState(0);
 
   const abortRef = useRef(null);
   const PAGE_SIZE = 8; // Tăng số lượng để giảm pagination
