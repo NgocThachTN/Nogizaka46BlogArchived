@@ -153,7 +153,14 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
       );
       const timeout = setTimeout(async () => {
         try {
+          console.log(
+            `iOS BlogListMobile: Attempting to fetch member ${memberCode} (attempt ${
+              memberInfoRetryCount + 1
+            })`
+          );
           const member = await fetchMemberInfo(memberCode);
+          console.log(`iOS BlogListMobile: fetchMemberInfo result:`, member);
+
           if (member) {
             console.log(
               "iOS BlogListMobile: Successfully loaded memberInfo:",
@@ -162,10 +169,18 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             setMemberInfo(member);
             setMemberInfoRetryCount(0); // Reset retry count on success
           } else {
+            console.log(
+              `iOS BlogListMobile: No member data returned for code ${memberCode}`
+            );
             setMemberInfoRetryCount((prev) => prev + 1);
           }
         } catch (error) {
           console.warn("iOS BlogListMobile: Failed to load memberInfo:", error);
+          console.warn("Error details:", {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+          });
           setMemberInfoRetryCount((prev) => prev + 1);
         }
       }, 2000 + memberInfoRetryCount * 1000); // Increasing delay for retries
@@ -173,6 +188,64 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
       return () => clearTimeout(timeout);
     }
   }, [memberCode, memberInfo, loading, isIOS, memberInfoRetryCount]);
+
+  // Reset retry count when memberCode changes
+  useEffect(() => {
+    setMemberInfoRetryCount(0);
+  }, [memberCode]);
+
+  // iOS-specific: Try alternative member loading method
+  useEffect(() => {
+    if (isIOS && memberCode && !memberInfo && memberInfoRetryCount >= 2) {
+      console.log("iOS: Trying alternative member loading method...");
+      const timeout = setTimeout(async () => {
+        try {
+          // Try to fetch member info directly without proxy
+          const response = await fetch(
+            `https://www.nogizaka46.com/s/n46/api/list/member?callback=res`,
+            {
+              method: "GET",
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+                Accept:
+                  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+              },
+              mode: "cors",
+              credentials: "omit",
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.text();
+            const jsonStr = data.replace(/^res\(/, "").replace(/\);?$/, "");
+            const api = JSON.parse(jsonStr);
+            const member = api.data.find(
+              (m) => String(m.code) === String(memberCode)
+            );
+
+            if (member) {
+              console.log("iOS: Alternative method successful:", member);
+              setMemberInfo(member);
+              setMemberInfoRetryCount(0);
+            } else {
+              console.log("iOS: Alternative method - member not found");
+            }
+          } else {
+            console.log(
+              "iOS: Alternative method failed - response not ok:",
+              response.status
+            );
+          }
+        } catch (error) {
+          console.warn("iOS: Alternative method failed:", error);
+        }
+      }, 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isIOS, memberCode, memberInfo, memberInfoRetryCount]);
 
   const abortRef = useRef(null);
   const PAGE_SIZE = 8; // Tăng số lượng để giảm pagination
@@ -764,7 +837,9 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       }}
                     >
                       {memberInfo?.name ||
-                        (isIOS
+                        (isIOS && memberCode
+                          ? `Member ${memberCode}`
+                          : isIOS
                           ? "Loading member..."
                           : currentLanguage === "ja"
                           ? "読み込み中..."
@@ -787,36 +862,61 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                             ? "Loading..."
                             : `Retry ${memberInfoRetryCount}/3`}
                         </Text>
-                        {memberInfoRetryCount < 3 && (
-                          <Button
-                            type="link"
-                            size="small"
-                            onClick={async () => {
-                              try {
-                                const member = await fetchMemberInfo(
-                                  memberCode
+                        <Button
+                          type="link"
+                          size="small"
+                          onClick={async () => {
+                            try {
+                              console.log(
+                                "Manual retry triggered for memberCode:",
+                                memberCode
+                              );
+                              console.log(
+                                "Current retry count:",
+                                memberInfoRetryCount
+                              );
+                              setMemberInfoRetryCount(0); // Reset retry count
+
+                              console.log("Calling fetchMemberInfo...");
+                              const member = await fetchMemberInfo(memberCode);
+                              console.log("fetchMemberInfo returned:", member);
+
+                              if (member) {
+                                console.log("Manual retry successful:", member);
+                                setMemberInfo(member);
+                                setMemberInfoRetryCount(0);
+                              } else {
+                                console.log(
+                                  "Manual retry failed - no member data returned"
                                 );
-                                if (member) {
-                                  setMemberInfo(member);
-                                  setMemberInfoRetryCount(0);
-                                } else {
-                                  setMemberInfoRetryCount((prev) => prev + 1);
-                                }
-                              } catch (error) {
-                                console.warn("Manual retry failed:", error);
-                                setMemberInfoRetryCount((prev) => prev + 1);
+                                console.log("This could be due to:");
+                                console.log("1. Proxy issues on iOS");
+                                console.log("2. Member code not found in API");
+                                console.log("3. Network/CORS issues");
+                                setMemberInfoRetryCount(1);
                               }
-                            }}
-                            style={{
-                              padding: 0,
-                              height: "auto",
-                              fontSize: 10,
-                              color: colors.primary,
-                            }}
-                          >
-                            Retry Now
-                          </Button>
-                        )}
+                            } catch (error) {
+                              console.warn(
+                                "Manual retry failed with error:",
+                                error
+                              );
+                              console.warn("Error details:", {
+                                message: error.message,
+                                stack: error.stack,
+                                name: error.name,
+                              });
+                              setMemberInfoRetryCount(1);
+                            }
+                          }}
+                          style={{
+                            padding: 0,
+                            height: "auto",
+                            fontSize: 10,
+                            color: colors.primary,
+                          }}
+                        >
+                          Retry Now
+                        </Button>
                       </div>
                     )}
                   </Space>
