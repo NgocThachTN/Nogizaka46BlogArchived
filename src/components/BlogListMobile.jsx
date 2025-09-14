@@ -55,36 +55,7 @@ import {
 
 const { Title, Text } = Typography;
 
-// Translation keys
-const t = {
-  searchPlaceholder: {
-    ja: "ブログを検索...",
-    en: "Search blogs...",
-    vi: "Tìm kiếm blog...",
-  },
-  noBlogs: {
-    ja: "ブログが見つかりません",
-    en: "No blogs found",
-    vi: "Không tìm thấy blog",
-  },
-  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
-  error: {
-    ja: "エラーが発生しました",
-    en: "An error occurred",
-    vi: "Đã xảy ra lỗi",
-  },
-  retry: { ja: "再試行", en: "Retry", vi: "Thử lại" },
-  blogArticle: { ja: "ブログ記事", en: "Blog Article", vi: "Bài viết blog" },
-  readMore: { ja: "続きを読む", en: "Read More", vi: "Đọc thêm" },
-  totalPosts: { ja: "総投稿数", en: "Total Posts", vi: "Tổng số bài viết" },
-  memberBlogs: {
-    ja: "メンバーブログ",
-    en: "Member Blogs",
-    vi: "Blog thành viên",
-  },
-  calendar: { ja: "カレンダー", en: "Calendar", vi: "Lịch" },
-  list: { ja: "リスト", en: "List", vi: "Danh sách" },
-};
+// Translation keys removed - using inline translations to avoid hoisting issues
 
 /** Japanese color palette - Purple theme */
 const colors = {
@@ -417,7 +388,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
       } catch (e) {
         if (e.name !== "AbortError") {
           console.error(e);
-          setError(t.error[currentLanguage]);
+          setError(currentLanguage === "ja" ? "エラーが発生しました" : currentLanguage === "vi" ? "Đã xảy ra lỗi" : "An error occurred");
         }
       } finally {
         if (!abortRef.current?.signal.aborted) setLoading(false);
@@ -599,7 +570,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             <Space direction="vertical" align="center" size={16}>
               <Spin size="large" />
               <Text style={{ ...jpFont, color: colors.textSecondary }}>
-                {t.loading[currentLanguage] || "Loading..."}
+                {currentLanguage === "ja" ? "読み込み中..." : currentLanguage === "vi" ? "Đang tải..." : "Loading..."}
               </Text>
               {isIOS && (
                 <Text
@@ -680,7 +651,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                   borderRadius: 12,
                 }}
               >
-                {t.retry[currentLanguage]}
+                {currentLanguage === "ja" ? "再試行" : currentLanguage === "vi" ? "Thử lại" : "Retry"}
               </Button>
             </Space>
           </ProCard>
@@ -761,7 +732,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         fontWeight: 500,
                       }}
                     >
-                      {t.blogArticle[currentLanguage]}
+                      {currentLanguage === "ja" ? "ブログ記事" : currentLanguage === "vi" ? "Bài viết blog" : "Blog Article"}
                     </Text>
                     <Title
                       level={4}
@@ -777,7 +748,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       {memberInfo?.name ||
                         (isIOS
                           ? "Loading member..."
-                          : t.loading[currentLanguage] || "Loading...")}
+                          : currentLanguage === "ja" ? "読み込み中..." : currentLanguage === "vi" ? "Đang tải..." : "Loading...")}
                     </Title>
                     {isIOS && !memberInfo && (
                       <div style={{ marginTop: 4 }}>
@@ -908,7 +879,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             <Input
               allowClear
               prefix={<SearchOutlined style={{ color: colors.primary }} />}
-              placeholder={t.searchPlaceholder[currentLanguage]}
+              placeholder={currentLanguage === "ja" ? "ブログを検索..." : currentLanguage === "vi" ? "Tìm kiếm blog..." : "Search blogs..."}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               size="large"
@@ -957,7 +928,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
             <Empty
               description={
                 <Text style={{ ...jpFont, color: colors.textSecondary }}>
-                  {t.noBlogs[currentLanguage]}
+                  {currentLanguage === "ja" ? "ブログが見つかりません" : currentLanguage === "vi" ? "Không tìm thấy blog" : "No blogs found"}
                 </Text>
               }
             />
