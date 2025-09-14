@@ -529,6 +529,7 @@ export default function BlogDetail({
         pendingNavId={pendingNavId}
         navLock={navLock}
         memberInfo={memberInfo}
+        setMemberInfo={setMemberInfo}
       />
     );
   }

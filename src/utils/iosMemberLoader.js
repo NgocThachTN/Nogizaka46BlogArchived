@@ -247,6 +247,102 @@ export class IOSMemberLoader {
   }
 
   /**
+   * Method 2.6: Try iOS-specific no-cors method (bypass CORS completely)
+   */
+  async tryIOSNoCors(memberCode) {
+    console.log(`iOS: Trying iOS no-cors method for member ${memberCode}`);
+    try {
+      // Use no-cors mode to bypass CORS restrictions completely
+      const response = await fetch(
+        `https://www.nogizaka46.com/s/n46/api/list/member?callback=res`,
+        {
+          method: "GET",
+          mode: "no-cors", // This bypasses CORS completely
+          credentials: "omit",
+        }
+      );
+
+      console.log("iOS: No-cors response status:", response.status);
+      console.log("iOS: No-cors response ok:", response.ok);
+      console.log("iOS: No-cors response type:", response.type);
+
+      // With no-cors, we can't read the response body directly
+      // But we can try to use the proxy service instead
+      console.log("iOS: No-cors method - falling back to proxy service");
+
+      // Try proxy service as fallback
+      const proxyResponse = await fetch(
+        "/api/proxy?url=" +
+          encodeURIComponent(
+            "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
+          ),
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+          },
+          mode: "cors",
+          credentials: "omit",
+        }
+      );
+
+      console.log("iOS: Proxy fallback response status:", proxyResponse.status);
+      console.log("iOS: Proxy fallback response ok:", proxyResponse.ok);
+
+      if (proxyResponse.ok) {
+        const data = await proxyResponse.text();
+        console.log("iOS: Proxy fallback data length:", data.length);
+        console.log(
+          "iOS: Proxy fallback data preview:",
+          data.substring(0, 200)
+        );
+
+        const jsonStr = data.replace(/^res\(/, "").replace(/\);?$/, "");
+        console.log(
+          "iOS: Proxy fallback parsed JSON string length:",
+          jsonStr.length
+        );
+
+        const api = JSON.parse(jsonStr);
+        console.log(
+          "iOS: Proxy fallback API data length:",
+          api.data?.length || 0
+        );
+
+        const member = api.data.find(
+          (m) => String(m.code) === String(memberCode)
+        );
+        console.log("iOS: Found member in proxy fallback method:", member);
+
+        if (member) {
+          console.log("iOS: Proxy fallback method successful:", member);
+          this.setCachedMember(memberCode, member);
+          this.resetRetryCount(memberCode);
+          return member;
+        } else {
+          console.log("iOS: Member not found in proxy fallback method data");
+        }
+      } else {
+        console.log(
+          "iOS: Proxy fallback failed - response not ok:",
+          proxyResponse.status
+        );
+      }
+      return null;
+    } catch (error) {
+      console.warn("iOS: No-cors method failed with error:", error);
+      console.warn("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+      return null;
+    }
+  }
+
+  /**
    * Method 3: Try fetch by name (fallback)
    */
   async tryNameMethod(memberName) {
@@ -340,6 +436,79 @@ export class IOSMemberLoader {
   }
 
   /**
+   * Method 4.5: Test direct proxy call with iOS-specific debugging
+   */
+  async testDirectProxyCall() {
+    console.log("iOS: Testing direct proxy call...");
+    try {
+      // Test the proxy endpoint directly
+      const proxyUrl =
+        "/api/proxy?url=" +
+        encodeURIComponent(
+          "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
+        );
+
+      console.log("iOS: Direct proxy URL:", proxyUrl);
+
+      const response = await fetch(proxyUrl, {
+        method: "GET",
+        headers: {
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+          "User-Agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+        },
+        mode: "cors",
+        credentials: "omit",
+      });
+
+      console.log("iOS: Direct proxy response status:", response.status);
+      console.log("iOS: Direct proxy response ok:", response.ok);
+      console.log("iOS: Direct proxy response type:", response.type);
+      console.log(
+        "iOS: Direct proxy response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
+      if (response.ok) {
+        const data = await response.text();
+        console.log("iOS: Direct proxy data length:", data.length);
+        console.log("iOS: Direct proxy data preview:", data.substring(0, 300));
+
+        // Try to parse the data
+        try {
+          const jsonStr = data.replace(/^res\(/, "").replace(/\);?$/, "");
+          const api = JSON.parse(jsonStr);
+          console.log(
+            "iOS: Direct proxy - parsed API data length:",
+            api.data?.length || 0
+          );
+          console.log(
+            "iOS: Direct proxy - sample members:",
+            api.data
+              ?.slice(0, 5)
+              .map((m) => ({ code: m.code, name: m.name })) || []
+          );
+          return { success: true, data: api };
+        } catch (parseError) {
+          console.warn("iOS: Direct proxy - data parsing failed:", parseError);
+          return { success: false, error: parseError };
+        }
+      } else {
+        console.log(
+          "iOS: Direct proxy failed - response not ok:",
+          response.status
+        );
+        return { success: false, error: `Response not ok: ${response.status}` };
+      }
+    } catch (error) {
+      console.warn("iOS: Direct proxy call failed with error:", error);
+      return { success: false, error: error };
+    }
+  }
+
+  /**
    * Main loading method with all fallbacks
    */
   async loadMember(memberCode, memberName = null) {
@@ -375,9 +544,14 @@ export class IOSMemberLoader {
       })`
     );
 
-    // Test proxy service first
+    // Test proxy service first with enhanced debugging
     console.log("iOS: Testing proxy service before attempting member load...");
     const proxyWorking = await this.testProxyService();
+
+    // Also test direct proxy call for debugging
+    console.log("iOS: Testing direct proxy call for debugging...");
+    const directProxyResult = await this.testDirectProxyCall();
+    console.log("iOS: Direct proxy test result:", directProxyResult);
 
     // Try methods in order
     let member = null;
@@ -400,6 +574,12 @@ export class IOSMemberLoader {
     if (!member) {
       console.log("iOS: Trying iOS workaround method...");
       member = await this.tryIOSWorkaround(memberCode);
+    }
+
+    // Method 2.6: iOS no-cors method
+    if (!member) {
+      console.log("iOS: Trying iOS no-cors method...");
+      member = await this.tryIOSNoCors(memberCode);
     }
 
     // Method 3: By name (if provided)

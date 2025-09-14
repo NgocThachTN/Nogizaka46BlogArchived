@@ -147,6 +147,7 @@ export default function BlogDetailMobile({
   pendingNavId,
   navLock,
   memberInfo, // Add memberInfo prop
+  setMemberInfo, // Add setMemberInfo prop for iOS updates
 }) {
   const navigate = useNavigate();
 
@@ -759,8 +760,15 @@ export default function BlogDetailMobile({
 
           if (member) {
             console.log("iOS: Successfully loaded memberInfo:", member);
-            // Force re-render by updating a dummy state
-            setRetryCount((prev) => prev + 1);
+            // IMPORTANT: Set the memberInfo state to trigger re-render
+            // This was missing before!
+            if (setMemberInfo) {
+              setMemberInfo(member);
+            } else {
+              console.warn(
+                "iOS: setMemberInfo not provided, cannot update memberInfo"
+              );
+            }
           } else {
             console.log("iOS: Failed to load memberInfo");
           }
@@ -778,6 +786,7 @@ export default function BlogDetailMobile({
     blog?.author,
     blog?.memberCode,
     iosMemberLoader,
+    setMemberInfo,
   ]);
 
   // Loading skeleton
