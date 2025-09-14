@@ -286,21 +286,83 @@ export default function BlogDetail({
       try {
         if (!blog?.id) return;
 
+        console.log("BlogDetail: Computing prev/next for blog:", {
+          blogId: blog.id,
+          memberCode: blog.memberCode,
+          author: blog.author,
+        });
+
         let code = blog?.memberCode;
         if (!code && blog?.author) {
+          console.log(
+            "BlogDetail: No memberCode, trying to fetch by author:",
+            blog.author
+          );
           const m = await fetchMemberInfoByName(blog.author);
           code = m?.code;
+          console.log("BlogDetail: Fetched member by name:", m);
         }
-        if (!code) return;
 
-        const list = await fetchAllBlogs(code);
-        if (!Array.isArray(list) || list.length === 0) return;
+        if (!code) {
+          console.log(
+            "BlogDetail: No member code found, cannot compute navigation"
+          );
+          return;
+        }
+
+        console.log("BlogDetail: Fetching blogs for member code:", code);
+        let list = await fetchAllBlogs(code);
+        console.log("BlogDetail: Fetched blogs:", list?.length || 0);
+
+        // Fallback: If no blogs found, try direct API call
+        if (!Array.isArray(list) || list.length === 0) {
+          console.log(
+            "BlogDetail: No blogs found, trying fallback API call..."
+          );
+          try {
+            const response = await fetch(
+              `https://www.nogizaka46.com/s/n46/api/diary/MEMBER/list?ct=${code}&callback=res`
+            );
+            const text = await response.text();
+            const jsonStr = text.replace(/^res\(/, "").replace(/\);?$/, "");
+            const api = JSON.parse(jsonStr);
+            if (api.data && Array.isArray(api.data)) {
+              list = api.data;
+              console.log("BlogDetail: Fallback API found blogs:", list.length);
+            }
+          } catch (fallbackError) {
+            console.warn(
+              "BlogDetail: Fallback API also failed:",
+              fallbackError
+            );
+          }
+        }
+
+        if (!Array.isArray(list) || list.length === 0) {
+          console.log("BlogDetail: No blogs found for member code:", code);
+          return;
+        }
 
         const index = list.findIndex((b) => String(b.id) === String(blog.id));
-        if (index === -1) return;
+        console.log(
+          "BlogDetail: Found blog at index:",
+          index,
+          "out of",
+          list.length
+        );
+
+        if (index === -1) {
+          console.log("BlogDetail: Blog not found in list");
+          return;
+        }
 
         const nextNewer = index > 0 ? list[index - 1]?.id : null; // Next
         const prevOlder = index < list.length - 1 ? list[index + 1]?.id : null; // Prev
+
+        console.log("BlogDetail: Navigation IDs:", {
+          prevId: prevOlder,
+          nextId: nextNewer,
+        });
         setNavIds({ prevId: prevOlder || null, nextId: nextNewer || null });
 
         // Prefetch neighbors
