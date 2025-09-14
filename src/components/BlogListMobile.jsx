@@ -355,6 +355,14 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               ),
         ]);
 
+        console.log("BlogListMobile - Loaded data:", {
+          memberCode,
+          blogsCount: all?.length || 0,
+          memberInfo: member,
+          hasMemberName: !!member?.name,
+          memberName: member?.name,
+        });
+
         if (!controller.signal.aborted) {
           // Cập nhật cache trước khi set state
           _cache.blogsByMember.set(memberCode, {

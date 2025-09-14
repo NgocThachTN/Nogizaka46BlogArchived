@@ -356,7 +356,7 @@ export const getImageUrl = (imagePath) => {
 };
 
 // Fetch thông tin member từ code
-export const fetchMemberInfo = async (memberCode) => {
+export const fetchMemberInfo = async (memberCode, options = {}) => {
   try {
     console.log("Fetching member info for code:", memberCode);
 
@@ -397,6 +397,7 @@ export const fetchMemberInfo = async (memberCode) => {
             headers: {
               "User-Agent": getUserAgent(),
             },
+            signal: options.signal,
           }
         );
         memberData = response.data;
@@ -414,6 +415,7 @@ export const fetchMemberInfo = async (memberCode) => {
           headers: {
             "User-Agent": getUserAgent(),
           },
+          signal: options.signal,
         }
       );
       memberData = response.data;
