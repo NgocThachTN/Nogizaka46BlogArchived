@@ -444,14 +444,7 @@ export default function BlogDetailMobile({
                   <Button
                     type="text"
                     size="small"
-                    disabled={
-                      !prevId ||
-                      navLock ||
-                      (pendingNavId === prevId && !getCachedBlogDetail(prevId))
-                    }
-                    loading={
-                      pendingNavId === prevId && !getCachedBlogDetail(prevId)
-                    }
+                    disabled={!prevId || navLock}
                     onClick={() => fastGo && fastGo(prevId)}
                     style={{
                       width: 28,
@@ -477,14 +470,7 @@ export default function BlogDetailMobile({
                   <Button
                     type="text"
                     size="small"
-                    disabled={
-                      !nextId ||
-                      navLock ||
-                      (pendingNavId === nextId && !getCachedBlogDetail(nextId))
-                    }
-                    loading={
-                      pendingNavId === nextId && !getCachedBlogDetail(nextId)
-                    }
+                    disabled={!nextId || navLock}
                     onClick={() => fastGo && fastGo(nextId)}
                     style={{
                       width: 28,
