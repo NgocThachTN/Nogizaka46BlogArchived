@@ -23,6 +23,8 @@ import {
   SearchOutlined,
   LinkOutlined,
   GlobalOutlined,
+  BulbOutlined,
+  MoonOutlined,
 } from "@ant-design/icons";
 import MemberListMobile from "./MemberListMobile";
 
@@ -110,7 +112,12 @@ const getAge = (birthday) => {
   return age;
 };
 
-const MemberList = ({ language = "ja", setLanguage }) => {
+const MemberList = ({
+  language = "ja",
+  setLanguage,
+  themeMode,
+  setThemeMode,
+}) => {
   // Ensure language is valid, fallback to "ja"
   const currentLanguage = ["ja", "en", "vi"].includes(language)
     ? language
@@ -222,7 +229,14 @@ const MemberList = ({ language = "ja", setLanguage }) => {
 
   // Mobile view
   if (isMobile) {
-    return <MemberListMobile language={language} setLanguage={setLanguage} />;
+    return (
+      <MemberListMobile
+        language={language}
+        setLanguage={setLanguage}
+        themeMode={themeMode}
+        setThemeMode={setThemeMode}
+      />
+    );
   }
 
   return (
@@ -243,7 +257,13 @@ const MemberList = ({ language = "ja", setLanguage }) => {
         {/* Header với title và language selector */}
         <ProCard
           bordered
-          style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
+          style={{
+            borderRadius: 14,
+            background:
+              themeMode === "dark"
+                ? "rgba(36, 33, 29, 0.85)"
+                : "rgba(253, 246, 227, 0.8)",
+          }}
         >
           <Space
             style={{ width: "100%", justifyContent: "space-between" }}
@@ -258,73 +278,92 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                 {t.totalBlogs[currentLanguage]}: {members.length}
               </Text>
             </Space>
-            {setLanguage && (
-              <Select
-                value={language}
-                onChange={setLanguage}
-                style={{ width: 140 }}
-                options={[
-                  {
-                    value: "ja",
-                    label: (
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <GlobalOutlined
-                          style={{ color: "#666", fontSize: "14px" }}
-                        />
-                        日本語
-                      </span>
-                    ),
-                  },
-                  {
-                    value: "en",
-                    label: (
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <GlobalOutlined
-                          style={{ color: "#666", fontSize: "14px" }}
-                        />
-                        English
-                      </span>
-                    ),
-                  },
-                  {
-                    value: "vi",
-                    label: (
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <GlobalOutlined
-                          style={{ color: "#666", fontSize: "14px" }}
-                        />
-                        Tiếng Việt
-                      </span>
-                    ),
-                  },
-                ]}
-              />
-            )}
+            <Space>
+              {setLanguage && (
+                <Select
+                  value={language}
+                  onChange={setLanguage}
+                  style={{ width: 140 }}
+                  options={[
+                    {
+                      value: "ja",
+                      label: (
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <GlobalOutlined
+                            style={{ color: "#666", fontSize: "14px" }}
+                          />
+                          日本語
+                        </span>
+                      ),
+                    },
+                    {
+                      value: "en",
+                      label: (
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <GlobalOutlined
+                            style={{ color: "#666", fontSize: "14px" }}
+                          />
+                          English
+                        </span>
+                      ),
+                    },
+                    {
+                      value: "vi",
+                      label: (
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <GlobalOutlined
+                            style={{ color: "#666", fontSize: "14px" }}
+                          />
+                          Tiếng Việt
+                        </span>
+                      ),
+                    },
+                  ]}
+                />
+              )}
+              {setThemeMode && (
+                <Segmented
+                  size="middle"
+                  value={themeMode}
+                  onChange={(v) => setThemeMode(v)}
+                  options={[
+                    { label: "Light", value: "light", icon: <BulbOutlined /> },
+                    { label: "Dark", value: "dark", icon: <MoonOutlined /> },
+                  ]}
+                />
+              )}
+            </Space>
           </Space>
         </ProCard>
 
         {/* Bộ lọc */}
         <ProCard
           bordered
-          style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
+          style={{
+            borderRadius: 14,
+            background:
+              themeMode === "dark"
+                ? "rgba(36, 33, 29, 0.85)"
+                : "rgba(253, 246, 227, 0.8)",
+          }}
         >
           <Space
             wrap
@@ -383,7 +422,13 @@ const MemberList = ({ language = "ja", setLanguage }) => {
         ) : grouped.length === 0 ? (
           <ProCard
             bordered
-            style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
+            style={{
+              borderRadius: 14,
+              background:
+                themeMode === "dark"
+                  ? "rgba(36, 33, 29, 0.85)"
+                  : "rgba(253, 246, 227, 0.8)",
+            }}
           >
             <Empty description={t.noMembers[currentLanguage]} />
           </ProCard>
@@ -420,7 +465,10 @@ const MemberList = ({ language = "ja", setLanguage }) => {
               headerBordered
               style={{
                 borderRadius: 14,
-                background: "rgba(253, 246, 227, 0.8)",
+                background:
+                  themeMode === "dark"
+                    ? "rgba(36, 33, 29, 0.85)"
+                    : "rgba(253, 246, 227, 0.8)",
               }}
               bodyStyle={{ paddingTop: 16 }}
             >
@@ -448,8 +496,14 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                         style={{
                           borderRadius: 16,
                           overflow: "hidden",
-                          background: "rgba(253, 246, 227, 0.9)",
-                          boxShadow: "0 4px 12px rgba(139, 69, 19, 0.1)",
+                          background:
+                            themeMode === "dark"
+                              ? "rgba(36, 33, 29, 0.9)"
+                              : "rgba(253, 246, 227, 0.9)",
+                          boxShadow:
+                            themeMode === "dark"
+                              ? "0 4px 12px rgba(0,0,0,0.35)"
+                              : "0 4px 12px rgba(139, 69, 19, 0.1)",
                           transition: "all 0.3s ease",
                         }}
                       >
@@ -459,7 +513,8 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                             position: "relative",
                             paddingBottom: "120%", // Tăng chiều cao ảnh
                             overflow: "hidden",
-                            background: "#f7f7f9",
+                            background:
+                              themeMode === "dark" ? "#1e1c19" : "#f7f7f9",
                             borderRadius: "12px", // Bo cả 4 góc
                           }}
                         >
@@ -525,8 +580,14 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                               {m.birthday && (
                                 <Tag
                                   style={{
-                                    background: "rgba(147, 51, 234, 0.05)",
-                                    border: "1px solid rgba(147, 51, 234, 0.2)",
+                                    background:
+                                      themeMode === "dark"
+                                        ? "rgba(207,191,166,0.08)"
+                                        : "rgba(147, 51, 234, 0.05)",
+                                    border:
+                                      themeMode === "dark"
+                                        ? "1px solid rgba(207,191,166,0.25)"
+                                        : "1px solid rgba(147, 51, 234, 0.2)",
                                     borderRadius: 12,
                                   }}
                                 >
@@ -537,8 +598,14 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                               {m.blood && (
                                 <Tag
                                   style={{
-                                    background: "rgba(147, 51, 234, 0.05)",
-                                    border: "1px solid rgba(147, 51, 234, 0.2)",
+                                    background:
+                                      themeMode === "dark"
+                                        ? "rgba(207,191,166,0.08)"
+                                        : "rgba(147, 51, 234, 0.05)",
+                                    border:
+                                      themeMode === "dark"
+                                        ? "1px solid rgba(207,191,166,0.25)"
+                                        : "1px solid rgba(147, 51, 234, 0.2)",
                                     borderRadius: 12,
                                   }}
                                 >
@@ -548,8 +615,14 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                               {m.constellation && (
                                 <Tag
                                   style={{
-                                    background: "rgba(147, 51, 234, 0.05)",
-                                    border: "1px solid rgba(147, 51, 234, 0.2)",
+                                    background:
+                                      themeMode === "dark"
+                                        ? "rgba(207,191,166,0.08)"
+                                        : "rgba(147, 51, 234, 0.05)",
+                                    border:
+                                      themeMode === "dark"
+                                        ? "1px solid rgba(207,191,166,0.25)"
+                                        : "1px solid rgba(147, 51, 234, 0.2)",
                                     borderRadius: 12,
                                   }}
                                 >
@@ -572,7 +645,10 @@ const MemberList = ({ language = "ja", setLanguage }) => {
                                   );
                                 }}
                                 style={{
-                                  color: "#9333ea",
+                                  color:
+                                    themeMode === "dark"
+                                      ? "#d2a86a"
+                                      : "#9333ea",
                                   fontSize: 12,
                                   padding: 0,
                                   height: "auto",
@@ -595,41 +671,6 @@ const MemberList = ({ language = "ja", setLanguage }) => {
           ))
         )}
       </ProCard>
-
-      {/* Custom styles */}
-      <style>{`
-        .member-card {
-          will-change: transform;
-        }
-        
-        .member-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-        }
-
-        .member-card .thumb img {
-          transition: transform 0.5s ease;
-          border-radius: 12px;
-        }
-
-        .member-card:hover .thumb img {
-          transform: scale(1.05);
-        }
-
-        .member-card .official-button:hover {
-          color: #7c28ea !important;
-        }
-        
-        .member-card .official-button:hover .anticon {
-          transform: translateX(2px);
-        }
-
-        .member-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, transparent 30%);
-        }
-      `}</style>
     </PageContainer>
   );
 };

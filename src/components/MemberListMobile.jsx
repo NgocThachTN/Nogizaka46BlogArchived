@@ -45,6 +45,8 @@ import {
   DownOutlined,
   RightOutlined,
   GlobalOutlined,
+  BulbOutlined,
+  MoonOutlined,
 } from "@ant-design/icons";
 
 /** Typography */
@@ -148,7 +150,12 @@ const useRafDebounce = (fn, delay = 160) => {
   );
 };
 
-export default function MemberListMobile({ language = "ja", setLanguage }) {
+export default function MemberListMobile({
+  language = "ja",
+  setLanguage,
+  themeMode = "light",
+  setThemeMode,
+}) {
   // Ensure language is valid, fallback to "ja"
   const currentLanguage = ["ja", "en", "vi"].includes(language)
     ? language
@@ -534,7 +541,8 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         paddingInlinePageContainer: 0,
       }}
       style={{
-        background: "rgba(253, 246, 227, 0.8)",
+        background:
+          themeMode === "dark" ? "#141311" : "rgba(253, 246, 227, 0.8)",
         padding: 0,
         margin: 0,
         minHeight: "100dvh",
@@ -547,8 +555,14 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
       <Affix offsetTop={0}>
         <div
           style={{
-            background: "rgba(253, 246, 227, 0.8)",
-            borderBottom: "1px solid #f2f2f5",
+            background:
+              themeMode === "dark"
+                ? "rgba(28,26,23,0.95)"
+                : "rgba(253, 246, 227, 0.8)",
+            borderBottom:
+              themeMode === "dark"
+                ? "1px solid rgba(207,191,166,0.2)"
+                : "1px solid #f2f2f5",
             width: "100%",
             zIndex: 998,
           }}
@@ -569,13 +583,22 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
               <Space direction="vertical" size={0}>
                 <Text
                   type="secondary"
-                  style={{ letterSpacing: 2, fontSize: 12 }}
+                  style={{
+                    letterSpacing: 2,
+                    fontSize: 12,
+                    color: themeMode === "dark" ? "#cfbfa6" : undefined,
+                  }}
                 >
                   {t.blogTitle[currentLanguage]}
                 </Text>
                 <Title
                   level={4}
-                  style={{ margin: 0, lineHeight: 1.2, fontSize: 18 }}
+                  style={{
+                    margin: 0,
+                    lineHeight: 1.2,
+                    fontSize: 18,
+                    color: themeMode === "dark" ? "#f5ede0" : undefined,
+                  }}
                 >
                   {t.totalBlogs[currentLanguage]}: {members.length}
                 </Title>
@@ -642,6 +665,19 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                     ]}
                   />
                 )}
+                {setThemeMode && (
+                  <Button
+                    type="text"
+                    onClick={() =>
+                      setThemeMode(themeMode === "dark" ? "light" : "dark")
+                    }
+                    style={{ borderRadius: 10, flexShrink: 0 }}
+                    icon={
+                      themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
+                    }
+                    aria-label="Toggle dark mode"
+                  />
+                )}
                 <Button
                   type="text"
                   icon={<FilterOutlined />}
@@ -691,8 +727,14 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                 size="middle"
                 style={{
                   borderRadius: 12,
-                  background: "rgba(253, 246, 227, 0.9)",
-                  border: "1px solid rgba(139, 69, 19, 0.2)",
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36,33,29,0.85)"
+                      : "rgba(253, 246, 227, 0.9)",
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.25)"
+                      : "1px solid rgba(139, 69, 19, 0.2)",
                   width: "100%",
                 }}
               />
@@ -712,11 +754,24 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         }}
       >
         {loading ? (
-          <ProCard ghost>
+          <ProCard
+            ghost
+            style={{
+              background:
+                themeMode === "dark" ? "rgba(36,33,29,0.85)" : undefined,
+            }}
+          >
             <ProSkeleton type="list" />
           </ProCard>
         ) : grouped.length === 0 ? (
-          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+          <Card
+            style={{
+              borderRadius: 16,
+              textAlign: "center",
+              background:
+                themeMode === "dark" ? "rgba(36,33,29,0.85)" : undefined,
+            }}
+          >
             <Empty description={t.noMembers[currentLanguage]} />
           </Card>
         ) : (
@@ -741,14 +796,17 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                   >
                     <Space>
                       <StarOutlined
-                        style={{ color: "#7c3aed", fontSize: 14 }}
+                        style={{
+                          color: themeMode === "dark" ? "#d2a86a" : "#7c3aed",
+                          fontSize: 14,
+                        }}
                       />
                       <span
                         style={{
                           ...jpFont,
                           fontWeight: 700,
                           fontSize: 14,
-                          color: "#18181b",
+                          color: themeMode === "dark" ? "#f5ede0" : "#18181b",
                         }}
                       >
                         {gen === "その他"
@@ -808,9 +866,18 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
                 style: {
                   marginBottom: 8,
                   borderRadius: 12,
-                  border: "1px solid #f1f1f5",
-                  background: "rgba(253, 246, 227, 0.8)",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.2)"
+                      : "1px solid #f1f1f5",
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36,33,29,0.85)"
+                      : "rgba(253, 246, 227, 0.8)",
+                  boxShadow:
+                    themeMode === "dark"
+                      ? "0 1px 4px rgba(0,0,0,0.35)"
+                      : "0 1px 4px rgba(0,0,0,0.04)",
                 },
                 forceRender: false,
                 showArrow: false,
@@ -886,7 +953,7 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
           height: 100%; 
           min-height: 100vh;
           min-height: 100dvh;
-            background: #fdf6e3;
+            background: ${themeMode === "dark" ? "#141311" : "#fdf6e3"};
           margin: 0;
           padding: 0;
           width: 100%;
@@ -938,11 +1005,21 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
           width: 100% !important;
         }
         .ant-collapse-item { 
-          border: 1px solid #f1f1f5 !important; 
+          border: 1px solid ${
+            themeMode === "dark" ? "rgba(207,191,166,0.2)" : "#f1f1f5"
+          } !important; 
           border-radius: 12px !important; 
           margin-bottom: 8px !important; 
-          background: rgba(253, 246, 227, 0.8) !important; 
-          box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important; 
+          background: ${
+            themeMode === "dark"
+              ? "rgba(36,33,29,0.85)"
+              : "rgba(253, 246, 227, 0.8)"
+          } !important; 
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 1px 4px rgba(0,0,0,0.35)"
+              : "0 1px 4px rgba(0,0,0,0.04)"
+          } !important; 
           overflow: hidden !important; 
           width: 100% !important;
         }
@@ -951,7 +1028,11 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         }
         .ant-collapse-header { 
           padding: 12px 16px !important; 
-          background: linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9)) !important; 
+          background: ${
+            themeMode === "dark"
+              ? "linear-gradient(135deg, rgba(28,26,23,0.95), rgba(36,33,29,0.95))"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9))"
+          } !important; 
           border: none !important; 
           border-radius: 12px !important; 
           cursor: pointer !important; 
@@ -962,7 +1043,11 @@ export default function MemberListMobile({ language = "ja", setLanguage }) {
         }
         .ant-collapse-content { 
           border: none !important; 
-          background: rgba(253, 246, 227, 0.8) !important; 
+          background: ${
+            themeMode === "dark"
+              ? "rgba(36,33,29,0.85)"
+              : "rgba(253, 246, 227, 0.8)"
+          } !important; 
           border-radius: 0 0 12px 12px !important; 
         }
         .ant-collapse-content-box { 

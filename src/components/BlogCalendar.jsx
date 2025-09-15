@@ -66,6 +66,7 @@ export default function BlogCalendar({
   onBlogClick = () => {},
   isMobile = false,
   language = "ja",
+  themeMode = "light",
 }) {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [viewMode, setViewMode] = useState("month"); // month, year
@@ -167,7 +168,13 @@ export default function BlogCalendar({
             )}
           </Space>
         }
-        style={{ borderRadius: 16, background: "rgba(253, 246, 227, 0.8)" }}
+        style={{
+          borderRadius: 16,
+          background:
+            themeMode === "dark"
+              ? "rgba(36, 33, 29, 0.85)"
+              : "rgba(253, 246, 227, 0.8)",
+        }}
         bodyStyle={{ padding: isMobile ? 12 : 16 }}
       >
         <div style={{ textAlign: "center", padding: "20px 0" }}>
@@ -190,7 +197,13 @@ export default function BlogCalendar({
           )}
         </Space>
       }
-      style={{ borderRadius: 16, background: "rgba(253, 246, 227, 0.8)" }}
+      style={{
+        borderRadius: 16,
+        background:
+          themeMode === "dark"
+            ? "rgba(36, 33, 29, 0.85)"
+            : "rgba(253, 246, 227, 0.8)",
+      }}
       bodyStyle={{ padding: isMobile ? 12 : 16 }}
       extra={
         <Button
@@ -266,7 +279,10 @@ export default function BlogCalendar({
           style={{
             borderRadius: 12,
             marginTop: 12,
-            background: "rgba(253, 246, 227, 0.9)",
+            background:
+              themeMode === "dark"
+                ? "rgba(36, 33, 29, 0.9)"
+                : "rgba(253, 246, 227, 0.9)",
           }}
           bodyStyle={{ padding: isMobile ? 8 : 12 }}
         >
@@ -280,8 +296,14 @@ export default function BlogCalendar({
                 style={{
                   borderRadius: 8,
                   cursor: "pointer",
-                  border: "1px solid rgba(139, 69, 19, 0.2)",
-                  background: "rgba(253, 246, 227, 0.95)",
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.25)"
+                      : "1px solid rgba(139, 69, 19, 0.2)",
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36, 33, 29, 0.95)"
+                      : "rgba(253, 246, 227, 0.95)",
                 }}
                 bodyStyle={{ padding: isMobile ? 8 : 12 }}
               >
@@ -295,7 +317,7 @@ export default function BlogCalendar({
                       height: isMobile ? 40 : 48,
                       borderRadius: 8,
                       overflow: "hidden",
-                      background: "#f5f6fa",
+                      background: themeMode === "dark" ? "#1e1c19" : "#f5f6fa",
                       flexShrink: 0,
                     }}
                   >
@@ -360,7 +382,10 @@ export default function BlogCalendar({
             borderRadius: 12,
             marginTop: 12,
             textAlign: "center",
-            background: "rgba(253, 246, 227, 0.9)",
+            background:
+              themeMode === "dark"
+                ? "rgba(36, 33, 29, 0.9)"
+                : "rgba(253, 246, 227, 0.9)",
           }}
           bodyStyle={{ padding: isMobile ? 16 : 24 }}
         >
@@ -378,15 +403,25 @@ export default function BlogCalendar({
       {/* Enhanced Calendar Styles */}
       <style>{`
         .blog-calendar {
-          background: linear-gradient(135deg, #faf7ff 0%, #ffffff 100%);
+          background: ${
+            themeMode === "dark"
+              ? "#141311"
+              : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
+          };
           border-radius: 16px;
           padding: 16px;
-          box-shadow: 0 4px 20px rgba(109, 40, 217, 0.08);
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 4px 20px rgba(0,0,0,0.35)"
+              : "0 4px 20px rgba(109, 40, 217, 0.08)"
+          };
         }
         
         .blog-calendar .ant-picker-calendar-header {
           padding: ${isMobile ? "12px 0" : "16px 0"};
-          border-bottom: 2px solid #f0f0f0;
+          border-bottom: 2px solid ${
+            themeMode === "dark" ? "rgba(207,191,166,0.15)" : "#f0f0f0"
+          };
           margin-bottom: 16px;
         }
         
@@ -408,25 +443,55 @@ export default function BlogCalendar({
         }
         
         .blog-calendar .ant-picker-calendar-date-today {
-          background: linear-gradient(135deg, rgba(109, 40, 217, 0.1) 0%, rgba(109, 40, 217, 0.05) 100%) !important;
-          border: 2px solid rgba(109, 40, 217, 0.3) !important;
-          box-shadow: 0 2px 8px rgba(109, 40, 217, 0.2);
+          background: ${
+            themeMode === "dark"
+              ? "rgba(207,191,166,0.08)"
+              : "linear-gradient(135deg, rgba(109, 40, 217, 0.1) 0%, rgba(109, 40, 217, 0.05) 100%)"
+          } !important;
+          border: 2px solid ${
+            themeMode === "dark"
+              ? "rgba(207,191,166,0.3)"
+              : "rgba(109, 40, 217, 0.3)"
+          } !important;
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 2px 8px rgba(0,0,0,0.35)"
+              : "0 2px 8px rgba(109, 40, 217, 0.2)"
+          };
         }
         
         .blog-calendar .ant-picker-calendar-date:hover {
-          background: linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%) !important;
+          background: ${
+            themeMode === "dark"
+              ? "rgba(207,191,166,0.12)"
+              : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
+          } !important;
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(109, 40, 217, 0.15);
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 4px 12px rgba(0,0,0,0.35)"
+              : "0 4px 12px rgba(109, 40, 217, 0.15)"
+          };
         }
         
         .blog-calendar .ant-picker-calendar-date-selected {
-          background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%) !important;
-          border: 2px solid #6d28d9 !important;
-          box-shadow: 0 4px 16px rgba(109, 40, 217, 0.3);
+          background: ${
+            themeMode === "dark"
+              ? "#9c6b3f"
+              : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
+          } !important;
+          border: 2px solid ${
+            themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
+          } !important;
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 4px 16px rgba(0,0,0,0.35)"
+              : "0 4px 16px rgba(109, 40, 217, 0.3)"
+          };
         }
         
         .blog-calendar .ant-picker-calendar-date-selected .ant-picker-calendar-date-value {
-          color: #fff !important;
+          color: ${themeMode === "dark" ? "#141311" : "#fff"} !important;
           font-weight: 700;
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
@@ -435,16 +500,21 @@ export default function BlogCalendar({
           font-size: ${isMobile ? "13px" : "15px"};
           line-height: 1.2;
           font-weight: 500;
+          color: ${themeMode === "dark" ? "#f5ede0" : "inherit"};
         }
         
         .blog-calendar .ant-picker-calendar-date-today .ant-picker-calendar-date-value {
-          color: #6d28d9 !important;
+          color: ${themeMode === "dark" ? "#d2a86a" : "#6d28d9"} !important;
           font-weight: 700;
         }
         
         .blog-calendar .ant-picker-calendar-month-panel {
           padding: ${isMobile ? "12px" : "16px"};
-          background: linear-gradient(135deg, #faf7ff 0%, #ffffff 100%);
+          background: ${
+            themeMode === "dark"
+              ? "#141311"
+              : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
+          };
           border-radius: 12px;
         }
         
@@ -457,19 +527,37 @@ export default function BlogCalendar({
         }
         
         .blog-calendar .ant-picker-calendar-month-panel-cell:hover {
-          background: linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%) !important;
+          background: ${
+            themeMode === "dark"
+              ? "rgba(207,191,166,0.12)"
+              : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
+          } !important;
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(109, 40, 217, 0.15);
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 6px 20px rgba(0,0,0,0.35)"
+              : "0 6px 20px rgba(109, 40, 217, 0.15)"
+          };
         }
         
         .blog-calendar .ant-picker-calendar-month-panel-cell-selected {
-          background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%) !important;
-          border: 2px solid #6d28d9 !important;
-          box-shadow: 0 6px 24px rgba(109, 40, 217, 0.3);
+          background: ${
+            themeMode === "dark"
+              ? "#9c6b3f"
+              : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
+          } !important;
+          border: 2px solid ${
+            themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
+          } !important;
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 6px 24px rgba(0,0,0,0.35)"
+              : "0 6px 24px rgba(109, 40, 217, 0.3)"
+          };
         }
         
         .blog-calendar .ant-picker-calendar-month-panel-cell-selected .ant-picker-calendar-month-panel-cell-content {
-          color: #fff !important;
+          color: ${themeMode === "dark" ? "#141311" : "#fff"} !important;
           font-weight: 700;
           text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
@@ -477,6 +565,7 @@ export default function BlogCalendar({
         .blog-calendar .ant-picker-calendar-month-panel-cell-content {
           font-size: ${isMobile ? "13px" : "15px"};
           font-weight: 500;
+          color: ${themeMode === "dark" ? "#f5ede0" : "inherit"};
         }
         
         .blog-calendar .ant-picker-calendar-date-today::before {
@@ -486,7 +575,7 @@ export default function BlogCalendar({
           left: 3px;
           right: 3px;
           bottom: 3px;
-          border: 2px solid #6d28d9;
+          border: 2px solid ${themeMode === "dark" ? "#d2a86a" : "#6d28d9"};
           border-radius: 6px;
           pointer-events: none;
           animation: pulse 2s infinite;

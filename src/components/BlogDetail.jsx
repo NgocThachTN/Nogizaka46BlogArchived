@@ -33,6 +33,8 @@ import {
   RightOutlined,
   ReadOutlined,
   GlobalOutlined,
+  BulbOutlined,
+  MoonOutlined,
 } from "@ant-design/icons";
 import {
   useEffect,
@@ -109,6 +111,8 @@ const LS_KEY_TTL_VI = "blog:trttl:vi";
 export default function BlogDetail({
   language: propLanguage,
   setLanguage: propSetLanguage,
+  themeMode,
+  setThemeMode,
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -592,6 +596,8 @@ export default function BlogDetail({
         navLock={navLock}
         memberInfo={memberInfo}
         setMemberInfo={setMemberInfo}
+        themeMode={themeMode}
+        setThemeMode={setThemeMode}
       />
     );
   }
@@ -725,6 +731,19 @@ export default function BlogDetail({
               },
             ]}
           />,
+          setThemeMode ? (
+            <Button
+              key="theme"
+              type="text"
+              size="middle"
+              onClick={() =>
+                setThemeMode(themeMode === "dark" ? "light" : "dark")
+              }
+              icon={themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />}
+              aria-label="Toggle dark mode"
+              title={themeMode === "dark" ? "Light" : "Dark"}
+            />
+          ) : null,
 
           <Segmented
             key="seg-size"
@@ -753,7 +772,10 @@ export default function BlogDetail({
           <Card
             style={{
               borderRadius: 16,
-              background: "rgba(253, 246, 227, 0.8)",
+              background:
+                themeMode === "dark"
+                  ? "rgba(36, 33, 29, 0.85)"
+                  : "rgba(253, 246, 227, 0.8)",
               ...jpFont,
             }}
             bodyStyle={{ padding: readingMode ? 32 : 24, position: "relative" }}
@@ -764,7 +786,10 @@ export default function BlogDetail({
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: "rgba(255,255,255,0.9)",
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(28,26,23,0.9)"
+                      : "rgba(255,255,255,0.9)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -927,7 +952,13 @@ export default function BlogDetail({
               </div>
             </div>
 
-            <Divider style={{ margin: "12px 0 20px" }} />
+            <Divider
+              style={{
+                margin: "12px 0 20px",
+                borderColor:
+                  themeMode === "dark" ? "rgba(207,191,166,0.2)" : undefined,
+              }}
+            />
 
             {/* Content */}
             <div
@@ -937,6 +968,7 @@ export default function BlogDetail({
                 fontSize: sz.px,
                 lineHeight: sz.lh,
                 letterSpacing: 0.3,
+                color: themeMode === "dark" ? "#f5ede0" : undefined,
               }}
               dangerouslySetInnerHTML={{ __html: displayContent }}
             />
@@ -970,7 +1002,13 @@ export default function BlogDetail({
                 <span>{t.readTime[language]}</span>
               </Space>
             }
-            style={{ borderRadius: 16, background: "rgba(253, 246, 227, 0.8)" }}
+            style={{
+              borderRadius: 16,
+              background:
+                themeMode === "dark"
+                  ? "rgba(36, 33, 29, 0.85)"
+                  : "rgba(253, 246, 227, 0.8)",
+            }}
             bodyStyle={{ padding: isMobile ? 12 : 16 }}
           >
             <div
@@ -978,19 +1016,30 @@ export default function BlogDetail({
                 textAlign: "center",
                 padding: isMobile ? "16px 0" : "20px 0",
                 background:
-                  "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)",
+                  themeMode === "dark"
+                    ? "linear-gradient(135deg, rgba(28,26,23,0.9) 0%, rgba(36,33,29,0.9) 100%)"
+                    : "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)",
                 borderRadius: 12,
-                border: "1px solid rgba(139, 69, 19, 0.2)",
-                boxShadow: "0 2px 8px rgba(139, 69, 19, 0.1)",
+                border:
+                  themeMode === "dark"
+                    ? "1px solid rgba(207,191,166,0.25)"
+                    : "1px solid rgba(139, 69, 19, 0.2)",
+                boxShadow:
+                  themeMode === "dark"
+                    ? "0 2px 8px rgba(0,0,0,0.35)"
+                    : "0 2px 8px rgba(139, 69, 19, 0.1)",
               }}
             >
               <div
                 style={{
                   fontSize: isMobile ? 24 : 28,
                   fontWeight: 700,
-                  color: "#8b4513",
+                  color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
                   marginBottom: 4,
-                  textShadow: "0 1px 2px rgba(139, 69, 19, 0.1)",
+                  textShadow:
+                    themeMode === "dark"
+                      ? "0 1px 2px rgba(0,0,0,0.4)"
+                      : "0 1px 2px rgba(139, 69, 19, 0.1)",
                 }}
               >
                 {readMinutes}
@@ -998,7 +1047,7 @@ export default function BlogDetail({
               <div
                 style={{
                   fontSize: isMobile ? 12 : 14,
-                  color: "#5d4e37",
+                  color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                   fontWeight: 500,
                   letterSpacing: 0.5,
                 }}
@@ -1013,7 +1062,10 @@ export default function BlogDetail({
               title={t.toc[language]}
               style={{
                 borderRadius: 16,
-                background: "rgba(253, 246, 227, 0.8)",
+                background:
+                  themeMode === "dark"
+                    ? "rgba(36, 33, 29, 0.85)"
+                    : "rgba(253, 246, 227, 0.8)",
               }}
             >
               <Space direction="vertical" style={{ width: "100%" }} size={6}>
@@ -1050,6 +1102,7 @@ export default function BlogDetail({
             onBlogClick={(blogId) => navigate(`/blog/${blogId}`)}
             isMobile={isMobile}
             language={language}
+            themeMode={themeMode}
           />
         </ProCard>
       </ProCard>
@@ -1087,12 +1140,14 @@ export default function BlogDetail({
           };
         }
         .jp-prose p { 
-          color: #374151; 
+          color: ${themeMode === "dark" ? "#f5ede0" : "#374151"}; 
           margin: ${window.innerWidth < 768 ? "0.6em 0" : "0.75em 0"}; 
           text-align: justify; 
           line-height: ${window.innerWidth < 768 ? "1.6" : "inherit"};
         }
-        .jp-prose a { color: #6b21a8; text-decoration: none; }
+        .jp-prose a { color: ${
+          themeMode === "dark" ? "#d2a86a" : "#6b21a8"
+        }; text-decoration: none; }
         .jp-prose a:hover { text-decoration: underline; }
         .jp-prose img { 
           border-radius: ${window.innerWidth < 768 ? "8px" : "12px"}; 
@@ -1102,10 +1157,20 @@ export default function BlogDetail({
           height: auto;
           box-shadow: ${
             window.innerWidth < 768
-              ? "0 2px 6px rgba(0,0,0,0.1)"
-              : "0 4px 12px rgba(0,0,0,0.1)"
+              ? `${
+                  themeMode === "dark"
+                    ? "0 2px 6px rgba(0,0,0,0.4)"
+                    : "0 2px 6px rgba(0,0,0,0.1)"
+                }`
+              : `${
+                  themeMode === "dark"
+                    ? "0 4px 12px rgba(0,0,0,0.45)"
+                    : "0 4px 12px rgba(0,0,0,0.1)"
+                }`
           };
-          border: 1px solid rgba(0,0,0,0.1);
+          border: 1px solid ${
+            themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.1)"
+          };
         }
       `}</style>
       {/* dynamic heading scale */}

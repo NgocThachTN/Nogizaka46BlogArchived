@@ -31,6 +31,8 @@ import {
   BookOutlined,
   StarOutlined,
   GlobalOutlined,
+  BulbOutlined,
+  MoonOutlined,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -93,7 +95,12 @@ const _cache = {
 const STALE_MS = 1000 * 60 * 5; // 5 phút coi là "fresh"
 const CACHE_LIMIT = 50; // Giới hạn cache để tránh memory leak
 
-export default function BlogListMobile({ language = "ja", setLanguage }) {
+export default function BlogListMobile({
+  language = "ja",
+  setLanguage,
+  themeMode = "light",
+  setThemeMode,
+}) {
   // Ensure language is valid, fallback to "ja"
   const currentLanguage = ["ja", "en", "vi"].includes(language)
     ? language
@@ -611,7 +618,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           paddingBlockPageContainerContent: 0,
         }}
         style={{
-          background: `linear-gradient(135deg, ${colors.background} 0%, #f5f5f5 100%)`,
+          background:
+            themeMode === "dark"
+              ? "#141311"
+              : `linear-gradient(135deg, ${colors.background} 0%, #f5f5f5 100%)`,
           minHeight: "100dvh",
           /* iOS Safari specific */
           WebkitOverflowScrolling: "touch",
@@ -630,9 +640,13 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         >
           <ProCard
             style={{
-              background: colors.surface,
+              background:
+                themeMode === "dark" ? "rgba(36,33,29,0.85)" : colors.surface,
               borderRadius: 20,
-              boxShadow: `0 4px 20px ${colors.shadow}`,
+              boxShadow:
+                themeMode === "dark"
+                  ? "0 4px 20px rgba(0,0,0,0.35)"
+                  : `0 4px 20px ${colors.shadow}`,
               /* iOS Safari specific */
               WebkitTransform: "translateZ(0)",
               transform: "translateZ(0)",
@@ -640,7 +654,13 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           >
             <Space direction="vertical" align="center" size={16}>
               <Spin size="large" />
-              <Text style={{ ...jpFont, color: colors.textSecondary }}>
+              <Text
+                style={{
+                  ...jpFont,
+                  color:
+                    themeMode === "dark" ? "#cfbfa6" : colors.textSecondary,
+                }}
+              >
                 {currentLanguage === "ja"
                   ? "読み込み中..."
                   : currentLanguage === "vi"
@@ -747,7 +767,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         paddingBlockPageContainerContent: 0,
       }}
       style={{
-        background: `linear-gradient(135deg, ${colors.background} 0%, #f5f5f5 100%)`,
+        background:
+          themeMode === "dark"
+            ? "#141311"
+            : `linear-gradient(135deg, ${colors.background} 0%, #f5f5f5 100%)`,
         minHeight: "100dvh",
         padding: 0,
         margin: 0,
@@ -761,11 +784,20 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
       <Affix offsetTop={0}>
         <div
           style={{
-            background: `linear-gradient(135deg, ${colors.surface} 0%, #f8f9fa 100%)`,
-            borderBottom: `2px solid ${colors.primary}20`,
+            background:
+              themeMode === "dark"
+                ? "linear-gradient(135deg, rgba(28,26,23,0.95) 0%, rgba(36,33,29,0.95) 100%)"
+                : `linear-gradient(135deg, ${colors.surface} 0%, #f8f9fa 100%)`,
+            borderBottom:
+              themeMode === "dark"
+                ? `1px solid rgba(207,191,166,0.2)`
+                : `2px solid ${colors.primary}20`,
             width: "100%",
             zIndex: 998,
-            boxShadow: `0 2px 20px ${colors.shadow}`,
+            boxShadow:
+              themeMode === "dark"
+                ? "0 2px 20px rgba(0,0,0,0.35)"
+                : `0 2px 20px ${colors.shadow}`,
             /* iOS Safari specific */
             WebkitTransform: "translateZ(0)",
             transform: "translateZ(0)",
@@ -922,7 +954,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                   <Statistic
                     value={filtered.length}
                     valueStyle={{
-                      color: colors.primary,
+                      color: themeMode === "dark" ? "#d2a86a" : colors.primary,
                       fontSize: 16,
                       fontWeight: 600,
                     }}
@@ -990,6 +1022,24 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       ]}
                     />
                   )}
+                  {setThemeMode && (
+                    <Button
+                      size="small"
+                      type="text"
+                      onClick={() =>
+                        setThemeMode(themeMode === "dark" ? "light" : "dark")
+                      }
+                      icon={
+                        themeMode === "dark" ? (
+                          <BulbOutlined />
+                        ) : (
+                          <MoonOutlined />
+                        )
+                      }
+                      aria-label="Toggle dark mode"
+                      style={{ marginLeft: 6 }}
+                    />
+                  )}
                 </Space>
               </Space>
             </div>
@@ -1010,10 +1060,17 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               size="large"
               style={{
                 borderRadius: 16,
-                background: colors.surface,
-                border: `2px solid ${colors.border}`,
+                background:
+                  themeMode === "dark" ? "rgba(36,33,29,0.85)" : colors.surface,
+                border:
+                  themeMode === "dark"
+                    ? "1px solid rgba(207,191,166,0.25)"
+                    : `2px solid ${colors.border}`,
                 width: "100%",
-                boxShadow: `0 2px 8px ${colors.shadow}`,
+                boxShadow:
+                  themeMode === "dark"
+                    ? "0 2px 8px rgba(0,0,0,0.35)"
+                    : `0 2px 8px ${colors.shadow}`,
               }}
             />
           </ProCard>
@@ -1084,9 +1141,18 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                 style={{
                   borderRadius: 16,
                   overflow: "hidden",
-                  background: `linear-gradient(135deg, ${colors.surface} 0%, #f8f9fa 100%)`,
-                  boxShadow: `0 2px 12px ${colors.shadow}`,
-                  border: `1px solid ${colors.border}`,
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36,33,29,0.9)"
+                      : `linear-gradient(135deg, ${colors.surface} 0%, #f8f9fa 100%)`,
+                  boxShadow:
+                    themeMode === "dark"
+                      ? "0 2px 12px rgba(0,0,0,0.35)"
+                      : `0 2px 12px ${colors.shadow}`,
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.2)"
+                      : `1px solid ${colors.border}`,
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   contain: "layout paint style",
                   /* iOS Safari specific */
@@ -1154,13 +1220,18 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         position: "absolute",
                         top: 8,
                         left: 8,
-                        background: colors.primary,
-                        color: colors.surface,
+                        background:
+                          themeMode === "dark" ? "#9c6b3f" : colors.primary,
+                        color:
+                          themeMode === "dark" ? "#141311" : colors.surface,
                         padding: "4px 8px",
                         borderRadius: 12,
                         fontSize: 10,
                         fontWeight: 600,
-                        boxShadow: `0 2px 8px ${colors.primary}40`,
+                        boxShadow:
+                          themeMode === "dark"
+                            ? "0 2px 8px rgba(0,0,0,0.35)"
+                            : `0 2px 8px ${colors.primary}40`,
                         zIndex: 2,
                       }}
                     >
@@ -1174,7 +1245,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         position: "absolute",
                         bottom: 8,
                         right: 8,
-                        background: "rgba(255,255,255,0.9)",
+                        background:
+                          themeMode === "dark"
+                            ? "rgba(20,19,17,0.9)"
+                            : "rgba(255,255,255,0.9)",
                         borderRadius: 50,
                         width: 24,
                         height: 24,
@@ -1185,7 +1259,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                       }}
                     >
                       <ReadOutlined
-                        style={{ fontSize: 12, color: colors.primary }}
+                        style={{
+                          fontSize: 12,
+                          color:
+                            themeMode === "dark" ? "#d2a86a" : colors.primary,
+                        }}
                       />
                     </div>
                   </div>
@@ -1210,7 +1288,7 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                           lineHeight: 1.4,
                           display: "block",
                           marginBottom: 4,
-                          color: colors.text,
+                          color: themeMode === "dark" ? "#f5ede0" : colors.text,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -1223,7 +1301,10 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         style={{
                           fontSize: 12,
                           display: "block",
-                          color: colors.textSecondary,
+                          color:
+                            themeMode === "dark"
+                              ? "#cfbfa6"
+                              : colors.textSecondary,
                           marginBottom: 8,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -1238,7 +1319,8 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         size="small"
                         icon={<EyeOutlined />}
                         style={{
-                          color: colors.primary,
+                          color:
+                            themeMode === "dark" ? "#d2a86a" : colors.primary,
                           fontSize: 11,
                           height: 24,
                           padding: "0 8px",
@@ -1251,7 +1333,8 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
                         size="small"
                         icon={<HeartOutlined />}
                         style={{
-                          color: colors.accent,
+                          color:
+                            themeMode === "dark" ? "#c78b52" : colors.accent,
                           fontSize: 11,
                           height: 24,
                           padding: "0 8px",
@@ -1299,10 +1382,14 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
               showSizeChanger={false}
               size="small"
               style={{
-                background: colors.surface,
+                background:
+                  themeMode === "dark" ? "rgba(36,33,29,0.85)" : colors.surface,
                 padding: "8px 16px",
                 borderRadius: 16,
-                boxShadow: `0 2px 8px ${colors.shadow}`,
+                boxShadow:
+                  themeMode === "dark"
+                    ? "0 2px 8px rgba(0,0,0,0.35)"
+                    : `0 2px 8px ${colors.shadow}`,
                 /* iOS Safari specific */
                 WebkitTransform: "translateZ(0)",
                 transform: "translateZ(0)",
@@ -1319,7 +1406,11 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           height: 100%; 
           min-height: 100vh;
           min-height: 100dvh;
-          background: linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%);
+          background: ${
+            themeMode === "dark"
+              ? "#141311"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
+          };
           margin: 0;
           padding: 0;
           width: 100%;
@@ -1380,19 +1471,41 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
         }
         .ant-card:hover { 
           transform: translateY(-2px) scale(1.01); 
-          box-shadow: 0 8px 25px rgba(156, 39, 176, 0.15) !important; 
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 8px 25px rgba(0,0,0,0.35)"
+              : "0 8px 25px rgba(156, 39, 176, 0.15)"
+          } !important; 
         }
 
         /* Japanese Input */
         .ant-input {
           border-radius: 16px !important;
-          border: 2px solid #e0e0e0 !important;
+          border: ${
+            themeMode === "dark"
+              ? "1px solid rgba(207,191,166,0.25)"
+              : "2px solid #e0e0e0"
+          } !important;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 2px 8px rgba(0,0,0,0.35)"
+              : "0 2px 8px rgba(0,0,0,0.05)"
+          } !important;
+          background: ${
+            themeMode === "dark" ? "rgba(36,33,29,0.85)" : "white"
+          } !important;
+          color: ${themeMode === "dark" ? "#f5ede0" : "inherit"} !important;
         }
         .ant-input:focus {
-          border-color: #9c27b0 !important;
-          box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2) !important;
+          border-color: ${
+            themeMode === "dark" ? "#d2a86a" : "#9c27b0"
+          } !important;
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 4px 12px rgba(0,0,0,0.45)"
+              : "0 4px 12px rgba(156, 39, 176, 0.2)"
+          } !important;
         }
 
         /* Japanese Button */
@@ -1415,9 +1528,15 @@ export default function BlogListMobile({ language = "ja", setLanguage }) {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
         .ant-pagination-item-active {
-          background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%) !important;
-          border-color: #9c27b0 !important;
-          color: white !important;
+          background: ${
+            themeMode === "dark"
+              ? "#9c6b3f"
+              : "linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)"
+          } !important;
+          border-color: ${
+            themeMode === "dark" ? "#9c6b3f" : "#9c27b0"
+          } !important;
+          color: ${themeMode === "dark" ? "#141311" : "white"} !important;
         }
 
         /* Mobile image perf */

@@ -23,6 +23,8 @@ import {
   EyeOutlined,
   SearchOutlined,
   GlobalOutlined,
+  BulbOutlined,
+  MoonOutlined,
 } from "@ant-design/icons";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
 import {
@@ -83,7 +85,12 @@ const _cache = {
 };
 const STALE_MS = 1000 * 60 * 3; // 3 phút coi là “fresh”
 
-export default function BlogList({ language = "ja", setLanguage }) {
+export default function BlogList({
+  language = "ja",
+  setLanguage,
+  themeMode,
+  setThemeMode,
+}) {
   // Ensure language is valid, fallback to "ja"
   const currentLanguage = ["ja", "en", "vi"].includes(language)
     ? language
@@ -309,7 +316,10 @@ export default function BlogList({ language = "ja", setLanguage }) {
             bordered
             style={{
               borderRadius: 16,
-              background: "rgba(253, 246, 227, 0.8)",
+              background:
+                themeMode === "dark"
+                  ? "rgba(36, 33, 29, 0.85)"
+                  : "rgba(253, 246, 227, 0.8)",
               marginTop: 0,
             }}
             bodyStyle={{ padding: screens.xs ? 12 : 18 }}
@@ -399,6 +409,21 @@ export default function BlogList({ language = "ja", setLanguage }) {
                     ]}
                   />
                 )}
+                {setThemeMode && (
+                  <Button
+                    size="small"
+                    type="text"
+                    onClick={() =>
+                      setThemeMode(themeMode === "dark" ? "light" : "dark")
+                    }
+                    icon={
+                      themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
+                    }
+                    style={{ marginTop: 8 }}
+                    aria-label="Toggle dark mode"
+                    title={themeMode === "dark" ? "Light" : "Dark"}
+                  />
+                )}
               </Space>
             </Space>
           </ProCard>
@@ -406,7 +431,13 @@ export default function BlogList({ language = "ja", setLanguage }) {
           {/* FILTER ROW */}
           <ProCard
             bordered
-            style={{ borderRadius: 14, background: "rgba(253, 246, 227, 0.8)" }}
+            style={{
+              borderRadius: 14,
+              background:
+                themeMode === "dark"
+                  ? "rgba(36, 33, 29, 0.85)"
+                  : "rgba(253, 246, 227, 0.8)",
+            }}
             bodyStyle={{ padding: 12 }}
           >
             <Space
@@ -446,7 +477,10 @@ export default function BlogList({ language = "ja", setLanguage }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "rgba(253, 246, 227, 0.8)",
+                background:
+                  themeMode === "dark"
+                    ? "rgba(36, 33, 29, 0.85)"
+                    : "rgba(253, 246, 227, 0.8)",
               }}
             >
               <Empty
@@ -471,7 +505,10 @@ export default function BlogList({ language = "ja", setLanguage }) {
                     height: "100%", // Đảm bảo tất cả card có cùng chiều cao
                     display: "flex",
                     flexDirection: "column",
-                    background: "rgba(253, 246, 227, 0.9)",
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36, 33, 29, 0.9)"
+                        : "rgba(253, 246, 227, 0.9)",
                   }}
                   bodyStyle={{
                     padding: 12,
@@ -490,7 +527,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
                       height: screens.xs ? 148 : 190,
                       overflow: "hidden",
                       borderRadius: "12px", // Bo cả 4 góc đồng đều
-                      background: "#f5f6fa",
+                      background: themeMode === "dark" ? "#1e1c19" : "#f5f6fa",
                       marginBottom: 12,
                       flexShrink: 0, // Không cho phép thu nhỏ
                     }}
@@ -539,8 +576,11 @@ export default function BlogList({ language = "ja", setLanguage }) {
                           </Space>
                         }
                         style={{
-                          background: "rgba(0,0,0,.55)",
-                          color: "#fff",
+                          background:
+                            themeMode === "dark"
+                              ? "rgba(255,255,255,.15)"
+                              : "rgba(0,0,0,.55)",
+                          color: themeMode === "dark" ? "#f5ede0" : "#fff",
                           padding: "3px 8px",
                           borderRadius: 999,
                         }}
@@ -571,6 +611,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
                           lineHeight: 1.25,
                           marginBottom: 12,
                           flexShrink: 0,
+                          color: themeMode === "dark" ? "#f5ede0" : undefined,
                         }}
                       >
                         {blog.title}
@@ -635,6 +676,8 @@ export default function BlogList({ language = "ja", setLanguage }) {
                             fontSize: 11,
                             height: 24,
                             padding: "0 8px",
+                            background:
+                              themeMode === "dark" ? "#9c6b3f" : undefined,
                           }}
                         >
                           {screens.xs ? "読む" : t.readMore[currentLanguage]}
@@ -680,6 +723,7 @@ export default function BlogList({ language = "ja", setLanguage }) {
             onBlogClick={onOpen}
             isMobile={screens.xs}
             language={language}
+            themeMode={themeMode}
           />
         </ProCard>
       </ProCard>

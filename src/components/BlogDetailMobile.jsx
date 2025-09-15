@@ -23,6 +23,8 @@ import {
   CalendarOutlined,
   FontSizeOutlined,
   GlobalOutlined,
+  BulbOutlined,
+  MoonOutlined,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -152,6 +154,8 @@ export default function BlogDetailMobile({
   navLock,
   memberInfo, // Add memberInfo prop
   setMemberInfo, // Add setMemberInfo prop for iOS updates
+  themeMode = "light",
+  setThemeMode,
 }) {
   const navigate = useNavigate();
 
@@ -391,8 +395,14 @@ export default function BlogDetailMobile({
         <div
           style={{
             ...jpFont,
-            background: "rgba(253, 246, 227, 0.95)",
-            borderBottom: "1px solid rgba(0,0,0,0.08)",
+            background:
+              themeMode === "dark"
+                ? "rgba(28,26,23,0.95)"
+                : "rgba(253, 246, 227, 0.95)",
+            borderBottom:
+              themeMode === "dark"
+                ? "1px solid rgba(207,191,166,0.2)"
+                : "1px solid rgba(0,0,0,0.08)",
             zIndex: 999,
             position: "fixed",
             top: 0,
@@ -419,9 +429,15 @@ export default function BlogDetailMobile({
                     width: 32,
                     height: 32,
                     borderRadius: 8,
-                    background: "rgba(255, 255, 255, 0.6)",
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    color: "#8b4513",
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36,33,29,0.8)"
+                        : "rgba(255, 255, 255, 0.6)",
+                    border:
+                      themeMode === "dark"
+                        ? "1px solid rgba(207,191,166,0.2)"
+                        : "1px solid rgba(0,0,0,0.08)",
+                    color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
                   }}
                 />
                 {prevId && (
@@ -492,8 +508,14 @@ export default function BlogDetailMobile({
                     { label: "VN", value: "vi" },
                   ]}
                   style={{
-                    background: "rgba(255, 255, 255, 0.6)",
-                    border: "1px solid rgba(0,0,0,0.08)",
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36,33,29,0.8)"
+                        : "rgba(255, 255, 255, 0.6)",
+                    border:
+                      themeMode === "dark"
+                        ? "1px solid rgba(207,191,166,0.2)"
+                        : "1px solid rgba(0,0,0,0.08)",
                     borderRadius: 8,
                   }}
                 />
@@ -501,6 +523,32 @@ export default function BlogDetailMobile({
 
               {/* Right side - Settings */}
               <Space size="small">
+                {setThemeMode && (
+                  <Button
+                    type="text"
+                    size="small"
+                    onClick={() =>
+                      setThemeMode(themeMode === "dark" ? "light" : "dark")
+                    }
+                    icon={
+                      themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
+                    }
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      background:
+                        themeMode === "dark"
+                          ? "rgba(36,33,29,0.8)"
+                          : "rgba(255, 255, 255, 0.6)",
+                      border:
+                        themeMode === "dark"
+                          ? "1px solid rgba(207,191,166,0.2)"
+                          : "1px solid rgba(0,0,0,0.08)",
+                      color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                    }}
+                  />
+                )}
                 {/* Translation status */}
                 {translating || isPending ? (
                   <div
@@ -509,7 +557,9 @@ export default function BlogDetailMobile({
                       alignItems: "center",
                       padding: "4px 8px",
                       background:
-                        "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
+                        themeMode === "dark"
+                          ? "#9c6b3f"
+                          : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
                       borderRadius: 6,
                       color: "white",
                       fontSize: 11,
@@ -551,9 +601,15 @@ export default function BlogDetailMobile({
                     width: 32,
                     height: 32,
                     borderRadius: 8,
-                    background: "rgba(255, 255, 255, 0.6)",
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    color: "#8b4513",
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36,33,29,0.8)"
+                        : "rgba(255, 255, 255, 0.6)",
+                    border:
+                      themeMode === "dark"
+                        ? "1px solid rgba(207,191,166,0.2)"
+                        : "1px solid rgba(0,0,0,0.08)",
+                    color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
                   }}
                 />
               </Space>
@@ -573,6 +629,8 @@ export default function BlogDetailMobile({
       pendingNavId,
       navLock,
       navigate,
+      themeMode,
+      setThemeMode,
     ]
   );
 
@@ -583,8 +641,13 @@ export default function BlogDetailMobile({
         style={{
           ...jpFont,
           background:
-            "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
-          borderBottom: "1px solid rgba(139, 69, 19, 0.15)",
+            themeMode === "dark"
+              ? "linear-gradient(135deg, rgba(28,26,23,0.95) 0%, rgba(36,33,29,0.95) 100%)"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
+          borderBottom:
+            themeMode === "dark"
+              ? "1px solid rgba(207,191,166,0.2)"
+              : "1px solid rgba(139, 69, 19, 0.15)",
           zIndex: 998,
           position: "fixed",
           top: 44,
@@ -595,7 +658,10 @@ export default function BlogDetailMobile({
           WebkitBackdropFilter: "blur(8px)",
           margin: 0,
           borderRadius: 0,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          boxShadow:
+            themeMode === "dark"
+              ? "0 2px 8px rgba(0,0,0,0.35)"
+              : "0 2px 8px rgba(0,0,0,0.06)",
         }}
       >
         <div
@@ -624,17 +690,29 @@ export default function BlogDetailMobile({
                   }
                   size={32}
                   style={{
-                    border: "1px solid #fff",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+                    border:
+                      themeMode === "dark"
+                        ? "1px solid rgba(207,191,166,0.2)"
+                        : "1px solid #fff",
+                    boxShadow:
+                      themeMode === "dark"
+                        ? "0 1px 4px rgba(0,0,0,0.35)"
+                        : "0 1px 4px rgba(0,0,0,0.1)",
                   }}
                 />
                 <div>
-                  <Text strong style={{ color: "#3c2415", fontSize: "13px" }}>
+                  <Text
+                    strong
+                    style={{
+                      color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
+                      fontSize: "13px",
+                    }}
+                  >
                     {memberInfo?.name || blog?.author || "Unknown Author"}
                   </Text>
                   <div
                     style={{
-                      color: "#5d4e37",
+                      color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                       marginTop: 1,
                       fontSize: "11px",
                       display: "flex",
@@ -662,7 +740,7 @@ export default function BlogDetailMobile({
                 <Text
                   strong
                   style={{
-                    color: "#3c2415",
+                    color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
                     fontSize: "12px",
                     lineHeight: 1.2,
                     display: "block",
@@ -682,7 +760,7 @@ export default function BlogDetailMobile({
                 icon={<InfoCircleOutlined />}
                 onClick={() => setDrawerVisible(true)}
                 style={{
-                  color: "#5d4e37",
+                  color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                   flexShrink: 0,
                   padding: "4px 6px",
                   height: "auto",
@@ -693,7 +771,7 @@ export default function BlogDetailMobile({
         </div>
       </div>
     ),
-    [blog, displayTitle, memberInfo]
+    [blog, displayTitle, memberInfo, themeMode]
   );
 
   // Simple scroll handler - keep header always visible
@@ -868,7 +946,8 @@ export default function BlogDetailMobile({
         style={{
           padding: 0,
           margin: 0,
-          background: "rgba(253, 246, 227, 0.8)",
+          background:
+            themeMode === "dark" ? "#141311" : "rgba(253, 246, 227, 0.8)",
         }}
       >
         {NavigationBar}
@@ -877,7 +956,8 @@ export default function BlogDetailMobile({
           ghost
           style={{
             minHeight: "100dvh",
-            background: "rgba(253, 246, 227, 0.8)",
+            background:
+              themeMode === "dark" ? "#1c1a17" : "rgba(253, 246, 227, 0.8)",
             padding: 0,
             ...jpFont,
           }}
@@ -907,7 +987,8 @@ export default function BlogDetailMobile({
         style={{
           padding: 0,
           margin: 0,
-          background: "rgba(253, 246, 227, 0.8)",
+          background:
+            themeMode === "dark" ? "#141311" : "rgba(253, 246, 227, 0.8)",
         }}
       >
         {NavigationBar}
@@ -916,7 +997,8 @@ export default function BlogDetailMobile({
           ghost
           style={{
             minHeight: "100dvh",
-            background: "rgba(253, 246, 227, 0.8)",
+            background:
+              themeMode === "dark" ? "#1c1a17" : "rgba(253, 246, 227, 0.8)",
             padding: 0,
             ...jpFont,
           }}
@@ -961,7 +1043,8 @@ export default function BlogDetailMobile({
         style={{
           padding: 0,
           margin: 0,
-          background: "rgba(253, 246, 227, 0.8)",
+          background:
+            themeMode === "dark" ? "#141311" : "rgba(253, 246, 227, 0.8)",
           height: "100dvh",
           maxHeight: "100dvh",
           width: "100vw",
@@ -988,7 +1071,9 @@ export default function BlogDetailMobile({
           style={{
             ...jpFont,
             background:
-              "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
+              themeMode === "dark"
+                ? "linear-gradient(135deg, rgba(28,26,23,0.95) 0%, rgba(36,33,29,0.95) 100%)"
+                : "linear-gradient(135deg, rgba(253, 246, 227, 0.95) 0%, rgba(244, 241, 232, 0.95) 100%)",
             borderBottom: "1px solid rgba(139, 69, 19, 0.15)",
             zIndex: 998,
             position: "fixed",
@@ -1028,7 +1113,7 @@ export default function BlogDetailMobile({
                 </Text>
                 <div
                   style={{
-                    color: "#5d4e37",
+                    color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                     marginTop: 1,
                     fontSize: "11px",
                     display: "flex",
@@ -1055,7 +1140,7 @@ export default function BlogDetailMobile({
               <Text
                 strong
                 style={{
-                  color: "#3c2415",
+                  color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
                   fontSize: "12px",
                   lineHeight: 1.2,
                   display: "block",
@@ -1074,7 +1159,7 @@ export default function BlogDetailMobile({
               icon={<InfoCircleOutlined />}
               onClick={() => setDrawerVisible(true)}
               style={{
-                color: "#5d4e37",
+                color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                 flexShrink: 0,
                 padding: "4px 6px",
                 height: "auto",
@@ -1090,7 +1175,8 @@ export default function BlogDetailMobile({
             height: "calc(100dvh - 84px)",
             maxHeight: "calc(100dvh - 84px)",
             overflow: "auto",
-            background: "rgba(253, 246, 227, 0.8)",
+            background:
+              themeMode === "dark" ? "#1c1a17" : "rgba(253, 246, 227, 0.8)",
             WebkitOverflowScrolling: "touch",
             overscrollBehavior: "none",
             scrollbarWidth: "none",
@@ -1114,7 +1200,10 @@ export default function BlogDetailMobile({
           <ProCard
             ghost
             style={{
-              background: "rgba(253, 246, 227, 0.8)",
+              background:
+                themeMode === "dark"
+                  ? "rgba(36,33,29,0.85)"
+                  : "rgba(253, 246, 227, 0.8)",
               padding: 0,
               flex: 1,
               width: "100%",
@@ -1158,6 +1247,7 @@ export default function BlogDetailMobile({
                   transform: "translateZ(0)",
                   WebkitBackfaceVisibility: "hidden",
                   backfaceVisibility: "hidden",
+                  color: themeMode === "dark" ? "#f5ede0" : undefined,
                 }}
                 dangerouslySetInnerHTML={{
                   __html: optimizedHtml,
@@ -1186,7 +1276,8 @@ export default function BlogDetailMobile({
       style={{
         padding: 0,
         margin: 0,
-        background: "rgba(253, 246, 227, 0.8)",
+        background:
+          themeMode === "dark" ? "#141311" : "rgba(253, 246, 227, 0.8)",
         height: "100dvh",
         maxHeight: "100dvh",
         width: "100vw",
@@ -1217,7 +1308,8 @@ export default function BlogDetailMobile({
           height: "calc(100dvh - 84px)", // Trừ đi chiều cao của cả NavigationBar và AuthorBar
           maxHeight: "calc(100dvh - 84px)",
           overflow: "auto",
-          background: "rgba(253, 246, 227, 0.8)",
+          background:
+            themeMode === "dark" ? "#1c1a17" : "rgba(253, 246, 227, 0.8)",
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "none",
           scrollbarWidth: "none",
@@ -1242,7 +1334,10 @@ export default function BlogDetailMobile({
         <ProCard
           ghost
           style={{
-            background: "rgba(253, 246, 227, 0.8)",
+            background:
+              themeMode === "dark"
+                ? "rgba(36,33,29,0.85)"
+                : "rgba(253, 246, 227, 0.8)",
             padding: 0,
             flex: 1,
             width: "100%",
@@ -1267,7 +1362,10 @@ export default function BlogDetailMobile({
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "rgba(253, 246, 227, 0.95)",
+                background:
+                  themeMode === "dark"
+                    ? "rgba(28,26,23,0.95)"
+                    : "rgba(253, 246, 227, 0.95)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1524,7 +1622,7 @@ export default function BlogDetailMobile({
             height: 100%; 
             min-height: 100vh;
             min-height: 100dvh;
-            background: #fdf6e3;
+            background: ${themeMode === "dark" ? "#141311" : "#fdf6e3"};
             margin: 0;
             padding: 0;
             width: 100%;
@@ -1563,7 +1661,7 @@ export default function BlogDetailMobile({
             width: 100% !important;
           }
           .ant-card { 
-            background: #fdf6e3;
+            background: ${themeMode === "dark" ? "#24211d" : "#fdf6e3"};
             width: 100% !important;
           }
           .ant-pro-card {
@@ -1579,8 +1677,16 @@ export default function BlogDetailMobile({
             margin: 14px auto;
             max-width: 100%;
             height: auto;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: ${
+              themeMode === "dark"
+                ? "0 4px 12px rgba(0,0,0,0.45)"
+                : "0 4px 12px rgba(0,0,0,0.08)"
+            };
+            border: 1px solid ${
+              themeMode === "dark"
+                ? "rgba(207,191,166,0.2)"
+                : "rgba(0,0,0,0.06)"
+            };
             display: block;
             /* Minimal CSS to prevent jank */
             pointer-events: none;
@@ -1591,7 +1697,11 @@ export default function BlogDetailMobile({
             transform: translateZ(0);
             /* No transitions or complex properties */
             opacity: 1;
-            background: rgba(0,0,0,0.05);
+            background: ${
+              themeMode === "dark"
+                ? "rgba(255,255,255,0.04)"
+                : "rgba(0,0,0,0.05)"
+            };
             /* iOS-specific optimizations */
             -webkit-backface-visibility: hidden;
             -webkit-transform: translateZ(0);
@@ -1604,21 +1714,39 @@ export default function BlogDetailMobile({
             text-align: justify;
             line-height: 1.9;
             font-size: 20px;
-            color: #1f2937;
+            color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"};
           }
-          .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: #111827; }
-          .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: #111827; }
-          .jp-prose h3 { font-size: 1.25em; margin: 0.8em 0 0.3em; font-weight: 600; color: #111827; }
+          .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: ${
+            themeMode === "dark" ? "#f7e6c8" : "#111827"
+          }; }
+          .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: ${
+            themeMode === "dark" ? "#f7e6c8" : "#111827"
+          }; }
+          .jp-prose h3 { font-size: 1.25em; margin: 0.8em 0 0.3em; font-weight: 600; color: ${
+            themeMode === "dark" ? "#f7e6c8" : "#111827"
+          }; }
           .jp-prose blockquote {
-            border-left: 4px solid #e9d5ff; background: #faf5ff;
+            border-left: 4px solid ${
+              themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
+            }; background: ${
+        themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
+      };
             padding: 12px 16px; border-radius: 8px; margin: 1em 0;
-            font-size: 1.05em; color: #4b5563;
+            font-size: 1.05em; color: ${
+              themeMode === "dark" ? "#cfbfa6" : "#4b5563"
+            };
           }
-          .jp-prose a { color: #9333ea; text-decoration: none; }
+          .jp-prose a { color: ${
+            themeMode === "dark" ? "#d2a86a" : "#9333ea"
+          }; text-decoration: none; }
           .jp-prose a:hover { text-decoration: underline; }
           .jp-prose ul, .jp-prose ol { padding-left: 1.2em; margin: 0.8em 0; }
-          .jp-prose li { margin: 0.4em 0; color: #374151; }
-          .jp-prose strong { color: #111827; font-weight: 600; }
+          .jp-prose li { margin: 0.4em 0; color: ${
+            themeMode === "dark" ? "#eae2d3" : "#374151"
+          }; }
+          .jp-prose strong { color: ${
+            themeMode === "dark" ? "#f7e6c8" : "#111827"
+          }; font-weight: 600; }
           
           /* iOS Safari specific fixes */
           @media screen and (-webkit-min-device-pixel-ratio: 0) {
