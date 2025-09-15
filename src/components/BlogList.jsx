@@ -348,81 +348,88 @@ export default function BlogList({
                   {memberInfo?.name || t.loading[currentLanguage]}{" "}
                   {t.blogArticle[currentLanguage]}
                 </Text>
-                {setLanguage && (
-                  <Select
-                    value={language}
-                    onChange={setLanguage}
-                    size="small"
-                    style={{ width: 140, marginTop: 8 }}
-                    options={[
-                      {
-                        value: "ja",
-                        label: (
-                          <span
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            <GlobalOutlined
-                              style={{ color: "#666", fontSize: "12px" }}
-                            />
-                            日本語
-                          </span>
-                        ),
-                      },
-                      {
-                        value: "en",
-                        label: (
-                          <span
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            <GlobalOutlined
-                              style={{ color: "#666", fontSize: "12px" }}
-                            />
-                            English
-                          </span>
-                        ),
-                      },
-                      {
-                        value: "vi",
-                        label: (
-                          <span
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            <GlobalOutlined
-                              style={{ color: "#666", fontSize: "12px" }}
-                            />
-                            Tiếng Việt
-                          </span>
-                        ),
-                      },
-                    ]}
-                  />
-                )}
-                {setThemeMode && (
-                  <Button
-                    size="small"
-                    type="text"
-                    onClick={() =>
-                      setThemeMode(themeMode === "dark" ? "light" : "dark")
-                    }
-                    icon={
-                      themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
-                    }
-                    style={{ marginTop: 8 }}
-                    aria-label="Toggle dark mode"
-                    title={themeMode === "dark" ? "Light" : "Dark"}
-                  />
+                {(setLanguage || setThemeMode) && (
+                  <Space size={6} align="center" style={{ marginTop: 8 }}>
+                    {setLanguage && (
+                      <Select
+                        value={language}
+                        onChange={setLanguage}
+                        size="small"
+                        style={{ width: 140 }}
+                        options={[
+                          {
+                            value: "ja",
+                            label: (
+                              <span
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                              >
+                                <GlobalOutlined
+                                  style={{ color: "#666", fontSize: "12px" }}
+                                />
+                                日本語
+                              </span>
+                            ),
+                          },
+                          {
+                            value: "en",
+                            label: (
+                              <span
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                              >
+                                <GlobalOutlined
+                                  style={{ color: "#666", fontSize: "12px" }}
+                                />
+                                English
+                              </span>
+                            ),
+                          },
+                          {
+                            value: "vi",
+                            label: (
+                              <span
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                              >
+                                <GlobalOutlined
+                                  style={{ color: "#666", fontSize: "12px" }}
+                                />
+                                Tiếng Việt
+                              </span>
+                            ),
+                          },
+                        ]}
+                      />
+                    )}
+                    {setThemeMode && (
+                      <Button
+                        size="small"
+                        type="text"
+                        onClick={() =>
+                          setThemeMode(themeMode === "dark" ? "light" : "dark")
+                        }
+                        icon={
+                          themeMode === "dark" ? (
+                            <BulbOutlined />
+                          ) : (
+                            <MoonOutlined />
+                          )
+                        }
+                        aria-label="Toggle dark mode"
+                        title={themeMode === "dark" ? "Light" : "Dark"}
+                      />
+                    )}
+                  </Space>
                 )}
               </Space>
             </Space>
