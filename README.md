@@ -12,7 +12,7 @@
 
 ## ✨ Overview
 
-- Archives official Nogizaka46 blog content for fans.
+- Mock Data from official Nogizaka46 blog content for fans.
 - One-click **Japanese → English & Vietnamese** translations (Gemini).
 - Fast, mobile-first UI built on React + Vite + Ant Design Pro.
 
@@ -51,11 +51,11 @@
 ## 🧩 Known Issues
 
 - **iOS blog pages don’t load** (Safari/Chrome on iPhone).  
-  _Status_: pending fix (khi nào rảnh sẽ xử).  
-  _Workaround_: dùng Android hoặc desktop browsers.
+  _Status_: pending fix(it's can working but not the same on Andriod and Windows)
+  _Workaround_: use Android or desktop browsers.
 
 - **Firefox not supported for now.**  
-  _Reason_: vài API/render path cần chỉnh tương thích.  
+  _Reason_: unknow issues 
   _Use_: **Chrome / Edge / Safari (desktop)** recommended.
 
 ## 🧰 Troubleshooting
