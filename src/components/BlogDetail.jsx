@@ -641,10 +641,27 @@ export default function BlogDetail({
           // PREV
           <Tooltip key="prev" title={t.prevPost[language]}>
             <Button
-              icon={<LeftOutlined />}
+              icon={
+                pendingNavId &&
+                pendingNavId === navIds.prevId &&
+                !getCachedBlogDetail(navIds.prevId) ? (
+                  <LoadingOutlined />
+                ) : (
+                  <LeftOutlined />
+                )
+              }
+              loading={
+                pendingNavId === navIds.prevId &&
+                !getCachedBlogDetail(navIds.prevId)
+              }
               onClick={() => fastGo(navIds.prevId)}
               onMouseEnter={() => onHoverPrefetch(navIds.prevId)}
-              disabled={!navIds.prevId || navLock}
+              disabled={
+                !navIds.prevId ||
+                navLock ||
+                (pendingNavId === navIds.prevId &&
+                  !getCachedBlogDetail(navIds.prevId))
+              }
             />
           </Tooltip>,
 
@@ -660,6 +677,10 @@ export default function BlogDetail({
                 ) : (
                   <RightOutlined />
                 )
+              }
+              loading={
+                pendingNavId === navIds.nextId &&
+                !getCachedBlogDetail(navIds.nextId)
               }
               onClick={() => fastGo(navIds.nextId)}
               onMouseEnter={() => onHoverPrefetch(navIds.nextId)}
