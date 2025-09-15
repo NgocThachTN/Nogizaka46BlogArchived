@@ -14,7 +14,6 @@ import BlogDetail from "./components/BlogDetail";
 import MemberProfile from "./components/MemberProfile";
 import MemberList from "./components/MemberList";
 import "./App.css";
-import { Analytics } from "@vercel/analytics/next"
 
 function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);

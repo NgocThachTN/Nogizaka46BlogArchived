@@ -449,6 +449,9 @@ export default function BlogDetailMobile({
                       navLock ||
                       (pendingNavId === prevId && !getCachedBlogDetail(prevId))
                     }
+                    loading={
+                      pendingNavId === prevId && !getCachedBlogDetail(prevId)
+                    }
                     onClick={() => fastGo && fastGo(prevId)}
                     style={{
                       width: 28,
@@ -478,6 +481,9 @@ export default function BlogDetailMobile({
                       !nextId ||
                       navLock ||
                       (pendingNavId === nextId && !getCachedBlogDetail(nextId))
+                    }
+                    loading={
+                      pendingNavId === nextId && !getCachedBlogDetail(nextId)
                     }
                     onClick={() => fastGo && fastGo(nextId)}
                     style={{
