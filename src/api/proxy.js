@@ -12,8 +12,18 @@ export const createProxyUrl = (path, params = {}) => {
   )}`;
 };
 
+// Check if we're in localhost environment
+const isLocalhost = () => {
+  return (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "0.0.0.0"
+  );
+};
+
 // Fetch với proxy để tránh CORS
 export const fetchWithProxy = async (path, params = {}, retries = 3) => {
+  // Sử dụng proxy cho cả localhost và production
   const proxyUrl = createProxyUrl(path, params);
 
   for (let attempt = 1; attempt <= retries; attempt++) {

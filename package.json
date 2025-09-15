@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "concurrently \"npm run proxy\" \"npm run dev\"",
+    "proxy": "node local-proxy-server.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -18,7 +20,11 @@
     "antd": "^5.22.4",
     "axios": "^1.6.7",
     "cheerio": "^1.1.0",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.5",
     "dayjs": "^1.11.10",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
     "jsdom": "^26.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
