@@ -4,7 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { ProLayout, SettingDrawer } from "@ant-design/pro-components";
+import { ProLayout } from "@ant-design/pro-components";
 import { ConfigProvider, theme, Segmented } from "antd";
 import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 import { useEffect, useMemo, useState } from "react";
@@ -209,18 +209,6 @@ function App() {
               </Routes>
             </div>
           </ProLayout>
-          {/* Floating settings drawer toggle with dark theme support */}
-          <SettingDrawer
-            enableDarkTheme
-            hideCopyButton
-            disableUrlParams
-            getContainer={() => document.body}
-            settings={{ navTheme: themeMode === "dark" ? "realDark" : "light" }}
-            onSettingChange={(s) => {
-              if (s.navTheme === "realDark") setThemeMode("dark");
-              if (s.navTheme === "light") setThemeMode("light");
-            }}
-          />
         </div>
       </Router>
     </ConfigProvider>
