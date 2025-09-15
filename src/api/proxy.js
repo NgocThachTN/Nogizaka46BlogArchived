@@ -59,16 +59,11 @@ export const fetchWithProxy = async (path, params = {}, retries = 3) => {
 
       const data = await response.text();
 
-      // Kiểm tra nếu response có vẻ hợp lệ (không phải error page)
-      if (
-        data.includes("<!DOCTYPE html") ||
-        data.includes("<html") ||
-        data.includes("<body")
-      ) {
-        return data;
-      } else {
-        throw new Error("Invalid response format");
-      }
+      // Chấp nhận mọi response không rỗng. Một số endpoint trả JSONP (res(...))
+      // hoặc HTML tối giản không chứa <!DOCTYPE>.
+      const trimmed = (data || "").trim();
+      if (trimmed.length > 0) return trimmed;
+      throw new Error("Invalid response format: empty body");
     } catch (error) {
       console.warn(`Proxy fetch attempt ${attempt} failed:`, error);
 
