@@ -638,55 +638,58 @@ export default function BlogDetail({
             {t.back[language]}
           </Button>,
 
-          // PREV
-          <Tooltip key="prev" title={t.prevPost[language]}>
-            <Button
-              icon={
-                pendingNavId &&
-                pendingNavId === navIds.prevId &&
-                !getCachedBlogDetail(navIds.prevId) ? (
-                  <LoadingOutlined />
-                ) : (
-                  <LeftOutlined />
-                )
-              }
-              loading={
-                pendingNavId === navIds.prevId &&
-                !getCachedBlogDetail(navIds.prevId)
-              }
-              onClick={() => fastGo(navIds.prevId)}
-              onMouseEnter={() => onHoverPrefetch(navIds.prevId)}
-              disabled={
-                !navIds.prevId ||
-                navLock ||
-                (pendingNavId === navIds.prevId &&
-                  !getCachedBlogDetail(navIds.prevId))
-              }
-            />
-          </Tooltip>,
+          // PREV (only render when prevId exists)
+          navIds.prevId ? (
+            <Tooltip key="prev" title={t.prevPost[language]}>
+              <Button
+                icon={
+                  pendingNavId &&
+                  pendingNavId === navIds.prevId &&
+                  !getCachedBlogDetail(navIds.prevId) ? (
+                    <LoadingOutlined />
+                  ) : (
+                    <LeftOutlined />
+                  )
+                }
+                loading={
+                  pendingNavId === navIds.prevId &&
+                  !getCachedBlogDetail(navIds.prevId)
+                }
+                onClick={() => fastGo(navIds.prevId)}
+                onMouseEnter={() => onHoverPrefetch(navIds.prevId)}
+                disabled={
+                  navLock ||
+                  (pendingNavId === navIds.prevId &&
+                    !getCachedBlogDetail(navIds.prevId))
+                }
+              />
+            </Tooltip>
+          ) : null,
 
-          // NEXT (kèm spinner nhỏ nếu đang pending & chưa cache)
-          <Tooltip key="next" title={t.nextPost[language]}>
-            <Button
-              type="primary"
-              icon={
-                pendingNavId &&
-                pendingNavId === navIds.nextId &&
-                !getCachedBlogDetail(navIds.nextId) ? (
-                  <LoadingOutlined />
-                ) : (
-                  <RightOutlined />
-                )
-              }
-              loading={
-                pendingNavId === navIds.nextId &&
-                !getCachedBlogDetail(navIds.nextId)
-              }
-              onClick={() => fastGo(navIds.nextId)}
-              onMouseEnter={() => onHoverPrefetch(navIds.nextId)}
-              disabled={!navIds.nextId || navLock}
-            />
-          </Tooltip>,
+          // NEXT (render only when nextId exists; kèm spinner nhỏ nếu đang pending & chưa cache)
+          navIds.nextId ? (
+            <Tooltip key="next" title={t.nextPost[language]}>
+              <Button
+                type="primary"
+                icon={
+                  pendingNavId &&
+                  pendingNavId === navIds.nextId &&
+                  !getCachedBlogDetail(navIds.nextId) ? (
+                    <LoadingOutlined />
+                  ) : (
+                    <RightOutlined />
+                  )
+                }
+                loading={
+                  pendingNavId === navIds.nextId &&
+                  !getCachedBlogDetail(navIds.nextId)
+                }
+                onClick={() => fastGo(navIds.nextId)}
+                onMouseEnter={() => onHoverPrefetch(navIds.nextId)}
+                disabled={navLock}
+              />
+            </Tooltip>
+          ) : null,
 
           <Select
             key="lang"
