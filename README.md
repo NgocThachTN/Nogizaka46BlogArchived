@@ -37,7 +37,7 @@
 - **Gemini API** – automatic translations
 ## 🛠 Scripts
 -- `npm i` – install essential library 
-- `npm run dev` – start dev server  
+- `npm run dev:full` – start dev server and proxy server(without :full you cannot run web in localhost:5173
 - `npm run build` – create production build  
 - `preview` – serve built app  
 - `lint` – optional (if configured)
