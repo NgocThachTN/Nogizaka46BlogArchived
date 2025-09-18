@@ -1,6 +1,6 @@
 # Nogizaka46 Blog Archived
 
-> Fetch & preserve Nogizaka46 members’ blogs from the official site, with automatic multilingual translation via **Gemini API**.
+> Fetch Nogizaka46 members’ blogs from the official site, with automatic multilingual translation via **Gemini API**.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
@@ -49,14 +49,8 @@
 - Add new keys in `src/i18n/*.json`
 
 ## 🧩 Known Issues
-
-- **iOS blog pages don’t load** (Safari/Chrome on iPhone).  
-  _Status_: pending fix(it's can working but not the same on Andriod and Windows)
-  _Workaround_: use Android or desktop browsers.
-
-- **Firefox not supported for now.**  
-  _Reason_: unknow issues 
-  _Use_: **Chrome / Edge / Safari (desktop)** recommended.
+- Since the 6th generation (6期生) joined less than a year ago, there are currently no individual blogs available for its members.  
+This project only provides blog translation from the 5th generation (5期生) and earlier.
 
 ## 🧰 Troubleshooting
 
