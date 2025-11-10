@@ -121,29 +121,6 @@ export default function BlogListMobile({
   const [page, setPage] = useState(1);
   const [memberInfo, setMemberInfo] = useState(null);
 
-  // iOS detection
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  console.log(
-    "BlogListMobile - iOS detected:",
-    isIOS,
-    "User Agent:",
-    navigator.userAgent
-  );
-
-  // Debug member info for all platforms
-  useEffect(() => {
-    console.log("BlogListMobile - Member info debug:", {
-      memberCode,
-      hasMemberInfo: !!memberInfo,
-      memberInfoName: memberInfo?.name,
-      memberInfoImg: memberInfo?.img,
-      loading,
-      error,
-      isIOS,
-    });
-  }, [memberInfo, loading, error, memberCode, isIOS]);
-
   // This useEffect is removed - member info loading is now handled in the main load function
   // to ensure consistent behavior for all member IDs
 
@@ -298,6 +275,26 @@ export default function BlogListMobile({
         }
         setError(null);
 
+        // Fetch member info FIRST and IMMEDIATELY if not cached
+        if (!isFreshM) {
+          // Start fetching member info right away without waiting
+          fetchMemberInfo(memberCode, { signal: controller.signal })
+            .then((member) => {
+              if (!controller.signal.aborted && member) {
+                setMemberInfo(member);
+                _cache.memberByCode.set(memberCode, {
+                  info: member,
+                  ts: Date.now(),
+                });
+              }
+            })
+            .catch((err) => {
+              if (err.name !== "AbortError") {
+                console.warn("Early member fetch failed:", err);
+              }
+            });
+        }
+
         // iOS Safari specific delay and optimizations
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         if (isIOS) {
@@ -419,13 +416,6 @@ export default function BlogListMobile({
             info: finalMember,
             ts: Date.now(),
           });
-
-          console.log(
-            "BlogListMobile: Setting state - blogs:",
-            finalBlogs?.length || 0,
-            "member:",
-            !!finalMember
-          );
 
           // iOS-specific state updates
           if (isIOS) {
@@ -553,16 +543,8 @@ export default function BlogListMobile({
   const current = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const result = filtered.slice(start, start + PAGE_SIZE);
-    console.log(
-      "BlogListMobile: Current blogs to render:",
-      result.length,
-      "from filtered:",
-      filtered.length,
-      "total blogs:",
-      blogs.length
-    );
     return result;
-  }, [filtered, page, PAGE_SIZE, blogs.length]);
+  }, [filtered, page, PAGE_SIZE]);
 
   // const newestDate = useMemo(
   //   () => (blogs[0]?.date ? blogs[0].date : "-"),
@@ -680,17 +662,6 @@ export default function BlogListMobile({
                     ? "Đang tải..."
                     : "Loading..."}
               </Text>
-              {isIOS && (
-                <Text
-                  style={{
-                    ...jpFont,
-                    color: colors.textSecondary,
-                    fontSize: 12,
-                  }}
-                >
-                  iOS Safari detected - Loading...
-                </Text>
-              )}
             </Space>
           </ProCard>
         </div>
@@ -739,17 +710,6 @@ export default function BlogListMobile({
               <Title level={4} style={{ color: colors.error, ...jpFont }}>
                 {error}
               </Title>
-              {isIOS && (
-                <Text
-                  style={{
-                    ...jpFont,
-                    color: colors.textSecondary,
-                    fontSize: 12,
-                  }}
-                >
-                  iOS Safari detected - Error occurred
-                </Text>
-              )}
               <Button
                 type="primary"
                 onClick={() => window.location.reload()}
@@ -869,98 +829,17 @@ export default function BlogListMobile({
                         margin: 0,
                         lineHeight: 1.2,
                         fontSize: 16,
-                        color: colors.text,
+                        color: themeMode === "dark" ? "#cfbfa6" : colors.text,
                         fontWeight: 700,
                       }}
                     >
                       {memberInfo?.name ||
-                        (memberCode
-                          ? `Member ${memberCode}`
-                          : currentLanguage === "ja"
-                            ? "読み込み中..."
-                            : currentLanguage === "vi"
-                              ? "Đang tải..."
-                              : "Loading...")}
+                        (currentLanguage === "ja"
+                          ? "読み込み中..."
+                          : currentLanguage === "vi"
+                            ? "Đang tải..."
+                            : "Loading...")}
                     </Title>
-                    {!memberInfo && (
-                      <div style={{ marginTop: 4 }}>
-                        <Text
-                          style={{
-                            ...jpFont,
-                            fontSize: 10,
-                            color: colors.textSecondary,
-                            fontStyle: "italic",
-                          }}
-                        >
-                          Debug: MemberCode {memberCode} -{" "}
-                          {loading ? "Loading..." : "No member info"}
-                        </Text>
-                        <Space size={4}>
-                          <Button
-                            type="link"
-                            size="small"
-                            onClick={async () => {
-                              try {
-                                console.log(
-                                  "Manual retry triggered for memberCode:",
-                                  memberCode
-                                );
-                                // Use fetchMemberInfo for all member IDs, not just iOS
-                                const member = await fetchMemberInfo(
-                                  memberCode
-                                );
-
-                                if (member) {
-                                  console.log(
-                                    "Manual retry successful:",
-                                    member
-                                  );
-                                  setMemberInfo(member);
-                                } else {
-                                  console.log(
-                                    "Manual retry failed - no member data returned"
-                                  );
-                                }
-                              } catch (error) {
-                                console.warn(
-                                  "Manual retry failed with error:",
-                                  error
-                                );
-                              }
-                            }}
-                            style={{
-                              padding: 0,
-                              height: "auto",
-                              fontSize: 10,
-                              color: colors.primary,
-                            }}
-                          >
-                            Retry Now
-                          </Button>
-                          <Button
-                            type="link"
-                            size="small"
-                            onClick={() => {
-                              console.log(
-                                "Force reset for memberCode:",
-                                memberCode
-                              );
-                              // Clear cache and force reload
-                              _cache.memberByCode.delete(memberCode);
-                              setMemberInfo(null);
-                            }}
-                            style={{
-                              padding: 0,
-                              height: "auto",
-                              fontSize: 10,
-                              color: colors.error,
-                            }}
-                          >
-                            Reset
-                          </Button>
-                        </Space>
-                      </div>
-                    )}
                   </Space>
                 </Space>
                 <Space>
@@ -1104,19 +983,7 @@ export default function BlogListMobile({
           transform: "translateZ(0)",
         }}
       >
-        {(() => {
-          console.log(
-            "BlogListMobile: Render check - current.length:",
-            current.length,
-            "loading:",
-            loading,
-            "blogs.length:",
-            blogs.length,
-            "filtered.length:",
-            filtered.length
-          );
-          return current.length === 0;
-        })() ? (
+        {current.length === 0 ? (
           <Card
             style={{
               borderRadius: 20,
