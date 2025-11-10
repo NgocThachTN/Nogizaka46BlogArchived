@@ -38,20 +38,8 @@
         {
           "key": "Access-Control-Max-Age",
           "value": "86400"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=600, s-maxage=600, stale-while-revalidate=300"
         }
-      ]
-    },
-    {
-      "source": "/static/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
+
       ]
     },
     {
