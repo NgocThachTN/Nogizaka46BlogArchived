@@ -28,24 +28,31 @@ export const prefetchBlogDetail = async (blogId) => {
     return undefined;
   }
 };
-// Fetch tất cả các blog của member với parallel fetching
-export const fetchAllBlogs = async (memberCode) => {
+// Fetch tất cả các blog của member với parallel fetching + progress callback
+export const fetchAllBlogs = async (memberCode, { onProgress, signal } = {}) => {
   try {
     let allBlogs = [];
     let currentPage = 0;
     let hasNextPage = true;
 
-    // Fetch first page để xác định có bao nhiêu trang
+    // Fetch first page để xác định có bao nhiêu trang - PRIORITY: Show immediately
     const firstPageResult = await fetchBlogPage(currentPage, memberCode);
     allBlogs = firstPageResult.blogs;
     hasNextPage = firstPageResult.nextPage;
     currentPage++;
 
-    // Nếu có nhiều trang, fetch parallel (tối đa 3 trang cùng lúc để tránh overload)
+    // Call progress callback with first page data immediately
+    if (onProgress && allBlogs.length > 0) {
+      onProgress(allBlogs, false); // false = not complete yet
+    }
+
+    // Nếu có nhiều trang, fetch parallel (tối đa 5 trang cùng lúc - tăng từ 3)
     const parallelPages = [];
-    const MAX_PARALLEL = 3;
+    const MAX_PARALLEL = 5; // Increased for faster loading
 
     while (hasNextPage && currentPage < 50) { // Safety limit: 50 pages max
+      if (signal?.aborted) break; // Support cancellation
+
       parallelPages.push(currentPage);
       currentPage++;
 
@@ -65,11 +72,16 @@ export const fetchAllBlogs = async (memberCode) => {
 
         hasNextPage = hasAnyNext;
         parallelPages.length = 0; // Clear array
+
+        // Progress update after each batch
+        if (onProgress) {
+          onProgress(allBlogs, !hasNextPage);
+        }
       }
     }
 
     // Fetch remaining pages
-    if (parallelPages.length > 0) {
+    if (parallelPages.length > 0 && !signal?.aborted) {
       const results = await Promise.allSettled(
         parallelPages.map(p => fetchBlogPage(p, memberCode))
       );
@@ -79,6 +91,11 @@ export const fetchAllBlogs = async (memberCode) => {
           allBlogs = [...allBlogs, ...result.value.blogs];
         }
       });
+    }
+
+    // Final progress update
+    if (onProgress) {
+      onProgress(allBlogs, true); // true = complete
     }
 
     return allBlogs;
@@ -302,6 +319,16 @@ export const fetchMemberInfo = async (memberCode) => {
   } catch (error) {
     console.error("Error fetching member info:", error);
     return null;
+  }
+};
+
+// Prefetch member info để cache sẵn (gọi khi hover)
+export const prefetchMemberInfo = async () => {
+  try {
+    // Just trigger fetchMemberListAPI to cache it
+    await fetchMemberListAPI();
+  } catch {
+    // Silent fail
   }
 };
 

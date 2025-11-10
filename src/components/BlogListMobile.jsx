@@ -273,22 +273,19 @@ export default function BlogListMobile({
         // iOS Safari specific delay and optimizations
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         if (isIOS) {
-          // Add more delay for iOS to stabilize
-          await new Promise((resolve) => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 100)); // Reduced from 300ms
 
-          // Force layout recalc on iOS with multiple techniques
           document.body.style.willChange = "transform";
           document.body.style.transform = "translateZ(0)";
           requestAnimationFrame(() => {
             document.body.style.willChange = "auto";
             document.body.style.transform = "none";
-            // Force iOS Safari to repaint
             document.body.offsetHeight;
           });
         }
 
-        // Fetch song song với timeout
-        const fetchWithTimeout = (promise, timeout = 100000) => {
+        // Fetch with timeout
+        const fetchWithTimeout = (promise, timeout = 60000) => { // Reduced timeout
           return Promise.race([
             promise,
             new Promise((_, reject) =>
@@ -297,44 +294,50 @@ export default function BlogListMobile({
           ]);
         };
 
-        console.log(
-          "BlogListMobile: Starting fetch for memberCode:",
-          memberCode
-        );
-        console.log("isFreshB:", isFreshB, "isFreshM:", isFreshM);
-        console.log("cachedB exists:", !!cachedB, "cachedM exists:", !!cachedM);
+        // Fetch member info first (faster)
+        const memberPromise = isFreshM
+          ? Promise.resolve(cachedM.info)
+          : fetchWithTimeout(
+            fetchMemberInfo(memberCode, { signal: controller.signal }),
+            30000
+          );
 
-        const [all, member] = await Promise.all([
-          isFreshB
-            ? Promise.resolve(cachedB.list)
-            : fetchWithTimeout(
-                fetchAllBlogs(memberCode, { signal: controller.signal }),
-                80000
-              ),
-          isFreshM
-            ? Promise.resolve(cachedM.info)
-            : fetchWithTimeout(
-                fetchMemberInfo(memberCode, { signal: controller.signal }),
-                50000
-              ),
-        ]);
+        // Fetch blogs with incremental loading
+        let blogsData = [];
+        if (isFreshB) {
+          blogsData = cachedB.list;
+        } else {
+          await fetchWithTimeout(
+            fetchAllBlogs(memberCode, {
+              signal: controller.signal,
+              onProgress: (partialBlogs, isComplete) => {
+                if (!controller.signal.aborted && partialBlogs.length > 0) {
+                  startTransition(() => {
+                    setBlogs(partialBlogs);
+                    setFiltered(partialBlogs);
+                  });
 
-        console.log(
-          "BlogListMobile: Fetch results - blogs:",
-          all?.length || 0,
-          "member:",
-          !!member
-        );
+                  // Hide loading after first batch
+                  if (partialBlogs.length > 0) {
+                    setLoading(false);
+                  }
+                }
+
+                if (isComplete) {
+                  blogsData = partialBlogs;
+                }
+              },
+            }),
+            60000
+          );
+        }
+
+        const member = await memberPromise;
 
         // Enhanced fallback for member info (all platforms)
         let finalMember = member;
         if (!finalMember) {
-          console.log(
-            "BlogListMobile: No member info from fetchMemberInfo, trying fallback..."
-          );
-
           if (String(memberCode) === "40008") {
-            console.log("BlogListMobile: Creating special member for 40008");
             finalMember = {
               code: "40008",
               name: "6期生リレー",
@@ -343,12 +346,7 @@ export default function BlogListMobile({
               graduation: "NO",
             };
           } else {
-            // Try to get member info from direct API call
             try {
-              console.log(
-                "BlogListMobile: Trying direct API call for member:",
-                memberCode
-              );
               const response = await fetch(
                 "https://www.nogizaka46.com/s/n46/api/list/member?callback=res"
               );
@@ -358,22 +356,16 @@ export default function BlogListMobile({
               finalMember = api.data.find(
                 (m) => String(m.code) === String(memberCode)
               );
-              console.log("BlogListMobile: Direct API result:", finalMember);
             } catch (fallbackError) {
-              console.warn(
-                "BlogListMobile: Direct API fallback failed:",
-                fallbackError
-              );
+              console.warn("BlogListMobile: Direct API fallback failed:", fallbackError);
             }
           }
         }
 
         // Enhanced fallback for blogs if empty (all platforms)
-        let finalBlogs = all;
+        let finalBlogs = blogsData;
         if (!finalBlogs || finalBlogs.length === 0) {
-          console.log("BlogListMobile: No blogs found, trying fallback...");
           try {
-            // Try direct API call for blogs
             const response = await fetch(
               `https://www.nogizaka46.com/s/n46/api/diary/MEMBER/list?ct=${memberCode}&callback=res`
             );
@@ -382,16 +374,9 @@ export default function BlogListMobile({
             const api = JSON.parse(jsonStr);
             if (api.data && Array.isArray(api.data)) {
               finalBlogs = api.data;
-              console.log(
-                "BlogListMobile: Found fallback blogs:",
-                finalBlogs.length
-              );
             }
           } catch (fallbackError) {
-            console.warn(
-              "BlogListMobile: Fallback blogs fetch failed:",
-              fallbackError
-            );
+            console.warn("BlogListMobile: Fallback blogs fetch failed:", fallbackError);
           }
         }
 
@@ -420,10 +405,10 @@ export default function BlogListMobile({
             setFiltered(
               deferredQ
                 ? (finalBlogs || []).filter((f) =>
-                    (f.title + f.author)
-                      .toLowerCase()
-                      .includes(deferredQ.toLowerCase())
-                  )
+                  (f.title + f.author)
+                    .toLowerCase()
+                    .includes(deferredQ.toLowerCase())
+                )
                 : finalBlogs || []
             );
             setMemberInfo(finalMember);
@@ -438,10 +423,10 @@ export default function BlogListMobile({
               setFiltered(
                 deferredQ
                   ? (finalBlogs || []).filter((f) =>
-                      (f.title + f.author)
-                        .toLowerCase()
-                        .includes(deferredQ.toLowerCase())
-                    )
+                    (f.title + f.author)
+                      .toLowerCase()
+                      .includes(deferredQ.toLowerCase())
+                  )
                   : finalBlogs || []
               );
             });
@@ -455,8 +440,8 @@ export default function BlogListMobile({
             currentLanguage === "ja"
               ? "エラーが発生しました"
               : currentLanguage === "vi"
-              ? "Đã xảy ra lỗi"
-              : "An error occurred"
+                ? "Đã xảy ra lỗi"
+                : "An error occurred"
           );
         }
       } finally {
@@ -664,8 +649,8 @@ export default function BlogListMobile({
                 {currentLanguage === "ja"
                   ? "読み込み中..."
                   : currentLanguage === "vi"
-                  ? "Đang tải..."
-                  : "Loading..."}
+                    ? "Đang tải..."
+                    : "Loading..."}
               </Text>
               {isIOS && (
                 <Text
@@ -749,8 +734,8 @@ export default function BlogListMobile({
                 {currentLanguage === "ja"
                   ? "再試行"
                   : currentLanguage === "vi"
-                  ? "Thử lại"
-                  : "Retry"}
+                    ? "Thử lại"
+                    : "Retry"}
               </Button>
             </Space>
           </ProCard>
@@ -846,8 +831,8 @@ export default function BlogListMobile({
                       {currentLanguage === "ja"
                         ? "ブログ記事"
                         : currentLanguage === "vi"
-                        ? "Bài viết blog"
-                        : "Blog Article"}
+                          ? "Bài viết blog"
+                          : "Blog Article"}
                     </Text>
                     <Title
                       level={4}
@@ -864,10 +849,10 @@ export default function BlogListMobile({
                         (memberCode
                           ? `Member ${memberCode}`
                           : currentLanguage === "ja"
-                          ? "読み込み中..."
-                          : currentLanguage === "vi"
-                          ? "Đang tải..."
-                          : "Loading...")}
+                            ? "読み込み中..."
+                            : currentLanguage === "vi"
+                              ? "Đang tải..."
+                              : "Loading...")}
                     </Title>
                     {!memberInfo && (
                       <div style={{ marginTop: 4 }}>
@@ -1052,8 +1037,8 @@ export default function BlogListMobile({
                 currentLanguage === "ja"
                   ? "ブログを検索..."
                   : currentLanguage === "vi"
-                  ? "Tìm kiếm blog..."
-                  : "Search blogs..."
+                    ? "Tìm kiếm blog..."
+                    : "Search blogs..."
               }
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -1125,8 +1110,8 @@ export default function BlogListMobile({
                   {currentLanguage === "ja"
                     ? "ブログが見つかりません"
                     : currentLanguage === "vi"
-                    ? "Không tìm thấy blog"
-                    : "No blogs found"}
+                      ? "Không tìm thấy blog"
+                      : "No blogs found"}
                 </Text>
               }
             />
@@ -1406,11 +1391,10 @@ export default function BlogListMobile({
           height: 100%; 
           min-height: 100vh;
           min-height: 100dvh;
-          background: ${
-            themeMode === "dark"
-              ? "#141311"
-              : "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
-          };
+          background: ${themeMode === "dark"
+          ? "#141311"
+          : "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)"
+        };
           margin: 0;
           padding: 0;
           width: 100%;
@@ -1471,41 +1455,35 @@ export default function BlogListMobile({
         }
         .ant-card:hover { 
           transform: translateY(-2px) scale(1.01); 
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 8px 25px rgba(0,0,0,0.35)"
-              : "0 8px 25px rgba(156, 39, 176, 0.15)"
-          } !important; 
+          box-shadow: ${themeMode === "dark"
+          ? "0 8px 25px rgba(0,0,0,0.35)"
+          : "0 8px 25px rgba(156, 39, 176, 0.15)"
+        } !important; 
         }
 
         /* Japanese Input */
         .ant-input {
           border-radius: 16px !important;
-          border: ${
-            themeMode === "dark"
-              ? "1px solid rgba(207,191,166,0.25)"
-              : "2px solid #e0e0e0"
-          } !important;
+          border: ${themeMode === "dark"
+          ? "1px solid rgba(207,191,166,0.25)"
+          : "2px solid #e0e0e0"
+        } !important;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 2px 8px rgba(0,0,0,0.35)"
-              : "0 2px 8px rgba(0,0,0,0.05)"
-          } !important;
-          background: ${
-            themeMode === "dark" ? "rgba(36,33,29,0.85)" : "white"
-          } !important;
+          box-shadow: ${themeMode === "dark"
+          ? "0 2px 8px rgba(0,0,0,0.35)"
+          : "0 2px 8px rgba(0,0,0,0.05)"
+        } !important;
+          background: ${themeMode === "dark" ? "rgba(36,33,29,0.85)" : "white"
+        } !important;
           color: ${themeMode === "dark" ? "#f5ede0" : "inherit"} !important;
         }
         .ant-input:focus {
-          border-color: ${
-            themeMode === "dark" ? "#d2a86a" : "#9c27b0"
-          } !important;
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 4px 12px rgba(0,0,0,0.45)"
-              : "0 4px 12px rgba(156, 39, 176, 0.2)"
-          } !important;
+          border-color: ${themeMode === "dark" ? "#d2a86a" : "#9c27b0"
+        } !important;
+          box-shadow: ${themeMode === "dark"
+          ? "0 4px 12px rgba(0,0,0,0.45)"
+          : "0 4px 12px rgba(156, 39, 176, 0.2)"
+        } !important;
         }
 
         /* Japanese Button */
@@ -1528,14 +1506,12 @@ export default function BlogListMobile({
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
         .ant-pagination-item-active {
-          background: ${
-            themeMode === "dark"
-              ? "#9c6b3f"
-              : "linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)"
-          } !important;
-          border-color: ${
-            themeMode === "dark" ? "#9c6b3f" : "#9c27b0"
-          } !important;
+          background: ${themeMode === "dark"
+          ? "#9c6b3f"
+          : "linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)"
+        } !important;
+          border-color: ${themeMode === "dark" ? "#9c6b3f" : "#9c27b0"
+        } !important;
           color: ${themeMode === "dark" ? "#141311" : "white"} !important;
         }
 

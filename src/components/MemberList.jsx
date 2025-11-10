@@ -27,6 +27,7 @@ import {
   MoonOutlined,
 } from "@ant-design/icons";
 import MemberListMobile from "./MemberListMobile";
+import { prefetchMemberInfo } from "../services/blogService";
 
 const { Title, Text } = Typography;
 
@@ -201,9 +202,8 @@ const MemberList = ({
     return members.filter((m) => {
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
-      const hay = `${m.name} ${m.english_name || ""} ${
-        m.kana || ""
-      }`.toLowerCase();
+      const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""
+        }`.toLowerCase();
       return hay.includes(kw);
     });
   }, [members, genFilter, keyword]);
@@ -377,21 +377,21 @@ const MemberList = ({
                     ? currentLanguage === "ja"
                       ? "すべて"
                       : currentLanguage === "en"
-                      ? "All"
-                      : "Tất cả"
+                        ? "All"
+                        : "Tất cả"
                     : g
-                        .replace(
-                          "期生",
-                          currentLanguage === "ja"
-                            ? "期生"
-                            : currentLanguage === "en"
+                      .replace(
+                        "期生",
+                        currentLanguage === "ja"
+                          ? "期生"
+                          : currentLanguage === "en"
                             ? " Gen"
                             : " Thế hệ"
-                        )
-                        .replace(
-                          /^(\d+)\s*(Gen|Thế hệ)$/,
-                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                        ),
+                      )
+                      .replace(
+                        /^(\d+)\s*(Gen|Thế hệ)$/,
+                        currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                      ),
                 value: g,
               }))}
               value={genFilter}
@@ -443,18 +443,18 @@ const MemberList = ({
                     {gen === "その他"
                       ? t.other[currentLanguage]
                       : gen
-                          .replace(
-                            "期生",
-                            currentLanguage === "ja"
-                              ? "期生"
-                              : currentLanguage === "en"
+                        .replace(
+                          "期生",
+                          currentLanguage === "ja"
+                            ? "期生"
+                            : currentLanguage === "en"
                               ? " Gen"
                               : " Thế hệ"
-                          )
-                          .replace(
-                            /^(\d+)\s*(Gen|Thế hệ)$/,
-                            currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                          )}
+                        )
+                        .replace(
+                          /^(\d+)\s*(Gen|Thế hệ)$/,
+                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                        )}
                   </span>
                   <Tag color="purple" style={{ marginLeft: 6 }}>
                     {items.length}
@@ -493,6 +493,10 @@ const MemberList = ({
                         bordered={false}
                         className="member-card"
                         onClick={() => navigate(`/blogs/${m.code}`)}
+                        onMouseEnter={() => {
+                          // Prefetch member list API when hovering to prepare cache
+                          prefetchMemberInfo();
+                        }}
                         style={{
                           borderRadius: 16,
                           overflow: "hidden",

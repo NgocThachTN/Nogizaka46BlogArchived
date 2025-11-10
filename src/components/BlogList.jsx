@@ -138,60 +138,99 @@ export default function BlogList({
     }
   }, [memberCode]);
 
-  // ---- Load + revalidate (nếu cache cũ) ----
+  // ---- Load + revalidate với incremental loading ----
   useEffect(() => {
     const controller = new AbortController();
     abortRef.current = controller;
 
     const load = async (revalidateOnly = false) => {
       try {
-        if (
-          !revalidateOnly &&
-          !_cache.blogsByMember.get(memberCode)?.list?.length
-        ) {
-          setLoading(true);
-        }
-        setError(null);
-
         const now = Date.now();
         const cachedB = _cache.blogsByMember.get(memberCode);
         const cachedM = _cache.memberByCode.get(memberCode);
         const isFreshB = cachedB && now - cachedB.ts < STALE_MS;
         const isFreshM = cachedM && now - cachedM.ts < STALE_MS;
 
+        // If cache is fresh, use it and skip loading
         if (isFreshB && isFreshM) {
           setLoading(false);
           return;
         }
 
-        // Fetch song song
-        const [all, member] = await Promise.all([
-          isFreshB
-            ? Promise.resolve(cachedB.list)
-            : fetchAllBlogs(memberCode, { signal: controller.signal }),
-          isFreshM
-            ? Promise.resolve(cachedM.info)
-            : fetchMemberInfo(memberCode, { signal: controller.signal }),
-        ]);
+        // Show loading only if no cache
+        if (!revalidateOnly && !cachedB?.list?.length) {
+          setLoading(true);
+        }
+        setError(null);
+
+        // Fetch member info first (faster, parallel)
+        const memberPromise = isFreshM
+          ? Promise.resolve(cachedM.info)
+          : fetchMemberInfo(memberCode, { signal: controller.signal });
+
+        // Fetch blogs with progress callback for incremental updates
+        let blogsData = [];
+        if (isFreshB) {
+          blogsData = cachedB.list;
+        } else {
+          // Use progress callback to update UI as data arrives
+          await fetchAllBlogs(memberCode, {
+            signal: controller.signal,
+            onProgress: (partialBlogs, isComplete) => {
+              if (!controller.signal.aborted && partialBlogs.length > 0) {
+                startTransition(() => {
+                  setBlogs(partialBlogs);
+                  setFiltered(
+                    deferredQ
+                      ? partialBlogs.filter((f) =>
+                        (f.title + f.author)
+                          .toLowerCase()
+                          .includes(deferredQ.toLowerCase())
+                      )
+                      : partialBlogs
+                  );
+                });
+
+                // Hide loading spinner after first batch
+                if (partialBlogs.length > 0) {
+                  setLoading(false);
+                }
+              }
+
+              if (isComplete) {
+                blogsData = partialBlogs;
+              }
+            },
+          });
+        }
+
+        const member = await memberPromise;
 
         if (!controller.signal.aborted) {
-          // cập nhật state nặng trong transition => ít giật lag hơn
+          // Final update
           startTransition(() => {
-            setBlogs(all);
-            setFiltered(
-              deferredQ
-                ? all.filter((f) =>
+            if (blogsData.length > 0) {
+              setBlogs(blogsData);
+              setFiltered(
+                deferredQ
+                  ? blogsData.filter((f) =>
                     (f.title + f.author)
                       .toLowerCase()
                       .includes(deferredQ.toLowerCase())
                   )
-                : all
-            );
+                  : blogsData
+              );
+            }
           });
           setMemberInfo(member);
 
-          _cache.blogsByMember.set(memberCode, { list: all, ts: Date.now() });
-          _cache.memberByCode.set(memberCode, { info: member, ts: Date.now() });
+          // Update cache
+          if (blogsData.length > 0) {
+            _cache.blogsByMember.set(memberCode, { list: blogsData, ts: Date.now() });
+          }
+          if (member) {
+            _cache.memberByCode.set(memberCode, { info: member, ts: Date.now() });
+          }
         }
       } catch (e) {
         if (e.name !== "AbortError") {
@@ -543,20 +582,20 @@ export default function BlogList({
                       src={
                         blog.thumbnail
                           ? getImageUrl(blog.thumbnail, {
-                              w: screens.xs ? 640 : 960,
-                            })
+                            w: screens.xs ? 640 : 960,
+                          })
                           : "https://via.placeholder.com/600x320/f0f0f0/666666?text=No+Image"
                       }
                       srcSet={
                         blog.thumbnail
                           ? [
-                              `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
-                              `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
-                              `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
-                              `${getImageUrl(blog.thumbnail, {
-                                w: 1280,
-                              })} 1280w`,
-                            ].join(", ")
+                            `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
+                            `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
+                            `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
+                            `${getImageUrl(blog.thumbnail, {
+                              w: 1280,
+                            })} 1280w`,
+                          ].join(", ")
                           : undefined
                       }
                       sizes={
