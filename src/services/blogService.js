@@ -46,9 +46,9 @@ export const fetchAllBlogs = async (memberCode, { onProgress, signal } = {}) => 
       onProgress(allBlogs, false); // false = not complete yet
     }
 
-    // Nếu có nhiều trang, fetch parallel (tối đa 5 trang cùng lúc - tăng từ 3)
+    // Nếu có nhiều trang, fetch parallel (tối đa 3 trang cùng lúc để tránh Vercel throttle)
     const parallelPages = [];
-    const MAX_PARALLEL = 5; // Increased for faster loading
+    const MAX_PARALLEL = 3; // Reduced from 5 - Vercel has rate limits
 
     while (hasNextPage && currentPage < 50) { // Safety limit: 50 pages max
       if (signal?.aborted) break; // Support cancellation
