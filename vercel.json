@@ -1,10 +1,9 @@
 {
   "functions": {
     "api/proxy.js": {
-      "maxDuration": 15
+      "maxDuration": 30
     }
   },
-  "regions": ["sin1", "hnd1"],
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -39,7 +38,6 @@
           "key": "Access-Control-Max-Age",
           "value": "86400"
         }
-
       ]
     },
     {
