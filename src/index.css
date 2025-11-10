@@ -308,6 +308,22 @@ body,
 html,
 #root {
   font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+  /* Mobile optimization: prevent address bar from affecting layout */
+  height: 100%;
+  height: 100dvh; /* Use dynamic viewport height for mobile */
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  body,
+  html,
+  #root {
+    height: -webkit-fill-available;
+  }
 }
 
 /* Typography components */

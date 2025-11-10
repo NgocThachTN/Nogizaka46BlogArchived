@@ -458,8 +458,8 @@ export default function BlogDetailMobile({
                     }}
                   >
                     {pendingNavId &&
-                    pendingNavId === prevId &&
-                    !getCachedBlogDetail(prevId) ? (
+                      pendingNavId === prevId &&
+                      !getCachedBlogDetail(prevId) ? (
                       <LoadingOutlined style={{ fontSize: 12 }} />
                     ) : (
                       "‹"
@@ -484,8 +484,8 @@ export default function BlogDetailMobile({
                     }}
                   >
                     {pendingNavId &&
-                    pendingNavId === nextId &&
-                    !getCachedBlogDetail(nextId) ? (
+                      pendingNavId === nextId &&
+                      !getCachedBlogDetail(nextId) ? (
                       <LoadingOutlined style={{ fontSize: 12 }} />
                     ) : (
                       "›"
@@ -573,8 +573,8 @@ export default function BlogDetailMobile({
                     {cachedLanguage === "vi"
                       ? "Dịch"
                       : cachedLanguage === "en"
-                      ? "Trans"
-                      : "翻訳"}
+                        ? "Trans"
+                        : "翻訳"}
                   </div>
                 ) : (
                   <div
@@ -774,22 +774,60 @@ export default function BlogDetailMobile({
     [blog, displayTitle, memberInfo, themeMode]
   );
 
-  // Simple scroll handler - keep header always visible
+  // Scroll handler to hide browser address bar on mobile
+  const lastScrollY = useRef(0);
+  const scrollDirectionRef = useRef('down');
+
   const handleScroll = useCallback(() => {
-    // Keep header always visible - no auto-hide functionality
-    // Removed setIsHeaderVisible call
+    const wrap = scrollWrapRef.current;
+    if (!wrap) return;
+
+    const currentScrollY = wrap.scrollTop;
+
+    // Detect scroll direction
+    if (currentScrollY > lastScrollY.current) {
+      scrollDirectionRef.current = 'down';
+    } else if (currentScrollY < lastScrollY.current) {
+      scrollDirectionRef.current = 'up';
+    }
+
+    lastScrollY.current = currentScrollY;
   }, []);
 
-  // Setup scroll handlers - simplified
+  // Setup scroll handlers and hide browser address bar on mount
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
 
-    // Keep header always visible
-    handleScroll();
+    // Attach scroll listener
+    wrap.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Mobile optimization: Hide browser address bar by scrolling down slightly
+    // This maximizes reading space on mobile devices
+    const hideBrowserBar = () => {
+      if (window.innerWidth <= 768) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+          window.scrollTo(0, 1);
+          // Scroll back to top after hiding address bar
+          setTimeout(() => {
+            if (wrap) {
+              wrap.scrollTop = 0;
+            }
+          }, 100);
+        }, 100);
+      }
+    };
+
+    // Hide address bar on component mount
+    hideBrowserBar();
+
+    // Also hide when window resizes (orientation change)
+    window.addEventListener('resize', hideBrowserBar);
 
     return () => {
-      // Cleanup not needed for simple handler
+      wrap.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', hideBrowserBar);
     };
   }, [handleScroll]);
 
@@ -1009,8 +1047,8 @@ export default function BlogDetailMobile({
               {language === "vi"
                 ? "Không tìm thấy bài viết"
                 : language === "en"
-                ? "Blog post not found"
-                : "ブログが見つかりません"}
+                  ? "Blog post not found"
+                  : "ブログが見つかりません"}
             </Title>
           </Card>
         </ProCard>
@@ -1414,8 +1452,8 @@ export default function BlogDetailMobile({
                       {cachedLanguage === "vi"
                         ? "Đang xử lý..."
                         : cachedLanguage === "en"
-                        ? "Processing..."
-                        : "処理中..."}
+                          ? "Processing..."
+                          : "処理中..."}
                     </div>
                   </div>
                 </Space>
@@ -1677,16 +1715,14 @@ export default function BlogDetailMobile({
             margin: 14px auto;
             max-width: 100%;
             height: auto;
-            box-shadow: ${
-              themeMode === "dark"
-                ? "0 4px 12px rgba(0,0,0,0.45)"
-                : "0 4px 12px rgba(0,0,0,0.08)"
-            };
-            border: 1px solid ${
-              themeMode === "dark"
-                ? "rgba(207,191,166,0.2)"
-                : "rgba(0,0,0,0.06)"
-            };
+            box-shadow: ${themeMode === "dark"
+          ? "0 4px 12px rgba(0,0,0,0.45)"
+          : "0 4px 12px rgba(0,0,0,0.08)"
+        };
+            border: 1px solid ${themeMode === "dark"
+          ? "rgba(207,191,166,0.2)"
+          : "rgba(0,0,0,0.06)"
+        };
             display: block;
             /* Minimal CSS to prevent jank */
             pointer-events: none;
@@ -1697,11 +1733,10 @@ export default function BlogDetailMobile({
             transform: translateZ(0);
             /* No transitions or complex properties */
             opacity: 1;
-            background: ${
-              themeMode === "dark"
-                ? "rgba(255,255,255,0.04)"
-                : "rgba(0,0,0,0.05)"
-            };
+            background: ${themeMode === "dark"
+          ? "rgba(255,255,255,0.04)"
+          : "rgba(0,0,0,0.05)"
+        };
             /* iOS-specific optimizations */
             -webkit-backface-visibility: hidden;
             -webkit-transform: translateZ(0);
@@ -1716,37 +1751,28 @@ export default function BlogDetailMobile({
             font-size: 20px;
             color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"};
           }
-          .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: ${
-            themeMode === "dark" ? "#f7e6c8" : "#111827"
-          }; }
-          .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: ${
-            themeMode === "dark" ? "#f7e6c8" : "#111827"
-          }; }
-          .jp-prose h3 { font-size: 1.25em; margin: 0.8em 0 0.3em; font-weight: 600; color: ${
-            themeMode === "dark" ? "#f7e6c8" : "#111827"
-          }; }
+          .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
+        }; }
+          .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
+        }; }
+          .jp-prose h3 { font-size: 1.25em; margin: 0.8em 0 0.3em; font-weight: 600; color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
+        }; }
           .jp-prose blockquote {
-            border-left: 4px solid ${
-              themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
-            }; background: ${
-        themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
-      };
+            border-left: 4px solid ${themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
+        }; background: ${themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
+        };
             padding: 12px 16px; border-radius: 8px; margin: 1em 0;
-            font-size: 1.05em; color: ${
-              themeMode === "dark" ? "#cfbfa6" : "#4b5563"
-            };
+            font-size: 1.05em; color: ${themeMode === "dark" ? "#cfbfa6" : "#4b5563"
+        };
           }
-          .jp-prose a { color: ${
-            themeMode === "dark" ? "#d2a86a" : "#9333ea"
-          }; text-decoration: none; }
+          .jp-prose a { color: ${themeMode === "dark" ? "#d2a86a" : "#9333ea"
+        }; text-decoration: none; }
           .jp-prose a:hover { text-decoration: underline; }
           .jp-prose ul, .jp-prose ol { padding-left: 1.2em; margin: 0.8em 0; }
-          .jp-prose li { margin: 0.4em 0; color: ${
-            themeMode === "dark" ? "#eae2d3" : "#374151"
-          }; }
-          .jp-prose strong { color: ${
-            themeMode === "dark" ? "#f7e6c8" : "#111827"
-          }; font-weight: 600; }
+          .jp-prose li { margin: 0.4em 0; color: ${themeMode === "dark" ? "#eae2d3" : "#374151"
+        }; }
+          .jp-prose strong { color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
+        }; font-weight: 600; }
           
           /* iOS Safari specific fixes */
           @media screen and (-webkit-min-device-pixel-ratio: 0) {

@@ -169,6 +169,34 @@ export default function BlogListMobile({
     return () => clearInterval(interval);
   }, []);
 
+  // Hide mobile browser address bar on mount for better reading experience
+  useEffect(() => {
+    const hideBrowserBar = () => {
+      if (window.innerWidth <= 768) {
+        // Delay to ensure DOM is ready
+        setTimeout(() => {
+          window.scrollTo(0, 1);
+          // Return to top after hiding address bar
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+          }, 100);
+        }, 100);
+      }
+    };
+
+    // Hide on mount
+    hideBrowserBar();
+
+    // Hide on orientation change
+    window.addEventListener('resize', hideBrowserBar);
+    window.addEventListener('orientationchange', hideBrowserBar);
+
+    return () => {
+      window.removeEventListener('resize', hideBrowserBar);
+      window.removeEventListener('orientationchange', hideBrowserBar);
+    };
+  }, []);
+
   // ---- Render instantly from cache with iOS optimizations ----
   useLayoutEffect(() => {
     const renderCachedContent = async () => {
