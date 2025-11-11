@@ -102,6 +102,13 @@ const t = {
   openSource: { ja: "元ページ", en: "Original", vi: "Trang gốc" },
   toc: { ja: "目次", en: "Contents", vi: "Mục lục" },
   readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
+  fontSizes: {
+    sm: { ja: "小", en: "Small", vi: "Nhỏ" },
+    md: { ja: "標準", en: "Normal", vi: "Chuẩn" },
+    lg: { ja: "大", en: "Large", vi: "Lớn" },
+    xl: { ja: "特大", en: "X-Large", vi: "Rất lớn" },
+    xxl: { ja: "特特大", en: "XX-Large", vi: "Cực lớn" },
+  },
 };
 
 const LS_KEY_SIZE = "blog:jpFontSize";
@@ -778,11 +785,11 @@ export default function BlogDetail({
           <Segmented
             key="seg-size"
             options={[
-              { label: "小", value: "sm" },
-              { label: "標準", value: "md" },
-              { label: "大", value: "lg" },
-              { label: "特大", value: "xl" },
-              { label: "特特大", value: "xxl" },
+              { label: t.fontSizes.sm[language], value: "sm" },
+              { label: t.fontSizes.md[language], value: "md" },
+              { label: t.fontSizes.lg[language], value: "lg" },
+              { label: t.fontSizes.xl[language], value: "xl" },
+              { label: t.fontSizes.xxl[language], value: "xxl" },
             ]}
             value={fontSizeKey}
             onChange={(v) => setFontSizeKey(v)}

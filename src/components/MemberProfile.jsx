@@ -35,6 +35,53 @@ const profileLabels = {
   officialProfile: { ja: "公式プロフィール", en: "Official Profile", vi: "Trang chính thức" },
 };
 
+// Helper function to translate blood type
+const translateBloodType = (bloodType, lang) => {
+  if (!bloodType) return bloodType;
+  if (lang === "ja") return bloodType;
+  // Remove "型" for non-Japanese languages
+  return bloodType.replace(/型/g, "");
+};
+
+// Helper function to translate constellation
+const translateConstellation = (constellation, lang) => {
+  if (!constellation) return constellation;
+
+  const constellations = {
+    "おひつじ座": { en: "Aries", vi: "Bạch Dương" },
+    "おうし座": { en: "Taurus", vi: "Kim Ngưu" },
+    "ふたご座": { en: "Gemini", vi: "Song Tử" },
+    "かに座": { en: "Cancer", vi: "Cự Giải" },
+    "しし座": { en: "Leo", vi: "Sư Tử" },
+    "おとめ座": { en: "Virgo", vi: "Xử Nữ" },
+    "てんびん座": { en: "Libra", vi: "Thiên Bình" },
+    "さそり座": { en: "Scorpio", vi: "Bọ Cạp" },
+    "いて座": { en: "Sagittarius", vi: "Nhân Mã" },
+    "やぎ座": { en: "Capricorn", vi: "Ma Kết" },
+    "みずがめ座": { en: "Aquarius", vi: "Bảo Bình" },
+    "うお座": { en: "Pisces", vi: "Song Ngư" },
+  };
+
+  if (lang === "ja") return constellation;
+  return constellations[constellation]?.[lang] || constellation;
+};
+
+// Helper function to translate generation
+const translateGeneration = (generation, lang) => {
+  if (!generation) return generation;
+  if (lang === "ja") return generation;
+
+  // Extract number from Japanese generation format (e.g., "1期生" -> "1")
+  const match = generation.match(/(\d+)期生/);
+  if (match) {
+    const genNumber = match[1];
+    if (lang === "en") return `${genNumber}th Gen`;
+    if (lang === "vi") return `Gen ${genNumber}`;
+  }
+
+  return generation;
+};
+
 const MemberProfile = ({ memberInfo, className, themeMode = "light", language = "ja" }) => {
   if (!memberInfo) return null;
   return (
@@ -189,7 +236,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
-            {memberInfo.blood}
+            {translateBloodType(memberInfo.blood, language)}
           </Descriptions.Item>
           <Descriptions.Item label={profileLabels.constellation[language]}>
             <StarOutlined
@@ -199,7 +246,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
-            {memberInfo.constellation}
+            {translateConstellation(memberInfo.constellation, language)}
           </Descriptions.Item>
           <Descriptions.Item label={profileLabels.generation[language]}>
             <TeamOutlined
@@ -209,7 +256,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
-            {memberInfo.groupcode}
+            {translateGeneration(memberInfo.groupcode, language)}
           </Descriptions.Item>
         </Descriptions>
 
