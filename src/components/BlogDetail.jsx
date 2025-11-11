@@ -931,7 +931,7 @@ export default function BlogDetail({
             >
               {/* Author Info - Left Side */}
               <Space
-                size={window.innerWidth < 768 ? 12 : 22}
+                size={window.innerWidth < 768 ? 12 : 13}
                 align="center"
                 style={{
                   justifyContent:
@@ -944,7 +944,7 @@ export default function BlogDetail({
                     getImageUrl(blog?.memberImage) ||
                     "https://via.placeholder.com/300x300?text=No+Image"
                   }
-                  size={window.innerWidth < 768 ? 56 : 86}
+                  size={window.innerWidth < 768 ? 56 : 55}
                   style={{
                     border: "2px solid #fff",
                     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -957,7 +957,7 @@ export default function BlogDetail({
                 >
                   <Text
                     strong
-                    style={{ fontSize: window.innerWidth < 768 ? 15 : 22 }}
+                    style={{ fontSize: window.innerWidth < 768 ? 15 : 18 }}
                   >
                     {memberInfo?.name || blog.author}
                   </Text>
@@ -965,7 +965,7 @@ export default function BlogDetail({
                     style={{
                       color: "#666",
                       marginTop: window.innerWidth < 768 ? 1 : 2,
-                      fontSize: window.innerWidth < 768 ? 13 : 18,
+                      fontSize: window.innerWidth < 768 ? 13 : 16,
                     }}
                   >
                     <CalendarOutlined style={{ marginRight: 7 }} />
@@ -985,7 +985,7 @@ export default function BlogDetail({
                 <Space direction="vertical" size={2} style={jpFont}>
                   <Text
                     type="secondary"
-                    style={{ letterSpacing: 2, fontSize: 16 }}
+                    style={{ letterSpacing: 2, fontSize: 14 }}
                   >
                     ブログ記事
                   </Text>
@@ -994,7 +994,7 @@ export default function BlogDetail({
                     style={{
                       margin: 0,
                       lineHeight: 1.25,
-                      fontSize: window.innerWidth < 768 ? 16 : 24,
+                      fontSize: window.innerWidth < 768 ? 16 : 16,
                       wordWrap: "break-word",
                       wordBreak: "break-word",
                       whiteSpace: "normal",
