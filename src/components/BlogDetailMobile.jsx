@@ -55,6 +55,22 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
+// Book-like serif fonts for reading content
+const bookFont = {
+  ja: {
+    fontFamily:
+      "'ヒラギノ明朝 ProN','Hiragino Mincho ProN','Yu Mincho','YuMincho','HG明朝E','MS Mincho','serif'",
+  },
+  en: {
+    fontFamily:
+      "'Georgia','Cambria','Times New Roman','serif'",
+  },
+  vi: {
+    fontFamily:
+      "'Times New Roman','Georgia','Cambria','serif'",
+  },
+};
+
 const LS_FONT = "mblog:fontSize";
 
 /** ---------- Simple in-memory cache for mobile optimization ---------- **/
@@ -1460,6 +1476,8 @@ export default function BlogDetailMobile({
                 wordWrap: "break-word",
                 hyphens: "auto",
                 paddingBottom: "20px",
+                letterSpacing: cachedLanguage === "ja" ? 0.5 : 0.3,
+                ...bookFont[cachedLanguage],
                 /* iOS Safari specific fixes */
                 WebkitTransform: "translateZ(0)",
                 transform: "translateZ(0)",
@@ -1725,13 +1743,30 @@ export default function BlogDetailMobile({
             line-height: 1.9;
             font-size: 20px;
             color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"};
+            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "0.02em"};
+            word-spacing: ${cachedLanguage === "ja" ? "0.1em" : "0.05em"};
           }
-          .jp-prose h1 { font-size: 1.6em; margin: 0.9em 0 0.45em; font-weight: 700; color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
-        }; }
-          .jp-prose h2 { font-size: 1.4em; margin: 0.85em 0 0.4em; font-weight: 700; color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
-        }; }
-          .jp-prose h3 { font-size: 1.25em; margin: 0.8em 0 0.3em; font-weight: 600; color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
-        }; }
+          .jp-prose h1 { 
+            font-size: 1.6em; 
+            margin: 0.9em 0 0.45em; 
+            font-weight: 600; 
+            color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"}; 
+            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "normal"};
+          }
+          .jp-prose h2 { 
+            font-size: 1.4em; 
+            margin: 0.85em 0 0.4em; 
+            font-weight: 600; 
+            color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"}; 
+            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "normal"};
+          }
+          .jp-prose h3 { 
+            font-size: 1.25em; 
+            margin: 0.8em 0 0.3em; 
+            font-weight: 600; 
+            color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"}; 
+            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "normal"};
+          }
           .jp-prose blockquote {
             border-left: 4px solid ${themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
         }; background: ${themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
@@ -1740,9 +1775,14 @@ export default function BlogDetailMobile({
             font-size: 1.05em; color: ${themeMode === "dark" ? "#cfbfa6" : "#4b5563"
         };
           }
-          .jp-prose a { color: ${themeMode === "dark" ? "#d2a86a" : "#9333ea"
-        }; text-decoration: none; }
-          .jp-prose a:hover { text-decoration: underline; }
+          .jp-prose a { 
+            color: ${themeMode === "dark" ? "#d2a86a" : "#9333ea"}; 
+            text-decoration: none; 
+            border-bottom: 1px dotted ${themeMode === "dark" ? "#d2a86a" : "#9333ea"};
+          }
+          .jp-prose a:hover { 
+            border-bottom-style: solid;
+          }
           .jp-prose ul, .jp-prose ol { padding-left: 1.2em; margin: 0.8em 0; }
           .jp-prose li { margin: 0.4em 0; color: ${themeMode === "dark" ? "#eae2d3" : "#374151"
         }; }

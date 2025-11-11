@@ -78,15 +78,15 @@ const jpFont = {
 const bookFont = {
   ja: {
     fontFamily:
-      "'Noto Serif JP','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG Mincho E','ＭＳ 明朝','MS Mincho',serif",
+      "'ヒラギノ明朝 ProN','Hiragino Mincho ProN','Yu Mincho','YuMincho','HG明朝E','MS Mincho','serif'",
   },
   en: {
     fontFamily:
-      "'Crimson Text','Libre Baskerville','Georgia','Cambria','Times New Roman',serif",
+      "'Georgia','Cambria','Times New Roman','serif'",
   },
   vi: {
     fontFamily:
-      "'Crimson Text','Libre Baskerville','Georgia','Cambria','Times New Roman',serif",
+      "'Times New Roman','Georgia','Cambria','serif'",
   },
 };
 
