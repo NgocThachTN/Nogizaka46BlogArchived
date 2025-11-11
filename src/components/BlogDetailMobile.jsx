@@ -33,7 +33,6 @@ import {
 } from "@ant-design/pro-components";
 import { useNavigate } from "react-router-dom";
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -634,7 +633,7 @@ export default function BlogDetailMobile({
     ]
   );
 
-  // Author Bar (always visible - clean design)
+  // Author Bar (scrolls with content - sticky at top)
   const AuthorBar = useMemo(
     () => (
       <div
@@ -648,9 +647,9 @@ export default function BlogDetailMobile({
             themeMode === "dark"
               ? "1px solid rgba(207,191,166,0.2)"
               : "1px solid rgba(139, 69, 19, 0.15)",
-          zIndex: 998,
-          position: "fixed",
-          top: 44,
+          zIndex: 10,
+          position: "sticky",
+          top: -104,
           left: 0,
           right: 0,
           width: "100%",
@@ -774,33 +773,10 @@ export default function BlogDetailMobile({
     [blog, displayTitle, memberInfo, themeMode]
   );
 
-  // Scroll handler to hide browser address bar on mobile
-  const lastScrollY = useRef(0);
-  const scrollDirectionRef = useRef('down');
-
-  const handleScroll = useCallback(() => {
-    const wrap = scrollWrapRef.current;
-    if (!wrap) return;
-
-    const currentScrollY = wrap.scrollTop;
-
-    // Detect scroll direction
-    if (currentScrollY > lastScrollY.current) {
-      scrollDirectionRef.current = 'down';
-    } else if (currentScrollY < lastScrollY.current) {
-      scrollDirectionRef.current = 'up';
-    }
-
-    lastScrollY.current = currentScrollY;
-  }, []);
-
   // Setup scroll handlers and hide browser address bar on mount
   useEffect(() => {
     const wrap = scrollWrapRef.current;
     if (!wrap) return;
-
-    // Attach scroll listener
-    wrap.addEventListener('scroll', handleScroll, { passive: true });
 
     // Mobile optimization: Hide browser address bar by scrolling down slightly
     // This maximizes reading space on mobile devices
@@ -826,10 +802,9 @@ export default function BlogDetailMobile({
     window.addEventListener('resize', hideBrowserBar);
 
     return () => {
-      wrap.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', hideBrowserBar);
     };
-  }, [handleScroll]);
+  }, []);
 
   // Simple image handling - no complex logic
   useEffect(() => {
@@ -1315,7 +1290,7 @@ export default function BlogDetailMobile({
         padding: 0,
         margin: 0,
         background:
-          themeMode === "dark" ? "#141311" : "rgba(253, 246, 227, 0.8)",
+          themeMode === "dark" ? "#1c1a17" : "rgba(253, 246, 227, 0.8)",
         height: "100dvh",
         maxHeight: "100dvh",
         width: "100vw",
@@ -1337,14 +1312,13 @@ export default function BlogDetailMobile({
       }}
     >
       {NavigationBar}
-      {AuthorBar}
 
       {/* scroll container */}
       <div
         ref={scrollWrapRef}
         style={{
-          height: "calc(100dvh - 84px)", // Trừ đi chiều cao của cả NavigationBar và AuthorBar
-          maxHeight: "calc(100dvh - 84px)",
+          height: "calc(100dvh - 44px)",
+          maxHeight: "calc(100dvh - 44px)",
           overflow: "auto",
           background:
             themeMode === "dark" ? "#1c1a17" : "rgba(253, 246, 227, 0.8)",
@@ -1357,8 +1331,8 @@ export default function BlogDetailMobile({
           display: "flex",
           flexDirection: "column",
           touchAction: "pan-y",
-          paddingTop: 0, // Đã tính trong height
-          marginTop: "84px",
+          paddingTop: 0,
+          marginTop: "44px",
           marginBottom: 0,
           flexShrink: 1,
           WebkitBackfaceVisibility: "hidden",
@@ -1366,9 +1340,10 @@ export default function BlogDetailMobile({
           transform: "translate3d(0,0,0)",
           willChange: "transform",
           contain: "paint layout style",
-          /* iOS Safari specific fixes - removed duplicate keys */
         }}
       >
+        {/* AuthorBar now inside scroll container */}
+        {AuthorBar}
         <ProCard
           ghost
           style={{
