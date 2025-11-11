@@ -102,6 +102,7 @@ const t = {
   openSource: { ja: "元ページ", en: "Original", vi: "Trang gốc" },
   toc: { ja: "目次", en: "Contents", vi: "Mục lục" },
   readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
+  minutes: { ja: "分", en: "min", vi: "phút" },
   fontSizes: {
     sm: { ja: "小", en: "Small", vi: "Nhỏ" },
     md: { ja: "標準", en: "Normal", vi: "Chuẩn" },
@@ -1124,7 +1125,7 @@ export default function BlogDetail({
                   letterSpacing: 0.5,
                 }}
               >
-                分
+                {t.minutes[language]}
               </div>
             </div>
           </ProCard>
