@@ -74,6 +74,22 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
+// Book-like serif fonts for reading content
+const bookFont = {
+  ja: {
+    fontFamily:
+      "'Noto Serif JP','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG Mincho E','ＭＳ 明朝','MS Mincho',serif",
+  },
+  en: {
+    fontFamily:
+      "'Crimson Text','Libre Baskerville','Georgia','Cambria','Times New Roman',serif",
+  },
+  vi: {
+    fontFamily:
+      "'Crimson Text','Libre Baskerville','Georgia','Cambria','Times New Roman',serif",
+  },
+};
+
 // size preset — big for JP reading (increased 20%)
 const SIZE_PRESETS = {
   sm: { px: 22, lh: 1.9, h1: 2.0, h2: 1.7, h3: 1.45 },
@@ -1029,8 +1045,9 @@ export default function BlogDetail({
               style={{
                 fontSize: sz.px,
                 lineHeight: sz.lh,
-                letterSpacing: 0.3,
+                letterSpacing: language === "ja" ? 0.5 : 0.3,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
+                ...bookFont[language],
               }}
               dangerouslySetInnerHTML={{ __html: displayContent }}
             />
@@ -1212,45 +1229,53 @@ export default function BlogDetail({
       {/* prose base */}
       <style>{`
         .jp-prose h1 { 
-          font-weight: 700; 
+          font-weight: 600; 
           margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.6em"
         }; 
-          letter-spacing: ${window.innerWidth < 768 ? "-0.02em" : "normal"};
+          letter-spacing: ${window.innerWidth < 768 ? "-0.02em" : language === "ja" ? "0.05em" : "normal"};
         }
         .jp-prose h2 { 
-          font-weight: 700; 
+          font-weight: 600; 
           margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.5em"
         }; 
-          letter-spacing: ${window.innerWidth < 768 ? "-0.01em" : "normal"};
+          letter-spacing: ${window.innerWidth < 768 ? "-0.01em" : language === "ja" ? "0.05em" : "normal"};
         }
         .jp-prose h3 { 
-          font-weight: 700; 
+          font-weight: 600; 
           margin: ${window.innerWidth < 768 ? "0.7em 0 0.3em" : "0.9em 0 0.4em"
         };
+          letter-spacing: ${language === "ja" ? "0.05em" : "normal"};
         }
         .jp-prose p { 
           color: ${themeMode === "dark" ? "#f5ede0" : "#374151"}; 
           margin: ${window.innerWidth < 768 ? "0.6em 0" : "0.75em 0"}; 
           text-align: justify; 
-          line-height: ${window.innerWidth < 768 ? "1.6" : "inherit"};
+          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh};
+          letter-spacing: ${language === "ja" ? "0.05em" : "0.02em"};
+          word-spacing: ${language === "ja" ? "0.1em" : "0.05em"};
         }
-        .jp-prose a { color: ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"
-        }; text-decoration: none; }
-        .jp-prose a:hover { text-decoration: underline; }
+        .jp-prose a { 
+          color: ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"}; 
+          text-decoration: none; 
+          border-bottom: 1px dotted ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"};
+        }
+        .jp-prose a:hover { 
+          border-bottom-style: solid;
+        }
         .jp-prose img { 
           border-radius: ${window.innerWidth < 768 ? "8px" : "12px"}; 
           display: block; 
-          margin: ${window.innerWidth < 768 ? "12px" : "16px"} auto; 
+          margin: ${window.innerWidth < 768 ? "16px" : "24px"} auto; 
           max-width: 100%; 
           height: auto;
           box-shadow: ${window.innerWidth < 768
           ? `${themeMode === "dark"
-            ? "0 2px 6px rgba(0,0,0,0.4)"
-            : "0 2px 6px rgba(0,0,0,0.1)"
+            ? "0 3px 8px rgba(0,0,0,0.4)"
+            : "0 3px 8px rgba(0,0,0,0.12)"
           }`
           : `${themeMode === "dark"
-            ? "0 4px 12px rgba(0,0,0,0.45)"
-            : "0 4px 12px rgba(0,0,0,0.1)"
+            ? "0 6px 16px rgba(0,0,0,0.45)"
+            : "0 6px 16px rgba(0,0,0,0.12)"
           }`
         };
           border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.1)"
