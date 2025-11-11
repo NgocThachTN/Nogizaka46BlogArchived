@@ -74,13 +74,13 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
-// size preset — big for JP reading
+// size preset — big for JP reading (increased 20%)
 const SIZE_PRESETS = {
-  sm: { px: 18, lh: 1.9, h1: 2.0, h2: 1.7, h3: 1.45 },
-  md: { px: 22, lh: 2.1, h1: 2.2, h2: 1.85, h3: 1.6 },
-  lg: { px: 26, lh: 2.2, h1: 2.4, h2: 2.0, h3: 1.75 },
-  xl: { px: 30, lh: 2.3, h1: 2.6, h2: 2.15, h3: 1.85 },
-  xxl: { px: 34, lh: 2.4, h1: 2.8, h2: 2.3, h3: 2.0 },
+  sm: { px: 22, lh: 1.9, h1: 2.0, h2: 1.7, h3: 1.45 },
+  md: { px: 26, lh: 2.1, h1: 2.2, h2: 1.85, h3: 1.6 },
+  lg: { px: 31, lh: 2.2, h1: 2.4, h2: 2.0, h3: 1.75 },
+  xl: { px: 36, lh: 2.3, h1: 2.6, h2: 2.15, h3: 1.85 },
+  xxl: { px: 41, lh: 2.4, h1: 2.8, h2: 2.3, h3: 2.0 },
 };
 
 const t = {
@@ -704,7 +704,7 @@ export default function BlogDetail({
               setLanguage(value);
               if (propSetLanguage) propSetLanguage(value);
             }}
-            style={{ width: 140 }}
+            style={{ width: 168 }}
             loading={translating}
             disabled={translating}
             options={[
@@ -832,7 +832,7 @@ export default function BlogDetail({
                   : "rgba(253, 246, 227, 0.8)",
               ...jpFont,
             }}
-            bodyStyle={{ padding: readingMode ? 40 : 32, position: "relative" }}
+            bodyStyle={{ padding: readingMode ? 48 : 38, position: "relative" }}
           >
             {/* Overlay translating */}
             {translating && (
@@ -931,7 +931,7 @@ export default function BlogDetail({
             >
               {/* Author Info - Left Side */}
               <Space
-                size={window.innerWidth < 768 ? 12 : 18}
+                size={window.innerWidth < 768 ? 12 : 22}
                 align="center"
                 style={{
                   justifyContent:
@@ -944,7 +944,7 @@ export default function BlogDetail({
                     getImageUrl(blog?.memberImage) ||
                     "https://via.placeholder.com/300x300?text=No+Image"
                   }
-                  size={window.innerWidth < 768 ? 56 : 72}
+                  size={window.innerWidth < 768 ? 56 : 86}
                   style={{
                     border: "2px solid #fff",
                     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -957,7 +957,7 @@ export default function BlogDetail({
                 >
                   <Text
                     strong
-                    style={{ fontSize: window.innerWidth < 768 ? 15 : 18 }}
+                    style={{ fontSize: window.innerWidth < 768 ? 15 : 22 }}
                   >
                     {memberInfo?.name || blog.author}
                   </Text>
@@ -965,10 +965,10 @@ export default function BlogDetail({
                     style={{
                       color: "#666",
                       marginTop: window.innerWidth < 768 ? 1 : 2,
-                      fontSize: window.innerWidth < 768 ? 13 : 15,
+                      fontSize: window.innerWidth < 768 ? 13 : 18,
                     }}
                   >
-                    <CalendarOutlined style={{ marginRight: 6 }} />
+                    <CalendarOutlined style={{ marginRight: 7 }} />
                     <Text>{blog.date}</Text>
                   </div>
                 </div>
@@ -985,7 +985,7 @@ export default function BlogDetail({
                 <Space direction="vertical" size={2} style={jpFont}>
                   <Text
                     type="secondary"
-                    style={{ letterSpacing: 2, fontSize: 13 }}
+                    style={{ letterSpacing: 2, fontSize: 16 }}
                   >
                     ブログ記事
                   </Text>
@@ -994,7 +994,7 @@ export default function BlogDetail({
                     style={{
                       margin: 0,
                       lineHeight: 1.25,
-                      fontSize: window.innerWidth < 768 ? 16 : 20,
+                      fontSize: window.innerWidth < 768 ? 16 : 24,
                       wordWrap: "break-word",
                       wordBreak: "break-word",
                       whiteSpace: "normal",
@@ -1008,7 +1008,7 @@ export default function BlogDetail({
 
             <Divider
               style={{
-                margin: "16px 0 24px",
+                margin: "19px 0 29px",
                 borderColor:
                   themeMode === "dark" ? "rgba(207,191,166,0.2)" : undefined,
               }}
@@ -1029,7 +1029,7 @@ export default function BlogDetail({
           </Card>
 
           {/* Bottom nav (tối giản) */}
-          <Space style={{ marginTop: 12 }} wrap>
+          <Space style={{ marginTop: 14 }} wrap>
             {blog.originalUrl && (
               <Button
                 icon={<LinkOutlined />}
@@ -1063,8 +1063,8 @@ export default function BlogDetail({
           <ProCard
             title={
               <Space size={4}>
-                <ReadOutlined style={{ fontSize: 13 }} />
-                <span style={{ fontSize: 14 }}>{t.readTime[language]}</span>
+                <ReadOutlined style={{ fontSize: 16 }} />
+                <span style={{ fontSize: 17 }}>{t.readTime[language]}</span>
               </Space>
             }
             style={{
@@ -1074,12 +1074,12 @@ export default function BlogDetail({
                   ? "rgba(36, 33, 29, 0.85)"
                   : "rgba(253, 246, 227, 0.8)",
             }}
-            bodyStyle={{ padding: isMobile ? 12 : 14 }}
+            bodyStyle={{ padding: isMobile ? 12 : 17 }}
           >
             <div
               style={{
                 textAlign: "center",
-                padding: isMobile ? "14px 0" : "16px 0",
+                padding: isMobile ? "14px 0" : "19px 0",
                 background:
                   themeMode === "dark"
                     ? "linear-gradient(135deg, rgba(28,26,23,0.9) 0%, rgba(36,33,29,0.9) 100%)"
@@ -1097,7 +1097,7 @@ export default function BlogDetail({
             >
               <div
                 style={{
-                  fontSize: isMobile ? 22 : 28,
+                  fontSize: isMobile ? 22 : 34,
                   fontWeight: 700,
                   color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
                   marginBottom: 2,
@@ -1111,7 +1111,7 @@ export default function BlogDetail({
               </div>
               <div
                 style={{
-                  fontSize: isMobile ? 12 : 13,
+                  fontSize: isMobile ? 12 : 16,
                   color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                   fontWeight: 500,
                   letterSpacing: 0.5,
@@ -1125,7 +1125,7 @@ export default function BlogDetail({
           {toc.length > 0 && (
             <Card
               title={
-                <span style={{ fontSize: 14 }}>{t.toc[language]}</span>
+                <span style={{ fontSize: 17 }}>{t.toc[language]}</span>
               }
               style={{
                 borderRadius: 12,
@@ -1134,9 +1134,9 @@ export default function BlogDetail({
                     ? "rgba(36, 33, 29, 0.85)"
                     : "rgba(253, 246, 227, 0.8)",
               }}
-              bodyStyle={{ padding: 12 }}
+              bodyStyle={{ padding: 14 }}
             >
-              <Space direction="vertical" style={{ width: "100%" }} size={4}>
+              <Space direction="vertical" style={{ width: "100%" }} size={5}>
                 {toc.map((h) => (
                   <Button
                     key={h.id}
@@ -1145,10 +1145,10 @@ export default function BlogDetail({
                     style={{
                       justifyContent: "flex-start",
                       paddingLeft:
-                        h.level === "H1" ? 0 : h.level === "H2" ? 6 : 12,
-                      fontSize: 13,
+                        h.level === "H1" ? 0 : h.level === "H2" ? 7 : 14,
+                      fontSize: 16,
                       height: "auto",
-                      padding: "6px 10px",
+                      padding: "7px 12px",
                       ...jpFont,
                     }}
                     onClick={() => {
@@ -1194,8 +1194,8 @@ export default function BlogDetail({
       <FloatButton.BackTop
         icon={<ArrowUpOutlined />}
         style={{
-          width: window.innerWidth < 768 ? 44 : 50,
-          height: window.innerWidth < 768 ? 44 : 50,
+          width: window.innerWidth < 768 ? 44 : 60,
+          height: window.innerWidth < 768 ? 44 : 60,
           right: window.innerWidth < 768 ? 16 : 24,
           bottom: window.innerWidth < 768 ? 16 : 24,
         }}

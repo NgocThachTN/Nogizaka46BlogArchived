@@ -62,7 +62,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         {/* Avatar + Name */}
         <div
           style={{
-            padding: "20px 14px 14px",
+            padding: "24px 17px 17px",
             textAlign: "center",
             background:
               themeMode === "dark"
@@ -71,25 +71,25 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           }}
         >
           <Avatar
-            size={110}
+            size={132}
             src={memberInfo.img}
             style={{
               border:
                 themeMode === "dark"
-                  ? "3px solid rgba(207,191,166,0.3)"
-                  : "3px solid #fff",
+                  ? "4px solid rgba(207,191,166,0.3)"
+                  : "4px solid #fff",
               boxShadow:
                 themeMode === "dark"
                   ? "0 4px 16px rgba(0,0,0,0.4)"
                   : "0 4px 16px rgba(0,0,0,0.08)",
             }}
           />
-          <div style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 12 }}>
             <Title
               level={5}
               style={{
-                marginBottom: 3,
-                fontSize: 16,
+                marginBottom: 4,
+                fontSize: 19,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
               }}
             >
@@ -98,7 +98,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <Text
               type="secondary"
               style={{
-                fontSize: 12,
+                fontSize: 14,
                 display: "block",
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
               }}
@@ -108,7 +108,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <Text
               type="secondary"
               style={{
-                fontSize: 13,
+                fontSize: 16,
                 display: "block",
                 marginTop: 2,
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
@@ -118,7 +118,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
               {memberInfo.english_name}
             </Text>
           </div>
-          <Space style={{ marginTop: 10 }} wrap>
+          <Space style={{ marginTop: 12 }} wrap>
             {/* {memberInfo.pick && (
               <Tag
                 icon={<CrownOutlined />}
@@ -153,8 +153,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 : "rgba(253,246,227,0.5)",
           }}
           labelStyle={{
-            width: 80,
-            fontSize: 12,
+            width: 96,
+            fontSize: 14,
             color: themeMode === "dark" ? "#cfbfa6" : "#555",
             background:
               themeMode === "dark"
@@ -163,7 +163,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           }}
           contentStyle={{
             textAlign: "right",
-            fontSize: 12,
+            fontSize: 14,
             color: themeMode === "dark" ? "#f5ede0" : undefined,
             background:
               themeMode === "dark"
@@ -174,8 +174,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.birthday[language]}>
             <CalendarOutlined
               style={{
-                marginRight: 5,
-                fontSize: 11,
+                marginRight: 6,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -184,8 +184,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.bloodType[language]}>
             <HeartOutlined
               style={{
-                marginRight: 5,
-                fontSize: 11,
+                marginRight: 6,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -194,8 +194,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.constellation[language]}>
             <StarOutlined
               style={{
-                marginRight: 5,
-                fontSize: 11,
+                marginRight: 6,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -204,8 +204,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.generation[language]}>
             <TeamOutlined
               style={{
-                marginRight: 5,
-                fontSize: 11,
+                marginRight: 6,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -216,7 +216,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         {/* Official link */}
         <div
           style={{
-            padding: 12,
+            padding: 14,
             textAlign: "center",
             background:
               themeMode === "dark"
@@ -226,12 +226,12 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         >
           <Button
             type="link"
-            size="small"
+            size="middle"
             icon={
               <GlobalOutlined
                 style={{
                   color: themeMode === "dark" ? "#d2a86a" : undefined,
-                  fontSize: 12,
+                  fontSize: 14,
                 }}
               />
             }
@@ -239,7 +239,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             target="_blank"
             style={{
               color: themeMode === "dark" ? "#d2a86a" : undefined,
-              fontSize: 12,
+              fontSize: 14,
             }}
           >
             {profileLabels.officialProfile[language]}

@@ -264,10 +264,10 @@ export default function BlogCalendar({
     <ProCard
       title={
         <Space size={4}>
-          <CalendarOutlined style={{ fontSize: 13 }} />
-          <span style={{ fontSize: 14 }}>{t.calendar[language]}</span>
+          <CalendarOutlined style={{ fontSize: 16 }} />
+          <span style={{ fontSize: 17 }}>{t.calendar[language]}</span>
           {memberInfo && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" style={{ fontSize: 14 }}>
               {memberInfo.name}
             </Text>
           )}
@@ -280,11 +280,11 @@ export default function BlogCalendar({
             ? "rgba(36, 33, 29, 0.85)"
             : "rgba(253, 246, 227, 0.8)",
       }}
-      bodyStyle={{ padding: isMobile ? 12 : 14 }}
+      bodyStyle={{ padding: isMobile ? 12 : 17 }}
       extra={
         <Button
           size="small"
-          style={{ fontSize: 12 }}
+          style={{ fontSize: 14 }}
           onClick={() => setViewMode(viewMode === "month" ? "year" : "month")}
         >
           {viewMode === "month" ? t.yearView[language] : t.monthView[language]}
@@ -314,7 +314,7 @@ export default function BlogCalendar({
             >
               <Button
                 size="small"
-                style={{ fontSize: 11, padding: "2px 8px" }}
+                style={{ fontSize: 13, padding: "2px 10px" }}
                 onClick={() =>
                   onChange(
                     value.subtract(1, viewMode === "month" ? "month" : "year")
@@ -323,14 +323,14 @@ export default function BlogCalendar({
               >
                 ←
               </Button>
-              <Text strong style={{ fontSize: isMobile ? 13 : 14 }}>
+              <Text strong style={{ fontSize: isMobile ? 13 : 17 }}>
                 {viewMode === "month"
                   ? formatDate(value, language, "yearMonth")
                   : formatDate(value, language, "year")}
               </Text>
               <Button
                 size="small"
-                style={{ fontSize: 11, padding: "2px 8px" }}
+                style={{ fontSize: 13, padding: "2px 10px" }}
                 onClick={() =>
                   onChange(
                     value.add(1, viewMode === "month" ? "month" : "year")
@@ -438,7 +438,7 @@ export default function BlogCalendar({
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
                           overflow: "hidden",
-                          fontSize: isMobile ? 12 : 13,
+                          fontSize: isMobile ? 12 : 16,
                           lineHeight: 1.4,
                           marginBottom: 4,
                         }}
@@ -449,7 +449,7 @@ export default function BlogCalendar({
                     <div
                       style={{
                         color: "#666",
-                        fontSize: isMobile ? 10 : 11,
+                        fontSize: isMobile ? 10 : 13,
                         display: "flex",
                         alignItems: "center",
                         gap: 4,
