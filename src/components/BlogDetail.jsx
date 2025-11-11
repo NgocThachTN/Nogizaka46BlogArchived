@@ -58,6 +58,7 @@ import {
 import { isIOS } from "../utils/deviceDetection";
 import BlogDetailMobile from "./BlogDetailMobile";
 import BlogCalendar from "./BlogCalendar";
+import MemberProfile from "./MemberProfile";
 import {
   translateJapaneseToEnglish,
   translateJapaneseToVietnamese,
@@ -494,9 +495,8 @@ export default function BlogDetail({
           setTranslationProgress(100);
           notification.success({
             message: "Dịch thuật thành công",
-            description: `Nội dung đã được dịch sang ${
-              language === "en" ? "tiếng Anh" : "tiếng Việt"
-            }`,
+            description: `Nội dung đã được dịch sang ${language === "en" ? "tiếng Anh" : "tiếng Việt"
+              }`,
             placement: "topRight",
             duration: 3,
           });
@@ -644,8 +644,8 @@ export default function BlogDetail({
               <Button
                 icon={
                   pendingNavId &&
-                  pendingNavId === navIds.prevId &&
-                  !getCachedBlogDetail(navIds.prevId) ? (
+                    pendingNavId === navIds.prevId &&
+                    !getCachedBlogDetail(navIds.prevId) ? (
                     <LoadingOutlined />
                   ) : (
                     <LeftOutlined />
@@ -673,8 +673,8 @@ export default function BlogDetail({
                 type="primary"
                 icon={
                   pendingNavId &&
-                  pendingNavId === navIds.nextId &&
-                  !getCachedBlogDetail(navIds.nextId) ? (
+                    pendingNavId === navIds.nextId &&
+                    !getCachedBlogDetail(navIds.nextId) ? (
                     <LoadingOutlined />
                   ) : (
                     <RightOutlined />
@@ -791,8 +791,27 @@ export default function BlogDetail({
       token={{ colorBgPageContainer: readingMode ? "#fafafa" : undefined }}
     >
       <ProCard ghost gutter={[16, 16]} wrap>
+        {/* Left Sidebar - Member Profile */}
+        {memberInfo && (
+          <ProCard
+            colSpan={{ xs: 24, sm: 24, md: 6, lg: 5, xl: 5 }}
+            ghost
+          >
+            <MemberProfile memberInfo={memberInfo} themeMode={themeMode} />
+          </ProCard>
+        )}
+
         {/* Main content */}
-        <ProCard colSpan={{ xs: 24, md: 16, xl: 17 }} ghost>
+        <ProCard
+          colSpan={{
+            xs: 24,
+            sm: 24,
+            md: memberInfo ? 12 : 16,
+            lg: memberInfo ? 13 : 16,
+            xl: memberInfo ? 13 : 17,
+          }}
+          ghost
+        >
           <Card
             style={{
               borderRadius: 16,
@@ -1013,7 +1032,13 @@ export default function BlogDetail({
 
         {/* Sidebar */}
         <ProCard
-          colSpan={{ xs: 24, md: 8, xl: 7 }}
+          colSpan={{
+            xs: 24,
+            sm: 24,
+            md: memberInfo ? 6 : 8,
+            lg: memberInfo ? 6 : 8,
+            xl: memberInfo ? 6 : 7,
+          }}
           ghost
           direction="column"
           gutter={[0, 16]}
@@ -1145,23 +1170,20 @@ export default function BlogDetail({
       <style>{`
         .jp-prose h1 { 
           font-weight: 700; 
-          margin: ${
-            window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.6em"
-          }; 
+          margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.6em"
+        }; 
           letter-spacing: ${window.innerWidth < 768 ? "-0.02em" : "normal"};
         }
         .jp-prose h2 { 
           font-weight: 700; 
-          margin: ${
-            window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.5em"
-          }; 
+          margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.5em"
+        }; 
           letter-spacing: ${window.innerWidth < 768 ? "-0.01em" : "normal"};
         }
         .jp-prose h3 { 
           font-weight: 700; 
-          margin: ${
-            window.innerWidth < 768 ? "0.7em 0 0.3em" : "0.9em 0 0.4em"
-          };
+          margin: ${window.innerWidth < 768 ? "0.7em 0 0.3em" : "0.9em 0 0.4em"
+        };
         }
         .jp-prose p { 
           color: ${themeMode === "dark" ? "#f5ede0" : "#374151"}; 
@@ -1169,8 +1191,7 @@ export default function BlogDetail({
           text-align: justify; 
           line-height: ${window.innerWidth < 768 ? "1.6" : "inherit"};
         }
-        .jp-prose a { color: ${
-          themeMode === "dark" ? "#d2a86a" : "#6b21a8"
+        .jp-prose a { color: ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"
         }; text-decoration: none; }
         .jp-prose a:hover { text-decoration: underline; }
         .jp-prose img { 
@@ -1179,46 +1200,39 @@ export default function BlogDetail({
           margin: ${window.innerWidth < 768 ? "12px" : "16px"} auto; 
           max-width: 100%; 
           height: auto;
-          box-shadow: ${
-            window.innerWidth < 768
-              ? `${
-                  themeMode === "dark"
-                    ? "0 2px 6px rgba(0,0,0,0.4)"
-                    : "0 2px 6px rgba(0,0,0,0.1)"
-                }`
-              : `${
-                  themeMode === "dark"
-                    ? "0 4px 12px rgba(0,0,0,0.45)"
-                    : "0 4px 12px rgba(0,0,0,0.1)"
-                }`
-          };
-          border: 1px solid ${
-            themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.1)"
-          };
+          box-shadow: ${window.innerWidth < 768
+          ? `${themeMode === "dark"
+            ? "0 2px 6px rgba(0,0,0,0.4)"
+            : "0 2px 6px rgba(0,0,0,0.1)"
+          }`
+          : `${themeMode === "dark"
+            ? "0 4px 12px rgba(0,0,0,0.45)"
+            : "0 4px 12px rgba(0,0,0,0.1)"
+          }`
+        };
+          border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.1)"
+        };
         }
       `}</style>
       {/* dynamic heading scale */}
       <style>{`
         .jp-prose h1 { 
-          font-size: ${
-            window.innerWidth < 768
-              ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
-              : SIZE_PRESETS[fontSizeKey].h1
-          }em; 
+          font-size: ${window.innerWidth < 768
+          ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h1
+        }em; 
         }
         .jp-prose h2 { 
-          font-size: ${
-            window.innerWidth < 768
-              ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
-              : SIZE_PRESETS[fontSizeKey].h2
-          }em; 
+          font-size: ${window.innerWidth < 768
+          ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h2
+        }em; 
         }
         .jp-prose h3 { 
-          font-size: ${
-            window.innerWidth < 768
-              ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
-              : SIZE_PRESETS[fontSizeKey].h3
-          }em; 
+          font-size: ${window.innerWidth < 768
+          ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h3
+        }em; 
         }
       `}</style>
     </PageContainer>

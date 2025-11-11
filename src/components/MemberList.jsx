@@ -565,6 +565,7 @@ const MemberList = ({
                                     fontSize: 12,
                                     display: "block",
                                     fontStyle: "italic",
+                                    textTransform: "capitalize",
                                   }}
                                 >
                                   {m.english_name}
