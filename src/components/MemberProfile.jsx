@@ -62,7 +62,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         {/* Avatar + Name */}
         <div
           style={{
-            padding: "24px 16px 16px",
+            padding: "20px 14px 14px",
             textAlign: "center",
             background:
               themeMode === "dark"
@@ -71,25 +71,25 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           }}
         >
           <Avatar
-            size={135}
+            size={110}
             src={memberInfo.img}
             style={{
               border:
                 themeMode === "dark"
-                  ? "4px solid rgba(207,191,166,0.3)"
-                  : "4px solid #fff",
+                  ? "3px solid rgba(207,191,166,0.3)"
+                  : "3px solid #fff",
               boxShadow:
                 themeMode === "dark"
                   ? "0 4px 16px rgba(0,0,0,0.4)"
                   : "0 4px 16px rgba(0,0,0,0.08)",
             }}
           />
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 10 }}>
             <Title
-              level={4}
+              level={5}
               style={{
-                marginBottom: 4,
-                fontSize: 20,
+                marginBottom: 3,
+                fontSize: 16,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
               }}
             >
@@ -98,7 +98,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <Text
               type="secondary"
               style={{
-                fontSize: 14,
+                fontSize: 12,
                 display: "block",
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
               }}
@@ -108,9 +108,9 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <Text
               type="secondary"
               style={{
-                fontSize: 15,
+                fontSize: 13,
                 display: "block",
-                marginTop: 4,
+                marginTop: 2,
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
                 textTransform: "capitalize",
               }}
@@ -118,7 +118,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
               {memberInfo.english_name}
             </Text>
           </div>
-          <Space style={{ marginTop: 12 }} wrap>
+          <Space style={{ marginTop: 10 }} wrap>
             {/* {memberInfo.pick && (
               <Tag
                 icon={<CrownOutlined />}
@@ -153,8 +153,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 : "rgba(253,246,227,0.5)",
           }}
           labelStyle={{
-            width: 95,
-            fontSize: 14,
+            width: 80,
+            fontSize: 12,
             color: themeMode === "dark" ? "#cfbfa6" : "#555",
             background:
               themeMode === "dark"
@@ -163,7 +163,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           }}
           contentStyle={{
             textAlign: "right",
-            fontSize: 14,
+            fontSize: 12,
             color: themeMode === "dark" ? "#f5ede0" : undefined,
             background:
               themeMode === "dark"
@@ -174,8 +174,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.birthday[language]}>
             <CalendarOutlined
               style={{
-                marginRight: 6,
-                fontSize: 13,
+                marginRight: 5,
+                fontSize: 11,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -184,8 +184,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.bloodType[language]}>
             <HeartOutlined
               style={{
-                marginRight: 6,
-                fontSize: 13,
+                marginRight: 5,
+                fontSize: 11,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -194,8 +194,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.constellation[language]}>
             <StarOutlined
               style={{
-                marginRight: 6,
-                fontSize: 13,
+                marginRight: 5,
+                fontSize: 11,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -204,8 +204,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           <Descriptions.Item label={profileLabels.generation[language]}>
             <TeamOutlined
               style={{
-                marginRight: 6,
-                fontSize: 13,
+                marginRight: 5,
+                fontSize: 11,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -216,7 +216,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         {/* Official link */}
         <div
           style={{
-            padding: 16,
+            padding: 12,
             textAlign: "center",
             background:
               themeMode === "dark"
@@ -226,12 +226,12 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         >
           <Button
             type="link"
-            size="middle"
+            size="small"
             icon={
               <GlobalOutlined
                 style={{
                   color: themeMode === "dark" ? "#d2a86a" : undefined,
-                  fontSize: 14,
+                  fontSize: 12,
                 }}
               />
             }
@@ -239,7 +239,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             target="_blank"
             style={{
               color: themeMode === "dark" ? "#d2a86a" : undefined,
-              fontSize: 14,
+              fontSize: 12,
             }}
           >
             {profileLabels.officialProfile[language]}
