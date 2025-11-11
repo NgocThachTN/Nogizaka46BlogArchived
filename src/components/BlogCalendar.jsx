@@ -264,10 +264,10 @@ export default function BlogCalendar({
     <ProCard
       title={
         <Space size={4}>
-          <CalendarOutlined style={{ fontSize: 12 }} />
-          <span style={{ fontSize: 13 }}>{t.calendar[language]}</span>
+          <CalendarOutlined style={{ fontSize: 13 }} />
+          <span style={{ fontSize: 14 }}>{t.calendar[language]}</span>
           {memberInfo && (
-            <Text type="secondary" style={{ fontSize: 11 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
               {memberInfo.name}
             </Text>
           )}
@@ -280,11 +280,11 @@ export default function BlogCalendar({
             ? "rgba(36, 33, 29, 0.85)"
             : "rgba(253, 246, 227, 0.8)",
       }}
-      bodyStyle={{ padding: isMobile ? 10 : 12 }}
+      bodyStyle={{ padding: isMobile ? 12 : 14 }}
       extra={
         <Button
           size="small"
-          style={{ fontSize: 11 }}
+          style={{ fontSize: 12 }}
           onClick={() => setViewMode(viewMode === "month" ? "year" : "month")}
         >
           {viewMode === "month" ? t.yearView[language] : t.monthView[language]}

@@ -71,7 +71,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           }}
         >
           <Avatar
-            size={120}
+            size={135}
             src={memberInfo.img}
             style={{
               border:
@@ -89,7 +89,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
               level={4}
               style={{
                 marginBottom: 4,
-                fontSize: 18,
+                fontSize: 20,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
               }}
             >
@@ -98,7 +98,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <Text
               type="secondary"
               style={{
-                fontSize: 13,
+                fontSize: 14,
                 display: "block",
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
               }}
@@ -108,7 +108,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <Text
               type="secondary"
               style={{
-                fontSize: 14,
+                fontSize: 15,
                 display: "block",
                 marginTop: 4,
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
@@ -153,8 +153,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 : "rgba(253,246,227,0.5)",
           }}
           labelStyle={{
-            width: 85,
-            fontSize: 13,
+            width: 95,
+            fontSize: 14,
             color: themeMode === "dark" ? "#cfbfa6" : "#555",
             background:
               themeMode === "dark"
@@ -163,7 +163,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
           }}
           contentStyle={{
             textAlign: "right",
-            fontSize: 13,
+            fontSize: 14,
             color: themeMode === "dark" ? "#f5ede0" : undefined,
             background:
               themeMode === "dark"
@@ -175,7 +175,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <CalendarOutlined
               style={{
                 marginRight: 6,
-                fontSize: 12,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -185,7 +185,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <HeartOutlined
               style={{
                 marginRight: 6,
-                fontSize: 12,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -195,7 +195,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <StarOutlined
               style={{
                 marginRight: 6,
-                fontSize: 12,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -205,7 +205,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             <TeamOutlined
               style={{
                 marginRight: 6,
-                fontSize: 12,
+                fontSize: 13,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -216,7 +216,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         {/* Official link */}
         <div
           style={{
-            padding: 14,
+            padding: 16,
             textAlign: "center",
             background:
               themeMode === "dark"
@@ -231,7 +231,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
               <GlobalOutlined
                 style={{
                   color: themeMode === "dark" ? "#d2a86a" : undefined,
-                  fontSize: 13,
+                  fontSize: 14,
                 }}
               />
             }
@@ -239,7 +239,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
             target="_blank"
             style={{
               color: themeMode === "dark" ? "#d2a86a" : undefined,
-              fontSize: 13,
+              fontSize: 14,
             }}
           >
             {profileLabels.officialProfile[language]}

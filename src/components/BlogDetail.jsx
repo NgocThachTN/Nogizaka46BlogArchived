@@ -76,11 +76,11 @@ const jpFont = {
 
 // size preset — big for JP reading
 const SIZE_PRESETS = {
-  sm: { px: 16, lh: 1.85, h1: 1.9, h2: 1.6, h3: 1.35 },
-  md: { px: 20, lh: 2.0, h1: 2.0, h2: 1.7, h3: 1.45 },
-  lg: { px: 24, lh: 2.1, h1: 2.15, h2: 1.85, h3: 1.6 },
-  xl: { px: 28, lh: 2.2, h1: 2.35, h2: 2.0, h3: 1.7 },
-  xxl: { px: 32, lh: 2.3, h1: 2.55, h2: 2.15, h3: 1.85 },
+  sm: { px: 18, lh: 1.9, h1: 2.0, h2: 1.7, h3: 1.45 },
+  md: { px: 22, lh: 2.1, h1: 2.2, h2: 1.85, h3: 1.6 },
+  lg: { px: 26, lh: 2.2, h1: 2.4, h2: 2.0, h3: 1.75 },
+  xl: { px: 30, lh: 2.3, h1: 2.6, h2: 2.15, h3: 1.85 },
+  xxl: { px: 34, lh: 2.4, h1: 2.8, h2: 2.3, h3: 2.0 },
 };
 
 const t = {
@@ -832,7 +832,7 @@ export default function BlogDetail({
                   : "rgba(253, 246, 227, 0.8)",
               ...jpFont,
             }}
-            bodyStyle={{ padding: readingMode ? 32 : 24, position: "relative" }}
+            bodyStyle={{ padding: readingMode ? 40 : 32, position: "relative" }}
           >
             {/* Overlay translating */}
             {translating && (
@@ -931,7 +931,7 @@ export default function BlogDetail({
             >
               {/* Author Info - Left Side */}
               <Space
-                size={window.innerWidth < 768 ? 12 : 16}
+                size={window.innerWidth < 768 ? 12 : 18}
                 align="center"
                 style={{
                   justifyContent:
@@ -944,7 +944,7 @@ export default function BlogDetail({
                     getImageUrl(blog?.memberImage) ||
                     "https://via.placeholder.com/300x300?text=No+Image"
                   }
-                  size={window.innerWidth < 768 ? 56 : 64}
+                  size={window.innerWidth < 768 ? 56 : 72}
                   style={{
                     border: "2px solid #fff",
                     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -957,7 +957,7 @@ export default function BlogDetail({
                 >
                   <Text
                     strong
-                    style={{ fontSize: window.innerWidth < 768 ? 15 : 16 }}
+                    style={{ fontSize: window.innerWidth < 768 ? 15 : 18 }}
                   >
                     {memberInfo?.name || blog.author}
                   </Text>
@@ -965,7 +965,7 @@ export default function BlogDetail({
                     style={{
                       color: "#666",
                       marginTop: window.innerWidth < 768 ? 1 : 2,
-                      fontSize: window.innerWidth < 768 ? 13 : 14,
+                      fontSize: window.innerWidth < 768 ? 13 : 15,
                     }}
                   >
                     <CalendarOutlined style={{ marginRight: 6 }} />
@@ -985,7 +985,7 @@ export default function BlogDetail({
                 <Space direction="vertical" size={2} style={jpFont}>
                   <Text
                     type="secondary"
-                    style={{ letterSpacing: 2, fontSize: 12 }}
+                    style={{ letterSpacing: 2, fontSize: 13 }}
                   >
                     ブログ記事
                   </Text>
@@ -994,7 +994,7 @@ export default function BlogDetail({
                     style={{
                       margin: 0,
                       lineHeight: 1.25,
-                      fontSize: window.innerWidth < 768 ? 16 : 18,
+                      fontSize: window.innerWidth < 768 ? 16 : 20,
                       wordWrap: "break-word",
                       wordBreak: "break-word",
                       whiteSpace: "normal",
@@ -1008,7 +1008,7 @@ export default function BlogDetail({
 
             <Divider
               style={{
-                margin: "12px 0 20px",
+                margin: "16px 0 24px",
                 borderColor:
                   themeMode === "dark" ? "rgba(207,191,166,0.2)" : undefined,
               }}
@@ -1063,8 +1063,8 @@ export default function BlogDetail({
           <ProCard
             title={
               <Space size={4}>
-                <ReadOutlined style={{ fontSize: 12 }} />
-                <span style={{ fontSize: 13 }}>{t.readTime[language]}</span>
+                <ReadOutlined style={{ fontSize: 13 }} />
+                <span style={{ fontSize: 14 }}>{t.readTime[language]}</span>
               </Space>
             }
             style={{
@@ -1074,12 +1074,12 @@ export default function BlogDetail({
                   ? "rgba(36, 33, 29, 0.85)"
                   : "rgba(253, 246, 227, 0.8)",
             }}
-            bodyStyle={{ padding: isMobile ? 10 : 12 }}
+            bodyStyle={{ padding: isMobile ? 12 : 14 }}
           >
             <div
               style={{
                 textAlign: "center",
-                padding: isMobile ? "12px 0" : "14px 0",
+                padding: isMobile ? "14px 0" : "16px 0",
                 background:
                   themeMode === "dark"
                     ? "linear-gradient(135deg, rgba(28,26,23,0.9) 0%, rgba(36,33,29,0.9) 100%)"
@@ -1097,7 +1097,7 @@ export default function BlogDetail({
             >
               <div
                 style={{
-                  fontSize: isMobile ? 20 : 24,
+                  fontSize: isMobile ? 22 : 28,
                   fontWeight: 700,
                   color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
                   marginBottom: 2,
@@ -1111,7 +1111,7 @@ export default function BlogDetail({
               </div>
               <div
                 style={{
-                  fontSize: isMobile ? 11 : 12,
+                  fontSize: isMobile ? 12 : 13,
                   color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                   fontWeight: 500,
                   letterSpacing: 0.5,
@@ -1125,7 +1125,7 @@ export default function BlogDetail({
           {toc.length > 0 && (
             <Card
               title={
-                <span style={{ fontSize: 13 }}>{t.toc[language]}</span>
+                <span style={{ fontSize: 14 }}>{t.toc[language]}</span>
               }
               style={{
                 borderRadius: 12,
@@ -1134,7 +1134,7 @@ export default function BlogDetail({
                     ? "rgba(36, 33, 29, 0.85)"
                     : "rgba(253, 246, 227, 0.8)",
               }}
-              bodyStyle={{ padding: 10 }}
+              bodyStyle={{ padding: 12 }}
             >
               <Space direction="vertical" style={{ width: "100%" }} size={4}>
                 {toc.map((h) => (
@@ -1146,9 +1146,9 @@ export default function BlogDetail({
                       justifyContent: "flex-start",
                       paddingLeft:
                         h.level === "H1" ? 0 : h.level === "H2" ? 6 : 12,
-                      fontSize: 12,
+                      fontSize: 13,
                       height: "auto",
-                      padding: "4px 8px",
+                      padding: "6px 10px",
                       ...jpFont,
                     }}
                     onClick={() => {
@@ -1194,8 +1194,8 @@ export default function BlogDetail({
       <FloatButton.BackTop
         icon={<ArrowUpOutlined />}
         style={{
-          width: window.innerWidth < 768 ? 40 : 44,
-          height: window.innerWidth < 768 ? 40 : 44,
+          width: window.innerWidth < 768 ? 44 : 50,
+          height: window.innerWidth < 768 ? 44 : 50,
           right: window.innerWidth < 768 ? 16 : 24,
           bottom: window.innerWidth < 768 ? 16 : 24,
         }}
