@@ -153,7 +153,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 : "rgba(253,246,227,0.5)",
           }}
           labelStyle={{
-            width: 96,
+            width: 110,
             fontSize: 14,
             color: themeMode === "dark" ? "#cfbfa6" : "#555",
             background:

@@ -800,7 +800,7 @@ export default function BlogDetail({
         {/* Left Sidebar - Member Profile */}
         {memberInfo && (
           <ProCard
-            colSpan={{ xs: 24, sm: 24, md: 5, lg: 4, xl: 4 }}
+            colSpan={{ xs: 24, sm: 24, md: 6, lg: 5, xl: 5 }}
             ghost
             style={{
               position: "sticky",
@@ -817,9 +817,9 @@ export default function BlogDetail({
           colSpan={{
             xs: 24,
             sm: 24,
-            md: memberInfo ? 13 : 17,
-            lg: memberInfo ? 14 : 16,
-            xl: memberInfo ? 14 : 16,
+            md: memberInfo ? 12 : 17,
+            lg: memberInfo ? 13 : 16,
+            xl: memberInfo ? 13 : 16,
           }}
           ghost
         >
