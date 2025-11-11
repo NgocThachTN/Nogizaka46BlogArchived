@@ -808,7 +808,7 @@ export default function BlogDetail({
               alignSelf: "flex-start",
             }}
           >
-            <MemberProfile memberInfo={memberInfo} themeMode={themeMode} />
+            <MemberProfile memberInfo={memberInfo} themeMode={themeMode} language={language} />
           </ProCard>
         )}
 

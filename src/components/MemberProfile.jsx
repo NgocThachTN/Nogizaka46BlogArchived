@@ -26,7 +26,16 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
-const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
+// Translation keys for profile labels
+const profileLabels = {
+  birthday: { ja: "誕生日", en: "Birthday", vi: "Ngày sinh" },
+  bloodType: { ja: "血液型", en: "Blood Type", vi: "Nhóm máu" },
+  constellation: { ja: "星座", en: "Zodiac", vi: "Cung hoàng đạo" },
+  generation: { ja: "期別", en: "Generation", vi: "Thế hệ" },
+  officialProfile: { ja: "公式プロフィール", en: "Official Profile", vi: "Trang chính thức" },
+};
+
+const MemberProfile = ({ memberInfo, className, themeMode = "light", language = "ja" }) => {
   if (!memberInfo) return null;
   return (
     <div className={className}>
@@ -162,7 +171,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
                 : "rgba(244,241,232,0.3)",
           }}
         >
-          <Descriptions.Item label="誕生日">
+          <Descriptions.Item label={profileLabels.birthday[language]}>
             <CalendarOutlined
               style={{
                 marginRight: 6,
@@ -172,7 +181,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
             />
             {memberInfo.birthday}
           </Descriptions.Item>
-          <Descriptions.Item label="血液型">
+          <Descriptions.Item label={profileLabels.bloodType[language]}>
             <HeartOutlined
               style={{
                 marginRight: 6,
@@ -182,7 +191,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
             />
             {memberInfo.blood}
           </Descriptions.Item>
-          <Descriptions.Item label="星座">
+          <Descriptions.Item label={profileLabels.constellation[language]}>
             <StarOutlined
               style={{
                 marginRight: 6,
@@ -192,7 +201,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
             />
             {memberInfo.constellation}
           </Descriptions.Item>
-          <Descriptions.Item label="期別">
+          <Descriptions.Item label={profileLabels.generation[language]}>
             <TeamOutlined
               style={{
                 marginRight: 6,
@@ -233,7 +242,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
               fontSize: 13,
             }}
           >
-            公式プロフィール
+            {profileLabels.officialProfile[language]}
           </Button>
         </div>
       </Card>

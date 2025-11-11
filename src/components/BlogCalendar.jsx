@@ -1,5 +1,5 @@
 // BlogCalendar.jsx — Ant Design Pro • Calendar with Blog Posts
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Calendar,
   Card,
@@ -14,10 +14,76 @@ import { CalendarOutlined, ReadOutlined } from "@ant-design/icons";
 import { ProCard } from "@ant-design/pro-components";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
+import "dayjs/locale/en";
+import "dayjs/locale/vi";
+
+// Import Ant Design locales for Calendar
+import jaJP from "antd/es/locale/ja_JP";
+import enUS from "antd/es/locale/en_US";
+import viVN from "antd/es/locale/vi_VN";
+
 import { getImageUrl } from "../services/blogService";
 
 const { Text } = Typography;
-dayjs.locale("ja");
+
+// Get Ant Design locale based on language
+const getAntdLocale = (lang) => {
+  switch (lang) {
+    case "vi":
+      return viVN;
+    case "en":
+      return enUS;
+    default:
+      return jaJP;
+  }
+};
+
+// Set locale based on language
+const setDayjsLocale = (lang) => {
+  switch (lang) {
+    case "vi":
+      dayjs.locale("vi");
+      break;
+    case "en":
+      dayjs.locale("en");
+      break;
+    default:
+      dayjs.locale("ja");
+  }
+};
+
+// Format date based on language
+const formatDate = (date, lang, format = "full") => {
+  if (format === "yearMonth") {
+    switch (lang) {
+      case "vi":
+        return `Tháng ${date.format("M/YYYY")}`;
+      case "en":
+        return date.format("MMMM YYYY");
+      default:
+        return date.format("YYYY年M月");
+    }
+  } else if (format === "year") {
+    switch (lang) {
+      case "vi":
+        return `Năm ${date.format("YYYY")}`;
+      case "en":
+        return date.format("YYYY");
+      default:
+        return date.format("YYYY年");
+    }
+  } else {
+    // full date
+    switch (lang) {
+      case "vi":
+        return date.format("DD/MM/YYYY");
+      case "en":
+        return date.format("MMMM D, YYYY");
+      default:
+        return date.format("YYYY年M月D日");
+    }
+  }
+};
 
 // Translation keys
 const t = {
@@ -68,8 +134,18 @@ export default function BlogCalendar({
   language = "ja",
   themeMode = "light",
 }) {
+  // Set initial locale
+  setDayjsLocale(language);
+
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [viewMode, setViewMode] = useState("month"); // month, year
+
+  // Set locale when language changes
+  useEffect(() => {
+    setDayjsLocale(language);
+    // Force re-render by updating selectedDate with new locale
+    setSelectedDate(prev => dayjs(prev.toDate()));
+  }, [language]);
 
   // Group blogs by date
   const blogsByDate = useMemo(() => {
@@ -217,6 +293,8 @@ export default function BlogCalendar({
     >
       <div style={{ marginBottom: 12 }}>
         <Calendar
+          key={language} // Force re-render when language changes
+          locale={getAntdLocale(language)} // Set Ant Design locale
           className="blog-calendar"
           fullscreen={false}
           value={selectedDate}
@@ -247,8 +325,8 @@ export default function BlogCalendar({
               </Button>
               <Text strong style={{ fontSize: isMobile ? 13 : 14 }}>
                 {viewMode === "month"
-                  ? value.format("YYYY年M月")
-                  : value.format("YYYY年")}
+                  ? formatDate(value, language, "yearMonth")
+                  : formatDate(value, language, "year")}
               </Text>
               <Button
                 size="small"
@@ -274,7 +352,7 @@ export default function BlogCalendar({
             <Space>
               <ReadOutlined />
               <span>
-                {selectedDate.format("YYYY年M月D日")} {t.postsOn[language]}
+                {formatDate(selectedDate, language)} {t.postsOn[language]}
               </span>
               <Badge
                 count={selectedDateBlogs.length}
@@ -407,7 +485,7 @@ export default function BlogCalendar({
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
               <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>
-                {selectedDate.format("YYYY年M月D日")} {t.noPosts[language]}
+                {formatDate(selectedDate, language)} {t.noPosts[language]}
               </Text>
             }
           />
