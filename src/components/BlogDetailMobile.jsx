@@ -402,7 +402,7 @@ export default function BlogDetailMobile({
               themeMode === "dark"
                 ? "1px solid rgba(207,191,166,0.2)"
                 : "1px solid rgba(0,0,0,0.08)",
-            zIndex: 999,
+            zIndex: 1,
             position: "fixed",
             top: 0,
             left: 0,
@@ -412,7 +412,7 @@ export default function BlogDetailMobile({
             WebkitBackdropFilter: "blur(10px)",
           }}
         >
-          <div style={{ padding: "6px 8px" }}>
+          <div style={{ padding: "13px 8px 6px" }}>
             <Space
               align="center"
               style={{ width: "100%", justifyContent: "space-between" }}
