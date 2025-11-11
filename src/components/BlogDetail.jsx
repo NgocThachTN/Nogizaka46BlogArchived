@@ -59,6 +59,7 @@ import { isIOS } from "../utils/deviceDetection";
 import BlogDetailMobile from "./BlogDetailMobile";
 import BlogCalendar from "./BlogCalendar";
 import MemberProfile from "./MemberProfile";
+import RecentBlogs from "./RecentBlogs";
 import {
   translateJapaneseToEnglish,
   translateJapaneseToVietnamese,
@@ -167,6 +168,11 @@ export default function BlogDetail({
       setTrTitle({ en: "", vi: "" });
       currentBlogIdRef.current = id;
     }
+  }, [id]);
+
+  // Scroll to top when blog ID changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [id]);
 
   // Back
@@ -794,8 +800,13 @@ export default function BlogDetail({
         {/* Left Sidebar - Member Profile */}
         {memberInfo && (
           <ProCard
-            colSpan={{ xs: 24, sm: 24, md: 6, lg: 5, xl: 5 }}
+            colSpan={{ xs: 24, sm: 24, md: 5, lg: 4, xl: 4 }}
             ghost
+            style={{
+              position: "sticky",
+              top: 16,
+              alignSelf: "flex-start",
+            }}
           >
             <MemberProfile memberInfo={memberInfo} themeMode={themeMode} />
           </ProCard>
@@ -806,9 +817,9 @@ export default function BlogDetail({
           colSpan={{
             xs: 24,
             sm: 24,
-            md: memberInfo ? 12 : 16,
-            lg: memberInfo ? 13 : 16,
-            xl: memberInfo ? 13 : 17,
+            md: memberInfo ? 13 : 17,
+            lg: memberInfo ? 14 : 16,
+            xl: memberInfo ? 14 : 16,
           }}
           ghost
         >
@@ -1035,40 +1046,45 @@ export default function BlogDetail({
           colSpan={{
             xs: 24,
             sm: 24,
-            md: memberInfo ? 6 : 8,
+            md: memberInfo ? 6 : 7,
             lg: memberInfo ? 6 : 8,
-            xl: memberInfo ? 6 : 7,
+            xl: memberInfo ? 6 : 8,
           }}
           ghost
           direction="column"
           gutter={[0, 16]}
+          style={{
+            position: "sticky",
+            top: 16,
+            alignSelf: "flex-start",
+          }}
         >
           {/* Reading Time Estimate */}
           <ProCard
             title={
-              <Space>
-                <ReadOutlined />
-                <span>{t.readTime[language]}</span>
+              <Space size={4}>
+                <ReadOutlined style={{ fontSize: 12 }} />
+                <span style={{ fontSize: 13 }}>{t.readTime[language]}</span>
               </Space>
             }
             style={{
-              borderRadius: 16,
+              borderRadius: 12,
               background:
                 themeMode === "dark"
                   ? "rgba(36, 33, 29, 0.85)"
                   : "rgba(253, 246, 227, 0.8)",
             }}
-            bodyStyle={{ padding: isMobile ? 12 : 16 }}
+            bodyStyle={{ padding: isMobile ? 10 : 12 }}
           >
             <div
               style={{
                 textAlign: "center",
-                padding: isMobile ? "16px 0" : "20px 0",
+                padding: isMobile ? "12px 0" : "14px 0",
                 background:
                   themeMode === "dark"
                     ? "linear-gradient(135deg, rgba(28,26,23,0.9) 0%, rgba(36,33,29,0.9) 100%)"
                     : "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)",
-                borderRadius: 12,
+                borderRadius: 10,
                 border:
                   themeMode === "dark"
                     ? "1px solid rgba(207,191,166,0.25)"
@@ -1081,10 +1097,10 @@ export default function BlogDetail({
             >
               <div
                 style={{
-                  fontSize: isMobile ? 24 : 28,
+                  fontSize: isMobile ? 20 : 24,
                   fontWeight: 700,
                   color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
-                  marginBottom: 4,
+                  marginBottom: 2,
                   textShadow:
                     themeMode === "dark"
                       ? "0 1px 2px rgba(0,0,0,0.4)"
@@ -1095,7 +1111,7 @@ export default function BlogDetail({
               </div>
               <div
                 style={{
-                  fontSize: isMobile ? 12 : 14,
+                  fontSize: isMobile ? 11 : 12,
                   color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
                   fontWeight: 500,
                   letterSpacing: 0.5,
@@ -1108,24 +1124,31 @@ export default function BlogDetail({
 
           {toc.length > 0 && (
             <Card
-              title={t.toc[language]}
+              title={
+                <span style={{ fontSize: 13 }}>{t.toc[language]}</span>
+              }
               style={{
-                borderRadius: 16,
+                borderRadius: 12,
                 background:
                   themeMode === "dark"
                     ? "rgba(36, 33, 29, 0.85)"
                     : "rgba(253, 246, 227, 0.8)",
               }}
+              bodyStyle={{ padding: 10 }}
             >
-              <Space direction="vertical" style={{ width: "100%" }} size={6}>
+              <Space direction="vertical" style={{ width: "100%" }} size={4}>
                 {toc.map((h) => (
                   <Button
                     key={h.id}
                     type="text"
+                    size="small"
                     style={{
                       justifyContent: "flex-start",
                       paddingLeft:
-                        h.level === "H1" ? 0 : h.level === "H2" ? 8 : 16,
+                        h.level === "H1" ? 0 : h.level === "H2" ? 6 : 12,
+                      fontSize: 12,
+                      height: "auto",
+                      padding: "4px 8px",
                       ...jpFont,
                     }}
                     onClick={() => {
@@ -1153,6 +1176,18 @@ export default function BlogDetail({
             language={language}
             themeMode={themeMode}
           />
+
+          {/* Recent Blogs */}
+          <div style={{ marginTop: 16 }}>
+            <RecentBlogs
+              blogs={memberBlogs}
+              onBlogClick={(blogId) => navigate(`/blog/${blogId}`)}
+              isMobile={isMobile}
+              language={language}
+              themeMode={themeMode}
+              maxItems={5}
+            />
+          </div>
         </ProCard>
       </ProCard>
 

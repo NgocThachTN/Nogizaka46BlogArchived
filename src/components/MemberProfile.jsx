@@ -75,11 +75,12 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
                   : "0 4px 16px rgba(0,0,0,0.08)",
             }}
           />
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 12 }}>
             <Title
               level={4}
               style={{
-                marginBottom: -1,
+                marginBottom: 4,
+                fontSize: 18,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
               }}
             >
@@ -89,16 +90,18 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
               type="secondary"
               style={{
                 fontSize: 13,
+                display: "block",
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
               }}
             >
               {memberInfo.kana}
             </Text>
-                <Text
+            <Text
               type="secondary"
               style={{
-                fontSize: 15,
+                fontSize: 14,
                 display: "block",
+                marginTop: 4,
                 color: themeMode === "dark" ? "#cfbfa6" : undefined,
                 textTransform: "capitalize",
               }}
@@ -141,7 +144,8 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
                 : "rgba(253,246,227,0.5)",
           }}
           labelStyle={{
-            width: 90,
+            width: 85,
+            fontSize: 13,
             color: themeMode === "dark" ? "#cfbfa6" : "#555",
             background:
               themeMode === "dark"
@@ -150,6 +154,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
           }}
           contentStyle={{
             textAlign: "right",
+            fontSize: 13,
             color: themeMode === "dark" ? "#f5ede0" : undefined,
             background:
               themeMode === "dark"
@@ -161,6 +166,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
             <CalendarOutlined
               style={{
                 marginRight: 6,
+                fontSize: 12,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -170,6 +176,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
             <HeartOutlined
               style={{
                 marginRight: 6,
+                fontSize: 12,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -179,6 +186,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
             <StarOutlined
               style={{
                 marginRight: 6,
+                fontSize: 12,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -188,6 +196,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
             <TeamOutlined
               style={{
                 marginRight: 6,
+                fontSize: 12,
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
@@ -198,7 +207,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
         {/* Official link */}
         <div
           style={{
-            padding: 16,
+            padding: 14,
             textAlign: "center",
             background:
               themeMode === "dark"
@@ -208,15 +217,20 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light" }) => {
         >
           <Button
             type="link"
+            size="middle"
             icon={
               <GlobalOutlined
-                style={{ color: themeMode === "dark" ? "#d2a86a" : undefined }}
+                style={{
+                  color: themeMode === "dark" ? "#d2a86a" : undefined,
+                  fontSize: 13,
+                }}
               />
             }
             href={memberInfo.link}
             target="_blank"
             style={{
               color: themeMode === "dark" ? "#d2a86a" : undefined,
+              fontSize: 13,
             }}
           >
             公式プロフィール

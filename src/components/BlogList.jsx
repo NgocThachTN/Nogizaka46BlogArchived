@@ -42,6 +42,7 @@ import {
   fetchMemberInfo,
 } from "../services/blogService";
 import BlogCalendar from "./BlogCalendar";
+import RecentBlogs from "./RecentBlogs";
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -770,6 +771,16 @@ export default function BlogList({
             isMobile={screens.xs}
             language={language}
             themeMode={themeMode}
+          />
+
+          {/* Recent Blogs */}
+          <RecentBlogs
+            blogs={blogs}
+            onBlogClick={onOpen}
+            isMobile={screens.xs}
+            language={language}
+            themeMode={themeMode}
+            maxItems={5}
           />
         </ProCard>
       </ProCard>

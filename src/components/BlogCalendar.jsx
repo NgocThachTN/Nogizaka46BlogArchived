@@ -63,7 +63,7 @@ const t = {
 export default function BlogCalendar({
   blogs = [],
   memberInfo = null,
-  onBlogClick = () => {},
+  onBlogClick = () => { },
   isMobile = false,
   language = "ja",
   themeMode = "light",
@@ -187,34 +187,35 @@ export default function BlogCalendar({
   return (
     <ProCard
       title={
-        <Space>
-          <CalendarOutlined />
-          <span>{t.calendar[language]}</span>
+        <Space size={4}>
+          <CalendarOutlined style={{ fontSize: 12 }} />
+          <span style={{ fontSize: 13 }}>{t.calendar[language]}</span>
           {memberInfo && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" style={{ fontSize: 11 }}>
               {memberInfo.name}
             </Text>
           )}
         </Space>
       }
       style={{
-        borderRadius: 16,
+        borderRadius: 12,
         background:
           themeMode === "dark"
             ? "rgba(36, 33, 29, 0.85)"
             : "rgba(253, 246, 227, 0.8)",
       }}
-      bodyStyle={{ padding: isMobile ? 12 : 16 }}
+      bodyStyle={{ padding: isMobile ? 10 : 12 }}
       extra={
         <Button
           size="small"
+          style={{ fontSize: 11 }}
           onClick={() => setViewMode(viewMode === "month" ? "year" : "month")}
         >
           {viewMode === "month" ? t.yearView[language] : t.monthView[language]}
         </Button>
       }
     >
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 12 }}>
         <Calendar
           className="blog-calendar"
           fullscreen={false}
@@ -229,12 +230,13 @@ export default function BlogCalendar({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 12,
-                padding: "0 8px",
+                marginBottom: 10,
+                padding: "0 6px",
               }}
             >
               <Button
                 size="small"
+                style={{ fontSize: 11, padding: "2px 8px" }}
                 onClick={() =>
                   onChange(
                     value.subtract(1, viewMode === "month" ? "month" : "year")
@@ -243,13 +245,14 @@ export default function BlogCalendar({
               >
                 ←
               </Button>
-              <Text strong style={{ fontSize: isMobile ? 14 : 16 }}>
+              <Text strong style={{ fontSize: isMobile ? 13 : 14 }}>
                 {viewMode === "month"
                   ? value.format("YYYY年M月")
                   : value.format("YYYY年")}
               </Text>
               <Button
                 size="small"
+                style={{ fontSize: 11, padding: "2px 8px" }}
                 onClick={() =>
                   onChange(
                     value.add(1, viewMode === "month" ? "month" : "year")
@@ -273,7 +276,18 @@ export default function BlogCalendar({
               <span>
                 {selectedDate.format("YYYY年M月D日")} {t.postsOn[language]}
               </span>
-              <Badge count={selectedDateBlogs.length} />
+              <Badge
+                count={selectedDateBlogs.length}
+                style={{
+                  backgroundColor: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                  color: themeMode === "dark" ? "#141311" : "#fff",
+                  boxShadow: themeMode === "dark"
+                    ? "0 2px 8px rgba(0,0,0,0.35)"
+                    : "0 2px 8px rgba(139, 69, 19, 0.2)",
+                  fontWeight: 600,
+                  borderRadius: "12px",
+                }}
+              />
             </Space>
           }
           style={{
@@ -403,35 +417,53 @@ export default function BlogCalendar({
       {/* Enhanced Calendar Styles */}
       <style>{`
         .blog-calendar {
-          background: ${
-            themeMode === "dark"
-              ? "#141311"
-              : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
-          };
-          border-radius: 16px;
-          padding: 16px;
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 4px 20px rgba(0,0,0,0.35)"
-              : "0 4px 20px rgba(109, 40, 217, 0.08)"
-          };
+          background: ${themeMode === "dark"
+          ? "#141311"
+          : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
+        };
+          border-radius: 12px;
+          padding: 12px;
+          box-shadow: ${themeMode === "dark"
+          ? "0 4px 20px rgba(0,0,0,0.35)"
+          : "0 4px 20px rgba(109, 40, 217, 0.08)"
+        };
+        }
+        
+        /* Badge styling for calendar */
+        .ant-card-head .ant-badge {
+          background: transparent !important;
+        }
+        
+        .ant-card-head .ant-badge-count {
+          background-color: ${themeMode === "dark" ? "#f5ede0" : "#f5ede0"} !important;
+          color: ${themeMode === "dark" ? "#8b4513" : "#8b4513"} !important;
+          box-shadow: ${themeMode === "dark"
+          ? "0 2px 8px rgba(0,0,0,0.35)"
+          : "0 2px 8px rgba(139, 69, 19, 0.2)"
+        } !important;
+          font-weight: 600 !important;
+          border-radius: 12px !important;
+          border: none !important;
+        }
+        
+        .ant-card-head .ant-badge .ant-scroll-number {
+          background: transparent !important;
         }
         
         .blog-calendar .ant-picker-calendar-header {
-          padding: ${isMobile ? "12px 0" : "16px 0"};
-          border-bottom: 2px solid ${
-            themeMode === "dark" ? "rgba(207,191,166,0.15)" : "#f0f0f0"
-          };
-          margin-bottom: 16px;
+          padding: ${isMobile ? "8px 0" : "10px 0"};
+          border-bottom: 2px solid ${themeMode === "dark" ? "rgba(207,191,166,0.15)" : "#f0f0f0"
+        };
+          margin-bottom: 12px;
         }
         
         .blog-calendar .ant-picker-calendar-date {
           position: relative;
-          height: ${isMobile ? "36px" : "44px"};
-          padding: ${isMobile ? "4px" : "6px"};
-          border-radius: 8px;
+          height: ${isMobile ? "32px" : "38px"};
+          padding: ${isMobile ? "3px" : "4px"};
+          border-radius: 6px;
           transition: all 0.3s ease;
-          margin: 2px;
+          margin: 1px;
         }
         
         .blog-calendar .ant-picker-calendar-date-content {
@@ -443,51 +475,43 @@ export default function BlogCalendar({
         }
         
         .blog-calendar .ant-picker-calendar-date-today {
-          background: ${
-            themeMode === "dark"
-              ? "rgba(207,191,166,0.08)"
-              : "linear-gradient(135deg, rgba(109, 40, 217, 0.1) 0%, rgba(109, 40, 217, 0.05) 100%)"
-          } !important;
-          border: 2px solid ${
-            themeMode === "dark"
-              ? "rgba(207,191,166,0.3)"
-              : "rgba(109, 40, 217, 0.3)"
-          } !important;
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 2px 8px rgba(0,0,0,0.35)"
-              : "0 2px 8px rgba(109, 40, 217, 0.2)"
-          };
+          background: ${themeMode === "dark"
+          ? "rgba(207,191,166,0.08)"
+          : "linear-gradient(135deg, rgba(109, 40, 217, 0.1) 0%, rgba(109, 40, 217, 0.05) 100%)"
+        } !important;
+          border: 2px solid ${themeMode === "dark"
+          ? "rgba(207,191,166,0.3)"
+          : "rgba(109, 40, 217, 0.3)"
+        } !important;
+          box-shadow: ${themeMode === "dark"
+          ? "0 2px 8px rgba(0,0,0,0.35)"
+          : "0 2px 8px rgba(109, 40, 217, 0.2)"
+        };
         }
         
         .blog-calendar .ant-picker-calendar-date:hover {
-          background: ${
-            themeMode === "dark"
-              ? "rgba(207,191,166,0.12)"
-              : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
-          } !important;
+          background: ${themeMode === "dark"
+          ? "rgba(207,191,166,0.12)"
+          : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
+        } !important;
           transform: translateY(-1px);
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 4px 12px rgba(0,0,0,0.35)"
-              : "0 4px 12px rgba(109, 40, 217, 0.15)"
-          };
+          box-shadow: ${themeMode === "dark"
+          ? "0 4px 12px rgba(0,0,0,0.35)"
+          : "0 4px 12px rgba(109, 40, 217, 0.15)"
+        };
         }
         
         .blog-calendar .ant-picker-calendar-date-selected {
-          background: ${
-            themeMode === "dark"
-              ? "#9c6b3f"
-              : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
-          } !important;
-          border: 2px solid ${
-            themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
-          } !important;
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 4px 16px rgba(0,0,0,0.35)"
-              : "0 4px 16px rgba(109, 40, 217, 0.3)"
-          };
+          background: ${themeMode === "dark"
+          ? "#9c6b3f"
+          : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
+        } !important;
+          border: 2px solid ${themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
+        } !important;
+          box-shadow: ${themeMode === "dark"
+          ? "0 4px 16px rgba(0,0,0,0.35)"
+          : "0 4px 16px rgba(109, 40, 217, 0.3)"
+        };
         }
         
         .blog-calendar .ant-picker-calendar-date-selected .ant-picker-calendar-date-value {
@@ -497,7 +521,7 @@ export default function BlogCalendar({
         }
         
         .blog-calendar .ant-picker-calendar-date-value {
-          font-size: ${isMobile ? "13px" : "15px"};
+          font-size: ${isMobile ? "11px" : "13px"};
           line-height: 1.2;
           font-weight: 500;
           color: ${themeMode === "dark" ? "#f5ede0" : "inherit"};
@@ -510,11 +534,10 @@ export default function BlogCalendar({
         
         .blog-calendar .ant-picker-calendar-month-panel {
           padding: ${isMobile ? "12px" : "16px"};
-          background: ${
-            themeMode === "dark"
-              ? "#141311"
-              : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
-          };
+          background: ${themeMode === "dark"
+          ? "#141311"
+          : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
+        };
           border-radius: 12px;
         }
         
@@ -527,33 +550,28 @@ export default function BlogCalendar({
         }
         
         .blog-calendar .ant-picker-calendar-month-panel-cell:hover {
-          background: ${
-            themeMode === "dark"
-              ? "rgba(207,191,166,0.12)"
-              : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
-          } !important;
+          background: ${themeMode === "dark"
+          ? "rgba(207,191,166,0.12)"
+          : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
+        } !important;
           transform: translateY(-2px);
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 6px 20px rgba(0,0,0,0.35)"
-              : "0 6px 20px rgba(109, 40, 217, 0.15)"
-          };
+          box-shadow: ${themeMode === "dark"
+          ? "0 6px 20px rgba(0,0,0,0.35)"
+          : "0 6px 20px rgba(109, 40, 217, 0.15)"
+        };
         }
         
         .blog-calendar .ant-picker-calendar-month-panel-cell-selected {
-          background: ${
-            themeMode === "dark"
-              ? "#9c6b3f"
-              : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
-          } !important;
-          border: 2px solid ${
-            themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
-          } !important;
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 6px 24px rgba(0,0,0,0.35)"
-              : "0 6px 24px rgba(109, 40, 217, 0.3)"
-          };
+          background: ${themeMode === "dark"
+          ? "#9c6b3f"
+          : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
+        } !important;
+          border: 2px solid ${themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
+        } !important;
+          box-shadow: ${themeMode === "dark"
+          ? "0 6px 24px rgba(0,0,0,0.35)"
+          : "0 6px 24px rgba(109, 40, 217, 0.3)"
+        };
         }
         
         .blog-calendar .ant-picker-calendar-month-panel-cell-selected .ant-picker-calendar-month-panel-cell-content {
