@@ -291,7 +291,7 @@ export default function BlogCalendar({
         </Button>
       }
     >
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ marginBottom: 10 }}>
         <Calendar
           key={language} // Force re-render when language changes
           locale={getAntdLocale(language)} // Set Ant Design locale
@@ -308,13 +308,13 @@ export default function BlogCalendar({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 10,
-                padding: "0 6px",
+                marginBottom: 8,
+                padding: "0 4px",
               }}
             >
               <Button
                 size="small"
-                style={{ fontSize: 13, padding: "2px 10px" }}
+                style={{ fontSize: 11, padding: "2px 8px" }}
                 onClick={() =>
                   onChange(
                     value.subtract(1, viewMode === "month" ? "month" : "year")
@@ -323,14 +323,14 @@ export default function BlogCalendar({
               >
                 ←
               </Button>
-              <Text strong style={{ fontSize: isMobile ? 13 : 17 }}>
+              <Text strong style={{ fontSize: isMobile ? 12 : 14 }}>
                 {viewMode === "month"
                   ? formatDate(value, language, "yearMonth")
                   : formatDate(value, language, "year")}
               </Text>
               <Button
                 size="small"
-                style={{ fontSize: 13, padding: "2px 10px" }}
+                style={{ fontSize: 11, padding: "2px 8px" }}
                 onClick={() =>
                   onChange(
                     value.add(1, viewMode === "month" ? "month" : "year")
@@ -499,11 +499,11 @@ export default function BlogCalendar({
           ? "#141311"
           : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
         };
-          border-radius: 12px;
-          padding: 12px;
+          border-radius: 10px;
+          padding: 8px;
           box-shadow: ${themeMode === "dark"
-          ? "0 4px 20px rgba(0,0,0,0.35)"
-          : "0 4px 20px rgba(109, 40, 217, 0.08)"
+          ? "0 3px 16px rgba(0,0,0,0.35)"
+          : "0 3px 16px rgba(109, 40, 217, 0.08)"
         };
         }
         
@@ -529,17 +529,17 @@ export default function BlogCalendar({
         }
         
         .blog-calendar .ant-picker-calendar-header {
-          padding: ${isMobile ? "8px 0" : "10px 0"};
-          border-bottom: 2px solid ${themeMode === "dark" ? "rgba(207,191,166,0.15)" : "#f0f0f0"
+          padding: ${isMobile ? "6px 0" : "8px 0"};
+          border-bottom: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.15)" : "#f0f0f0"
         };
-          margin-bottom: 12px;
+          margin-bottom: 8px;
         }
         
         .blog-calendar .ant-picker-calendar-date {
           position: relative;
-          height: ${isMobile ? "32px" : "38px"};
-          padding: ${isMobile ? "3px" : "4px"};
-          border-radius: 6px;
+          height: ${isMobile ? "28px" : "32px"};
+          padding: ${isMobile ? "2px" : "3px"};
+          border-radius: 5px;
           transition: all 0.3s ease;
           margin: 1px;
         }
@@ -549,7 +549,7 @@ export default function BlogCalendar({
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          border-radius: 6px;
+          border-radius: 5px;
         }
         
         .blog-calendar .ant-picker-calendar-date-today {
@@ -599,8 +599,8 @@ export default function BlogCalendar({
         }
         
         .blog-calendar .ant-picker-calendar-date-value {
-          font-size: ${isMobile ? "11px" : "13px"};
-          line-height: 1.2;
+          font-size: ${isMobile ? "10px" : "11px"};
+          line-height: 1.1;
           font-weight: 500;
           color: ${themeMode === "dark" ? "#f5ede0" : "inherit"};
         }

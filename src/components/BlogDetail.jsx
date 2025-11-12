@@ -843,7 +843,7 @@ export default function BlogDetail({
             sm: 24,
             md: memberInfo ? 12 : 17,
             lg: memberInfo ? 13 : 16,
-            xl: memberInfo ? 13 : 16,
+            xl: memberInfo ? 14 : 16,
           }}
           ghost
         >
@@ -1073,7 +1073,7 @@ export default function BlogDetail({
             sm: 24,
             md: memberInfo ? 6 : 7,
             lg: memberInfo ? 6 : 8,
-            xl: memberInfo ? 6 : 8,
+            xl: memberInfo ? 5 : 8,
           }}
           ghost
           direction="column"
@@ -1082,6 +1082,7 @@ export default function BlogDetail({
             position: "sticky",
             top: 16,
             alignSelf: "flex-start",
+            marginLeft: 10,
           }}
         >
           {/* Reading Time Estimate */}
@@ -1228,6 +1229,9 @@ export default function BlogDetail({
 
       {/* prose base */}
       <style>{`
+        body {
+          zoom: 1.2;
+        }
         .jp-prose h1 { 
           font-weight: 600; 
           margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.6em"
