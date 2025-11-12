@@ -39,6 +39,13 @@ const profileLabels = {
 const translateBloodType = (bloodType, lang) => {
   if (!bloodType) return bloodType;
   if (lang === "ja") return bloodType;
+
+  // Translate "不明" (unknown)
+  if (bloodType === "不明") {
+    if (lang === "en") return "Unknown";
+    if (lang === "vi") return "Không xác định";
+  }
+
   // Remove "型" for non-Japanese languages
   return bloodType.replace(/型/g, "");
 };
@@ -71,15 +78,34 @@ const translateGeneration = (generation, lang) => {
   if (!generation) return generation;
   if (lang === "ja") return generation;
 
-  // Extract number from Japanese generation format (e.g., "1期生" -> "1")
+  // Extract number from Japanese generation format (e.g., "6期生" -> "6")
   const match = generation.match(/(\d+)期生/);
   if (match) {
     const genNumber = match[1];
-    if (lang === "en") return `${genNumber}th Gen`;
-    if (lang === "vi") return `Gen ${genNumber}`;
+    if (lang === "en") {
+      // Handle ordinal numbers correctly (1st, 2nd, 3rd, 4th, etc.)
+      const ordinal = genNumber === "1" ? "st" :
+        genNumber === "2" ? "nd" :
+          genNumber === "3" ? "rd" : "th";
+      return `${genNumber}${ordinal} Gen`;
+    }
+    if (lang === "vi") return `Thế hệ ${genNumber}`;
   }
 
   return generation;
+};
+
+// Helper function to format English name (first last -> last first)
+const formatEnglishName = (englishName) => {
+  if (!englishName) return englishName;
+
+  // Split by space and reverse order (nagi inoue -> inoue nagi)
+  const parts = englishName.trim().split(/\s+/);
+  if (parts.length === 2) {
+    return `${parts[1]} ${parts[0]}`;
+  }
+
+  return englishName;
 };
 
 const MemberProfile = ({ memberInfo, className, themeMode = "light", language = "ja" }) => {
@@ -162,7 +188,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 textTransform: "capitalize",
               }}
             >
-              {memberInfo.english_name}
+              {formatEnglishName(memberInfo.english_name)}
             </Text>
           </div>
           <Space style={{ marginTop: 12 }} wrap>
@@ -256,7 +282,9 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
-            {translateGeneration(memberInfo.groupcode, language)}
+            <span style={{ fontSize: 14, display: "inline-block", verticalAlign: "middle" }}>
+              {translateGeneration(memberInfo.cate || memberInfo.groupcode, language)}
+            </span>
           </Descriptions.Item>
         </Descriptions>
 
