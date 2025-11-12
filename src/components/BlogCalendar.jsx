@@ -279,6 +279,14 @@ export default function BlogCalendar({
           themeMode === "dark"
             ? "rgba(36, 33, 29, 0.85)"
             : "rgba(253, 246, 227, 0.8)",
+        border:
+          themeMode === "dark"
+            ? "1px solid rgba(207,191,166,0.25)"
+            : "1px solid rgba(139, 69, 19, 0.2)",
+        boxShadow:
+          themeMode === "dark"
+            ? "0 2px 8px rgba(0,0,0,0.35)"
+            : "0 2px 8px rgba(139, 69, 19, 0.1)",
       }}
       bodyStyle={{ padding: isMobile ? 12 : 17 }}
       extra={
