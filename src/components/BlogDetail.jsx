@@ -1032,9 +1032,9 @@ export default function BlogDetail({
 
             <Divider
               style={{
-                margin: "13px 0 29px",
+                margin: "19px 0 29px",
                 borderColor:
-                  themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.2)",
+                  themeMode === "dark" ? "rgba(207,191,166,0.2)" : undefined,
               }}
             />
 
@@ -1082,7 +1082,7 @@ export default function BlogDetail({
             position: "sticky",
             top: 16,
             alignSelf: "flex-start",
-          
+
           }}
         >
           {/* Reading Time Estimate */}
@@ -1278,6 +1278,9 @@ export default function BlogDetail({
           color: ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"}; 
           text-decoration: none; 
           border-bottom: 1px dotted ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"};
+          word-break: break-all;
+          overflow-wrap: break-word;
+          hyphens: auto;
         }
         .jp-prose a:hover { 
           border-bottom-style: solid;
