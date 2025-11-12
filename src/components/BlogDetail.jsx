@@ -1082,7 +1082,7 @@ export default function BlogDetail({
             position: "sticky",
             top: 16,
             alignSelf: "flex-start",
-            marginLeft: 10,
+          
           }}
         >
           {/* Reading Time Estimate */}
