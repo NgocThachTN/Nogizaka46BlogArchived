@@ -151,7 +151,7 @@ export default function BlogDetail({
   const [language, setLanguage] = useState(propLanguage || "ja");
   const [readingMode, _SET_READING_MODE] = useState(true);
   const [fontSizeKey, setFontSizeKey] = useState(
-    () => localStorage.getItem(LS_KEY_SIZE) || "md"
+    () => localStorage.getItem(LS_KEY_SIZE) || "sm"
   );
 
   // translated caches
