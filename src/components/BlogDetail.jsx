@@ -119,6 +119,7 @@ const t = {
   toc: { ja: "目次", en: "Contents", vi: "Mục lục" },
   readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
   minutes: { ja: "分", en: "min", vi: "phút" },
+  blogArticle: { ja: "ブログ記事", en: "Blog Article", vi: "Tiêu Đề Blog" },
   fontSizes: {
     sm: { ja: "小", en: "Small", vi: "Nhỏ" },
     md: { ja: "標準", en: "Normal", vi: "Chuẩn" },
@@ -1011,7 +1012,7 @@ export default function BlogDetail({
                     type="secondary"
                     style={{ letterSpacing: 2, fontSize: 14 }}
                   >
-                    ブログ記事
+                    {t.blogArticle[language]}
                   </Text>
                   <Title
                     level={3}
