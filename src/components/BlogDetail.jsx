@@ -74,6 +74,24 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
+// Helper function to format English name (capitalize and reverse order)
+const formatEnglishName = (englishName) => {
+  if (!englishName) return englishName;
+
+  // Split by space (e.g., "ikeda eisa" -> ["ikeda", "eisa"])
+  const parts = englishName.trim().toLowerCase().split(/\s+/);
+
+  if (parts.length === 2) {
+    // Capitalize first letter of each part
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+    // Reverse order: last name first, first name last (eisa ikeda -> Eisa Ikeda)
+    return `${capitalize(parts[1])} ${capitalize(parts[0])}`;
+  }
+
+  // If not 2 parts, just capitalize first letter
+  return englishName.charAt(0).toUpperCase() + englishName.slice(1).toLowerCase();
+};
+
 // Book-like serif fonts for reading content
 const bookFont = {
   ja: {
@@ -984,7 +1002,9 @@ export default function BlogDetail({
                     strong
                     style={{ fontSize: window.innerWidth < 768 ? 15 : 18 }}
                   >
-                    {memberInfo?.name || blog.author}
+                    {language === "ja"
+                      ? memberInfo?.name || blog.author
+                      : formatEnglishName(memberInfo?.english_name) || memberInfo?.name || blog.author}
                   </Text>
                   <div
                     style={{

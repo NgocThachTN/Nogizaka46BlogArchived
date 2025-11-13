@@ -13,7 +13,6 @@ const cleanTranslationResult = (text) => {
   let cleaned = text
     .replace(/```html/g, "")
     .replace(/```/g, "")
-    .replace(/\s+/g, " ")
     .trim();
 
   // Remove any instruction text that might be included
@@ -22,16 +21,22 @@ const cleanTranslationResult = (text) => {
     // Remove lines that contain instruction keywords
     return (
       !trimmed.includes("IMPORTANT INSTRUCTIONS") &&
+      !trimmed.includes("TRANSLATION RULES") &&
+      !trimmed.includes("CRITICAL RULES") &&
       !trimmed.includes("Translate ONLY") &&
       !trimmed.includes("Do NOT include") &&
+      !trimmed.includes("Do NOT add") &&
+      !trimmed.includes("Do NOT violate") &&
       !trimmed.includes("Return ONLY") &&
       !trimmed.includes("Text to translate") &&
       !trimmed.includes("Title to translate") &&
       !trimmed.includes("CRITICAL:") &&
+      !trimmed.includes("You are a professional translator") &&
       !trimmed.includes("ブログ記事") &&
       !trimmed.includes("Dịch từ tiếng Nhật") &&
       !trimmed.includes("Văn bản cần dịch") &&
       !trimmed.includes('Dùng "mình" cho I/me') &&
+      !trimmed.includes('Use "mình" for') &&
       !trimmed.includes("Dùng cách xưng hô phù hợp") &&
       !trimmed.includes("Giữ giọng văn thân mật") &&
       !trimmed.includes("Giữ nguyên các thẻ HTML") &&
@@ -58,15 +63,22 @@ const cleanTitleTranslation = (text) => {
     const trimmed = line.trim();
     return (
       !trimmed.includes("IMPORTANT INSTRUCTIONS") &&
+      !trimmed.includes("TRANSLATION RULES") &&
+      !trimmed.includes("CRITICAL RULES") &&
       !trimmed.includes("Translate ONLY") &&
       !trimmed.includes("Do NOT include") &&
+      !trimmed.includes("Do NOT add") &&
+      !trimmed.includes("Do NOT violate") &&
       !trimmed.includes("Return ONLY") &&
       !trimmed.includes("Title to translate") &&
+      !trimmed.includes("Text to translate") &&
       !trimmed.includes("CRITICAL:") &&
+      !trimmed.includes("You are a professional translator") &&
       !trimmed.includes("ブログ記事") &&
       !trimmed.includes("Dịch từ tiếng Nhật") &&
       !trimmed.includes("Văn bản cần dịch") &&
       !trimmed.includes('Dùng "mình" cho I/me') &&
+      !trimmed.includes('Use "mình" for') &&
       !trimmed.includes("Dùng cách xưng hô phù hợp") &&
       !trimmed.includes("Giữ giọng văn thân mật") &&
       !trimmed.includes("Giữ nguyên các thẻ HTML") &&
@@ -78,6 +90,12 @@ const cleanTitleTranslation = (text) => {
   });
 
   cleaned = lines.join("\n").trim();
+
+  // Remove any emojis or icons that Gemini might add
+  cleaned = cleaned.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+
+  // Remove common decorative symbols (use alternation instead of character class)
+  cleaned = cleaned.replace(/✨|💫|⭐|🎵|🎶|❤️|💕|💖|🌸|🌺|🌷|🎀/gu, '');
 
   // If the text contains both Japanese and Vietnamese, try to extract only Vietnamese
   // Look for patterns like "Japanese text Vietnamese text" and keep only Vietnamese
@@ -94,38 +112,49 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
   const cleanedText = cleanTextForTranslation(text);
 
   if (toLang.toLowerCase() === "vietnamese") {
-    return `Translate from ${fromLang} to Vietnamese with Nogizaka46 idol blog style:
+    return `You are a professional translator. Translate the following ${fromLang} text to Vietnamese.
 
-- Use "mình" for I/me when talking about self, "mọi người" for fans, never use "ạ" "nhé" 
-- Use proper Vietnamese address terms for members: "cậu" (same age), "chị" (older), "em" (younger)
-- Keep tone intimate, natural, gentle like an idol writing diary for fans
-- Preserve HTML tags exactly, only translate text between tags
-- Keep original content structure and emotional flow
-- Maintain the diary-like, personal writing style
-- Preserve nicknames and song titles exactly as they appear in original
-- Keep focus on Nogizaka46 context and member relationships
+TRANSLATION RULES:
+1. Use "mình" for I/me (first person), "mọi người" for fans/everyone
+2. Use proper Vietnamese address: "cậu" (same age), "chị" (older), "em" (younger)
+3. Keep intimate, natural tone like idol diary
+4. NEVER use "ạ", "nhé" at end of sentences
+5. Preserve ALL HTML tags exactly as they appear
+6. Keep original structure, spacing, and formatting
+7. Translate text content only, keep all tags unchanged
+8. Maintain emotional tone and personality
 
-Text to translate: ${cleanedText}
-
-IMPORTANT INSTRUCTIONS:
-- Translate ONLY the text above to Vietnamese
+CRITICAL RULES - DO NOT VIOLATE:
+- Do NOT add any icons, emojis, or symbols (🎵 ✨ 💫 ❤️ etc.)
+- Do NOT add any decorative elements
+- Do NOT add any extra text or explanations
 - Do NOT include the original Japanese text
-- Do NOT include any explanations or additional text
-- Return ONLY the Vietnamese translation
-- If translating a title, return only the Vietnamese title
-- If translating content, return only the Vietnamese content`;
+- Do NOT add section headers or labels
+- Do NOT modify HTML structure
+- Return ONLY the translated Vietnamese text with preserved HTML tags
+
+Text to translate:
+${cleanedText}`;
   }
 
   // Default English prompt
-  return `Translate from ${fromLang} to English with idol blog style:
-- Keep tone friendly, feminine, and youthful
-- Use natural conversational English
-- Preserve HTML tags exactly, only translate text between tags
-- Keep original personality and structure
+  return `You are a professional translator. Translate the following ${fromLang} text to English.
 
-Text: ${cleanedText}
+TRANSLATION RULES:
+1. Keep tone friendly, feminine, and youthful
+2. Use natural conversational English
+3. Preserve ALL HTML tags exactly as they appear
+4. Keep original structure and formatting
 
-Output ONLY the translated content in English. No explanations, no additional text.`;
+CRITICAL RULES - DO NOT VIOLATE:
+- Do NOT add any icons, emojis, or symbols
+- Do NOT add any extra text or explanations
+- Do NOT include the original Japanese text
+- Do NOT modify HTML structure
+- Return ONLY the translated English text with preserved HTML tags
+
+Text to translate:
+${cleanedText}`;
 };
 
 const splitTextIntoChunks = (text, maxChunkSize = 4000) => {
@@ -245,16 +274,21 @@ export async function translateTitleToVietnamese(title) {
   if (!title) return "";
 
   try {
-    const prompt = `Translate this Japanese title to Vietnamese with Nogizaka46 idol blog style:
+    const prompt = `You are a professional translator. Translate this Japanese title to Vietnamese.
 
-- Use "mình" for I/me when talking about self, "mọi người" for fans
-- Keep tone intimate, natural, gentle like an idol writing diary for fans
-- Preserve nicknames and song titles exactly as they appear in original
-- Keep focus on Nogizaka46 context and member relationships
+TRANSLATION RULES:
+- Use "mình" for I/me, "mọi người" for fans
+- Keep intimate, natural tone like idol diary
+- Never use "ạ", "nhé"
+- Preserve nicknames and song titles exactly
 
-Title to translate: ${title}
+CRITICAL RULES - DO NOT VIOLATE:
+- Do NOT add any icons, emojis, or symbols (🎵 ✨ 💫 ❤️ etc.)
+- Do NOT add any extra text or explanations
+- Do NOT include the original Japanese text
+- Return ONLY the Vietnamese translation of the title
 
-CRITICAL: Return ONLY the Vietnamese title. Do NOT include the original Japanese title. Do NOT include any explanations or additional text.`;
+Title to translate: ${title}`;
 
     const result = await model.generateContent(prompt);
     const rawTranslation = result.response.text();
