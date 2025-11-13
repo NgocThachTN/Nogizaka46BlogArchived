@@ -87,15 +87,15 @@ const formatDate = (date, lang, format = "full") => {
 
 // Translation keys
 const t = {
-  calendar: { ja: "ブログカレンダー", en: "Blog Calendar", vi: "Lịch Blog" },
+  calendar: { ja: "カレンダー", en: "Calendar", vi: "Lịch" },
   thisMonth: {
     ja: "今月の投稿",
     en: "This Month's Posts",
     vi: "Bài viết tháng này",
   },
   totalPosts: { ja: "総投稿数", en: "Total Posts", vi: "Tổng số bài viết" },
-  yearView: { ja: "年表示", en: "Year View", vi: "Xem theo năm" },
-  monthView: { ja: "月表示", en: "Month View", vi: "Xem theo tháng" },
+  yearView: { ja: "年表示", en: "Year", vi: "Năm" },
+  monthView: { ja: "月表示", en: "Month", vi: "Tháng" },
   postsOn: { ja: "の投稿", en: "Posts on", vi: "Bài viết ngày" },
   noPosts: {
     ja: "には投稿がありません",
