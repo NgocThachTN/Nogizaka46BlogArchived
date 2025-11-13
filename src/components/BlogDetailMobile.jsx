@@ -443,22 +443,22 @@ export default function BlogDetailMobile({
             WebkitBackdropFilter: "blur(10px)",
           }}
         >
-          <div style={{ padding: "13px 8px 6px" }}>
+          <div style={{ padding: "10px 6px 10px" }}>
             <Space
               align="center"
               style={{ width: "100%", justifyContent: "space-between" }}
             >
               {/* Left side - Navigation */}
-              <Space size="small">
+              <Space size={4}>
                 <Button
                   type="text"
                   size="small"
                   icon={<HomeOutlined />}
                   onClick={() => navigate("/members")}
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
                     background:
                       themeMode === "dark"
                         ? "rgba(36,33,29,0.8)"
@@ -476,9 +476,9 @@ export default function BlogDetailMobile({
                   icon={<UnorderedListOutlined />}
                   onClick={onBackToMemberBlogs}
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
                     background:
                       themeMode === "dark"
                         ? "rgba(36,33,29,0.8)"
@@ -497,9 +497,9 @@ export default function BlogDetailMobile({
                     disabled={!prevId || navLock}
                     onClick={() => fastGo && fastGo(prevId)}
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 6,
+                      width: 26,
+                      height: 26,
+                      borderRadius: 5,
                       background: "rgba(255, 255, 255, 0.6)",
                       border: "1px solid rgba(0,0,0,0.08)",
                       color: "#8b4513",
@@ -523,9 +523,9 @@ export default function BlogDetailMobile({
                     disabled={!nextId || navLock}
                     onClick={() => fastGo && fastGo(nextId)}
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 6,
+                      width: 26,
+                      height: 26,
+                      borderRadius: 5,
                       background: "rgba(139, 69, 19, 0.1)",
                       border: "1px solid rgba(139, 69, 19, 0.2)",
                       color: "#8b4513",
@@ -572,7 +572,7 @@ export default function BlogDetailMobile({
               </div>
 
               {/* Right side - Settings */}
-              <Space size="small">
+              <Space size={4}>
                 {setThemeMode && (
                   <Button
                     type="text"
@@ -584,9 +584,9 @@ export default function BlogDetailMobile({
                       themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
                     }
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 6,
+                      width: 26,
+                      height: 26,
+                      borderRadius: 5,
                       background:
                         themeMode === "dark"
                           ? "rgba(36,33,29,0.8)"
@@ -599,8 +599,8 @@ export default function BlogDetailMobile({
                     }}
                   />
                 )}
-                {/* Translation status */}
-                {translating || isPending ? (
+                {/* Translation status - Hidden on very small screens */}
+                {(translating || isPending) && window.innerWidth >= 360 ? (
                   <div
                     style={{
                       display: "flex",
@@ -626,21 +626,21 @@ export default function BlogDetailMobile({
                         ? "Trans"
                         : "翻訳"}
                   </div>
-                ) : (
+                ) : window.innerWidth >= 360 ? (
                   <div
                     style={{
-                      padding: "4px 8px",
+                      padding: "4px 6px",
                       background: "rgba(255, 255, 255, 0.6)",
                       borderRadius: 6,
                       border: "1px solid rgba(0,0,0,0.08)",
                       color: "#8b4513",
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: 500,
                     }}
                   >
                     {cachedLanguage?.toUpperCase?.() || "JA"}
                   </div>
-                )}
+                ) : null}
 
                 <Button
                   type="text"
@@ -648,9 +648,9 @@ export default function BlogDetailMobile({
                   icon={<FontSizeOutlined />}
                   onClick={() => setDrawerVisible(true)}
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
                     background:
                       themeMode === "dark"
                         ? "rgba(36,33,29,0.8)"
