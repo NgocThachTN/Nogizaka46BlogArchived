@@ -19,6 +19,7 @@ import {
   ArrowUpOutlined,
   LeftOutlined,
   HomeOutlined,
+  UnorderedListOutlined,
   InfoCircleOutlined,
   CalendarOutlined,
   FontSizeOutlined,
@@ -154,6 +155,10 @@ function optimizeHtmlForMobile(html) {
   }
 }
 
+const t = {
+  backToMemberBlogs: { ja: "メンバーのブログ一覧", en: "Member's Blogs", vi: "Blog của thành viên" },
+};
+
 export default function BlogDetailMobile({
   blog,
   loading,
@@ -173,6 +178,16 @@ export default function BlogDetailMobile({
   setThemeMode,
 }) {
   const navigate = useNavigate();
+
+  // Back to member blogs
+  const onBackToMemberBlogs = () => {
+    const code = blog?.memberCode || memberInfo?.code;
+    if (code) {
+      navigate(`/blogs/${code}`);
+    } else {
+      console.warn('No member code available for navigation');
+    }
+  };
 
   // Mobile-optimized state management
   const [isPending] = useTransition();
@@ -440,6 +455,26 @@ export default function BlogDetailMobile({
                   size="small"
                   icon={<HomeOutlined />}
                   onClick={() => navigate("/members")}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36,33,29,0.8)"
+                        : "rgba(255, 255, 255, 0.6)",
+                    border:
+                      themeMode === "dark"
+                        ? "1px solid rgba(207,191,166,0.2)"
+                        : "1px solid rgba(0,0,0,0.08)",
+                    color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                  }}
+                />
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<UnorderedListOutlined />}
+                  onClick={onBackToMemberBlogs}
                   style={{
                     width: 32,
                     height: 32,

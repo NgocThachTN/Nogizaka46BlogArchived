@@ -119,6 +119,7 @@ const SIZE_PRESETS = {
 
 const t = {
   back: { ja: "一覧へ戻る", en: "Back to List", vi: "Quay lại Danh sách" },
+  backToMemberBlogs: { ja: "メンバーのブログ一覧", en: "Member's Blogs", vi: "Blog của thành viên" },
   loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
   notFound: {
     ja: "ブログが見つかりません",
@@ -218,10 +219,29 @@ export default function BlogDetail({
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [id]);
 
+  // Update page title when blog changes
+  useEffect(() => {
+    if (blog?.title) {
+      document.title = `${blog.title} - 乃木坂46ブログ`;
+    }
+    return () => {
+      document.title = "乃木坂46ブログ";
+    };
+  }, [blog?.title]);
+
   // Back
   const onBack = () => {
-    const backTo = blog?.memberCode ? `/blogs/${blog.memberCode}` : "/";
-    navigate(backTo);
+    navigate("/members");
+  };
+
+  // Back to member blogs
+  const onBackToMemberBlogs = () => {
+    const code = blog?.memberCode || memberInfo?.code;
+    if (code) {
+      navigate(`/blogs/${code}`);
+    } else {
+      console.warn('No member code available for navigation');
+    }
   };
 
   // Share
@@ -685,6 +705,9 @@ export default function BlogDetail({
         extra: [
           <Button key="back" icon={<LeftOutlined />} onClick={onBack}>
             {t.back[language]}
+          </Button>,
+          <Button key="member-blogs" onClick={onBackToMemberBlogs} type="default">
+            {t.backToMemberBlogs[language]}
           </Button>,
 
           // PREV (only render when prevId exists)

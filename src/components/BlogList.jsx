@@ -261,6 +261,18 @@ export default function BlogList({
     };
   }, [memberCode]);
 
+  // Update page title when member info changes
+  useEffect(() => {
+    if (memberInfo?.name) {
+      document.title = `${memberInfo.name} - 乃木坂46ブログ`;
+    } else {
+      document.title = "乃木坂46ブログ";
+    }
+    return () => {
+      document.title = "乃木坂46ブログ";
+    };
+  }, [memberInfo?.name]);
+
   // Debounce nhập liệu (200ms) để hạn chế filter liên tục
   useEffect(() => {
     const h = setTimeout(() => {
