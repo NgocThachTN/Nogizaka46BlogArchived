@@ -40,6 +40,7 @@ import {
   useState,
   useLayoutEffect,
   useTransition,
+  useCallback,
 } from "react";
 import {
   getCachedBlogDetail,
@@ -155,10 +156,6 @@ function optimizeHtmlForMobile(html) {
   }
 }
 
-const t = {
-  backToMemberBlogs: { ja: "メンバーのブログ一覧", en: "Member's Blogs", vi: "Blog của thành viên" },
-};
-
 export default function BlogDetailMobile({
   blog,
   loading,
@@ -179,15 +176,24 @@ export default function BlogDetailMobile({
 }) {
   const navigate = useNavigate();
 
-  // Back to member blogs
-  const onBackToMemberBlogs = () => {
-    const code = blog?.memberCode || memberInfo?.code;
+  // Back to member blogs - Enhanced with multiple fallbacks
+  const onBackToMemberBlogs = useCallback(() => {
+    // Try multiple sources for member code
+    const code = 
+      blog?.memberCode || 
+      memberInfo?.code || 
+      blog?.arti_code || // API response field
+      blog?.artiCode;    // Alternative field name
+    
     if (code) {
+      console.log('Navigating to member blogs with code:', code);
       navigate(`/blogs/${code}`);
     } else {
-      console.warn('No member code available for navigation');
+      // Fallback: Go to member list if no code available
+      console.warn('No member code available, navigating to member list');
+      navigate('/members');
     }
-  };
+  }, [blog, memberInfo, navigate]);
 
   // Mobile-optimized state management
   const [isPending] = useTransition();
@@ -421,28 +427,27 @@ export default function BlogDetailMobile({
   // Fixed Navigation Bar (always visible) - Clean Android design
   const NavigationBar = useMemo(
     () => (
-      <Affix offsetTop={0}>
-        <div
-          style={{
-            ...jpFont,
-            background:
-              themeMode === "dark"
-                ? "rgba(28,26,23,0.95)"
-                : "rgba(253, 246, 227, 0.95)",
-            borderBottom:
-              themeMode === "dark"
-                ? "1px solid rgba(207,191,166,0.2)"
-                : "1px solid rgba(0,0,0,0.08)",
-            zIndex: 1,
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            width: "100%",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-          }}
-        >
+      <div
+        style={{
+          ...jpFont,
+          background:
+            themeMode === "dark"
+              ? "rgba(28,26,23,0.95)"
+              : "rgba(253, 246, 227, 0.95)",
+          borderBottom:
+            themeMode === "dark"
+              ? "1px solid rgba(207,191,166,0.2)"
+              : "1px solid rgba(0,0,0,0.08)",
+          zIndex: 999,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          width: "100%",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+        }}
+      >
           <div style={{ padding: "10px 6px 10px" }}>
             <Space
               align="center"
@@ -666,7 +671,6 @@ export default function BlogDetailMobile({
             </Space>
           </div>
         </div>
-      </Affix>
     ),
     [
       cachedLanguage,
@@ -681,6 +685,7 @@ export default function BlogDetailMobile({
       navigate,
       themeMode,
       setThemeMode,
+      onBackToMemberBlogs,
     ]
   );
 
