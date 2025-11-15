@@ -705,7 +705,7 @@ export default function BlogDetailMobile({
               : "1px solid rgba(139, 69, 19, 0.15)",
           zIndex: 10,
           position: "sticky",
-          top: -300,
+          top: -600,
           left: 0,
           right: 0,
           width: "100%",
