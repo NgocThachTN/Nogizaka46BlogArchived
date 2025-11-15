@@ -48,6 +48,7 @@ import {
   BulbOutlined,
   MoonOutlined,
 } from "@ant-design/icons";
+import { loadAllGraduatedMembers, shouldUseLocalDB } from "../utils/graduatedMembersLoader";
 
 /** Typography */
 const { Title, Text } = Typography;
@@ -90,6 +91,21 @@ const t = {
     ja: "総メンバー数",
     en: "Total Members",
     vi: "Tổng Số Thành Viên ",
+  },
+  graduatedMembers: {
+    ja: "卒業生",
+    en: "Graduated Members",
+    vi: "Thành viên đã tốt nghiệp",
+  },
+  currentMembers: {
+    ja: "現役メンバー",
+    en: "Current Members",
+    vi: "Thành viên hiện tại",
+  },
+  graduated: {
+    ja: "卒業",
+    en: "Graduated",
+    vi: "Đã tốt nghiệp",
   },
 };
 
@@ -164,11 +180,13 @@ export default function MemberListMobile({
 
   /** State */
   const [members, setMembers] = useState([]);
+  const [graduatedMembers, setGraduatedMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [genFilter, setGenFilter] = useState("ALL");
   const [keyword, setKeyword] = useState("");
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [collapsedGens, setCollapsedGens] = useState(new Set());
+  const [showGraduated, setShowGraduated] = useState(false);
 
   /** Search */
   const setKeywordDebounced = useRafDebounce((v) => setKeyword(v), 140);
@@ -204,6 +222,19 @@ export default function MemberListMobile({
         };
 
         if (!canceled) setMembers([...normalized, specialMember]);
+
+        // ===== Load graduated members from local database =====
+        if (shouldUseLocalDB()) {
+          try {
+            const graduated = await loadAllGraduatedMembers();
+            console.log(`✅ Loaded ${graduated.length} graduated members from local DB`);
+            if (!canceled) setGraduatedMembers(graduated);
+          } catch (error) {
+            console.warn("Failed to load graduated members:", error);
+            if (!canceled) setGraduatedMembers([]);
+          }
+        }
+        // ===== END graduated members loading =====
       } catch (e) {
         console.error(e);
         message.error("データを取得できませんでした。");
@@ -218,24 +249,27 @@ export default function MemberListMobile({
 
   /** Gen options */
   const genList = useMemo(() => {
-    const s = new Set(members.map((m) => getGen(m)).filter(Boolean));
+    // Show generation options based on current view (current or graduated)
+    const allMembers = showGraduated ? graduatedMembers : members;
+    const s = new Set(allMembers.map((m) => getGen(m)).filter(Boolean));
     const ordered = GEN_ORDER.filter((g) => s.has(g));
     const rest = Array.from(s).filter((g) => !GEN_ORDER.includes(g));
     return ["ALL", ...ordered, ...rest];
-  }, [members]);
+  }, [members, graduatedMembers, showGraduated]);
 
   /** Filtered */
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
-    return members.filter((m) => {
+    // Show only graduated members when showGraduated is true, otherwise show only current members
+    const allMembers = showGraduated ? graduatedMembers : members;
+    return allMembers.filter((m) => {
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
-      const hay = `${m.name} ${m.english_name || ""} ${
-        m.kana || ""
-      }`.toLowerCase();
+      const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""
+        }`.toLowerCase();
       return hay.includes(kw);
     });
-  }, [members, genFilter, keyword]);
+  }, [members, graduatedMembers, genFilter, keyword, showGraduated]);
 
   /** Grouped */
   const grouped = useMemo(() => {
@@ -334,8 +368,8 @@ export default function MemberListMobile({
             {currentLanguage === "ja"
               ? "6期生ブログ"
               : currentLanguage === "en"
-              ? "6th Gen Blog"
-              : "Blog Thế hệ 6"}
+                ? "6th Gen Blog"
+                : "Blog Thế hệ 6"}
           </Text>
           <Text
             type="secondary"
@@ -348,8 +382,8 @@ export default function MemberListMobile({
             {currentLanguage === "ja"
               ? "6期生リレー公式ブログ"
               : currentLanguage === "en"
-              ? "6th Gen Relay Official Blog"
-              : "Blog chính thức 6期生"}
+                ? "6th Gen Relay Official Blog"
+                : "Blog chính thức 6期生"}
           </Text>
           <Space size={4} wrap>
             <Tag
@@ -364,8 +398,8 @@ export default function MemberListMobile({
               {currentLanguage === "ja"
                 ? "6期生"
                 : currentLanguage === "en"
-                ? "6th Gen"
-                : "Thế hệ 6"}
+                  ? "6th Gen"
+                  : "Thế hệ 6"}
             </Tag>
             <Tag
               style={{
@@ -380,8 +414,8 @@ export default function MemberListMobile({
               {currentLanguage === "ja"
                 ? "ブログ"
                 : currentLanguage === "en"
-                ? "Blog"
-                : "Blog"}
+                  ? "Blog"
+                  : "Blog"}
             </Tag>
           </Space>
         </div>
@@ -496,6 +530,21 @@ export default function MemberListMobile({
             </div>
 
             <Space size={[2, 2]} wrap>
+              {m.graduation === "YES" && (
+                <Tag
+                  color="default"
+                  style={{
+                    fontSize: 9,
+                    padding: "1px 4px",
+                    borderRadius: 6,
+                    background: "rgba(0,0,0,0.05)",
+                    border: "1px solid rgba(0,0,0,0.1)",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {t.graduated[currentLanguage]}
+                </Tag>
+              )}
               {m.birthday && (
                 <Tag
                   style={{
@@ -689,6 +738,41 @@ export default function MemberListMobile({
 
             {/* Gen chips + Search */}
             <div style={{ marginTop: 12 }}>
+              {/* Toggle Current/Graduated Members - Prominent Tab */}
+              {shouldUseLocalDB() && graduatedMembers.length > 0 && (
+                <Segmented
+                  value={showGraduated ? "graduated" : "current"}
+                  onChange={(val) => setShowGraduated(val === "graduated")}
+                  size="middle"
+                  block
+                  style={{
+                    marginBottom: 12,
+                    background: themeMode === "dark"
+                      ? "rgba(36,33,29,0.85)"
+                      : "rgba(253, 246, 227, 0.9)",
+                  }}
+                  options={[
+                    {
+                      label: (
+                        <span style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "center" }}>
+                          <StarOutlined />
+                          {t.currentMembers[currentLanguage]} ({members.length})
+                        </span>
+                      ),
+                      value: "current",
+                    },
+                    {
+                      label: (
+                        <span style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "center" }}>
+                          {t.graduatedMembers[currentLanguage]} ({graduatedMembers.length})
+                        </span>
+                      ),
+                      value: "graduated",
+                    },
+                  ]}
+                />
+              )}
+
               <Segmented
                 value={genFilter}
                 onChange={setGenFilter}
@@ -698,21 +782,21 @@ export default function MemberListMobile({
                       ? currentLanguage === "ja"
                         ? "すべて"
                         : currentLanguage === "en"
-                        ? "All"
-                        : "Tất cả"
+                          ? "All"
+                          : "Tất cả"
                       : g
-                          .replace(
-                            "期生",
-                            currentLanguage === "ja"
-                              ? "期生"
-                              : currentLanguage === "en"
+                        .replace(
+                          "期生",
+                          currentLanguage === "ja"
+                            ? "期生"
+                            : currentLanguage === "en"
                               ? " Gen"
                               : " Thế hệ"
-                          )
-                          .replace(
-                            /^(\d+)\s*(Gen|Thế hệ)$/,
-                            currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                          ),
+                        )
+                        .replace(
+                          /^(\d+)\s*(Gen|Thế hệ)$/,
+                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                        ),
                   value: g,
                 }))}
                 size="small"
@@ -812,20 +896,20 @@ export default function MemberListMobile({
                         {gen === "その他"
                           ? t.other[currentLanguage]
                           : gen
-                              .replace(
-                                "期生",
-                                currentLanguage === "ja"
-                                  ? "期生"
-                                  : currentLanguage === "en"
+                            .replace(
+                              "期生",
+                              currentLanguage === "ja"
+                                ? "期生"
+                                : currentLanguage === "en"
                                   ? " Gen"
                                   : " Thế hệ"
-                              )
-                              .replace(
-                                /^(\d+)\s*(Gen|Thế hệ)$/,
-                                currentLanguage === "en"
-                                  ? "Gen $1"
-                                  : "Thế hệ $1"
-                              )}
+                            )
+                            .replace(
+                              /^(\d+)\s*(Gen|Thế hệ)$/,
+                              currentLanguage === "en"
+                                ? "Gen $1"
+                                : "Thế hệ $1"
+                            )}
                       </span>
                     </Space>
                     <Space>
@@ -921,21 +1005,21 @@ export default function MemberListMobile({
                     ? currentLanguage === "ja"
                       ? "すべて"
                       : currentLanguage === "en"
-                      ? "All"
-                      : "Tất cả"
+                        ? "All"
+                        : "Tất cả"
                     : g
-                        .replace(
-                          "期生",
-                          currentLanguage === "ja"
-                            ? "期生"
-                            : currentLanguage === "en"
+                      .replace(
+                        "期生",
+                        currentLanguage === "ja"
+                          ? "期生"
+                          : currentLanguage === "en"
                             ? " Gen"
                             : " Thế hệ"
-                        )
-                        .replace(
-                          /^(\d+)\s*(Gen|Thế hệ)$/,
-                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                        ),
+                      )
+                      .replace(
+                        /^(\d+)\s*(Gen|Thế hệ)$/,
+                        currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                      ),
                 value: g,
               }))}
               value={genFilter}
@@ -1005,21 +1089,18 @@ export default function MemberListMobile({
           width: 100% !important;
         }
         .ant-collapse-item { 
-          border: 1px solid ${
-            themeMode === "dark" ? "rgba(207,191,166,0.2)" : "#f1f1f5"
-          } !important; 
+          border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "#f1f1f5"
+        } !important; 
           border-radius: 12px !important; 
           margin-bottom: 8px !important; 
-          background: ${
-            themeMode === "dark"
-              ? "rgba(36,33,29,0.85)"
-              : "rgba(253, 246, 227, 0.8)"
-          } !important; 
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 1px 4px rgba(0,0,0,0.35)"
-              : "0 1px 4px rgba(0,0,0,0.04)"
-          } !important; 
+          background: ${themeMode === "dark"
+          ? "rgba(36,33,29,0.85)"
+          : "rgba(253, 246, 227, 0.8)"
+        } !important; 
+          box-shadow: ${themeMode === "dark"
+          ? "0 1px 4px rgba(0,0,0,0.35)"
+          : "0 1px 4px rgba(0,0,0,0.04)"
+        } !important; 
           overflow: hidden !important; 
           width: 100% !important;
         }
@@ -1028,11 +1109,10 @@ export default function MemberListMobile({
         }
         .ant-collapse-header { 
           padding: 12px 16px !important; 
-          background: ${
-            themeMode === "dark"
-              ? "linear-gradient(135deg, rgba(28,26,23,0.95), rgba(36,33,29,0.95))"
-              : "linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9))"
-          } !important; 
+          background: ${themeMode === "dark"
+          ? "linear-gradient(135deg, rgba(28,26,23,0.95), rgba(36,33,29,0.95))"
+          : "linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9))"
+        } !important; 
           border: none !important; 
           border-radius: 12px !important; 
           cursor: pointer !important; 
@@ -1043,11 +1123,10 @@ export default function MemberListMobile({
         }
         .ant-collapse-content { 
           border: none !important; 
-          background: ${
-            themeMode === "dark"
-              ? "rgba(36,33,29,0.85)"
-              : "rgba(253, 246, 227, 0.8)"
-          } !important; 
+          background: ${themeMode === "dark"
+          ? "rgba(36,33,29,0.85)"
+          : "rgba(253, 246, 227, 0.8)"
+        } !important; 
           border-radius: 0 0 12px 12px !important; 
         }
         .ant-collapse-content-box { 

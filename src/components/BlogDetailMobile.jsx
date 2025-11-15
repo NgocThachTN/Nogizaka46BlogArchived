@@ -1310,6 +1310,7 @@ export default function BlogDetailMobile({
                   maxWidth: "100%",
                   overflowWrap: "break-word",
                   wordWrap: "break-word",
+                  wordBreak: "break-word",
                   hyphens: "auto",
                   paddingBottom: "20px",
                   WebkitTransform: "translateZ(0)",
@@ -1514,6 +1515,7 @@ export default function BlogDetailMobile({
                 maxWidth: "100%",
                 overflowWrap: "break-word",
                 wordWrap: "break-word",
+                wordBreak: "break-word",
                 hyphens: "auto",
                 paddingBottom: "20px",
                 letterSpacing: cachedLanguage === "ja" ? 0.5 : 0.3,
@@ -1777,14 +1779,36 @@ export default function BlogDetailMobile({
             /* Prevent iOS zoom on double tap */
             touch-action: manipulation;
           }
-          .jp-prose p {
-            margin: 0.85em 0;
+          /* Force override inline styles with higher specificity */
+          .jp-prose p,
+          .jp-prose p.p1,
+          .jp-prose p.p2,
+          .jp-prose p.p3,
+          .jp-prose p[style*="font-size"],
+          .jp-prose p[class*="p"] {
+            margin: 0.85em 0 !important;
             text-align: justify;
-            line-height: 1.9;
-            font-size: 20px;
-            color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"};
-            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "0.02em"};
+            line-height: 1.9 !important;
+            font-size: ${fontSize}px !important;
+            color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"} !important;
+            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "0.02em"} !important;
             word-spacing: ${cachedLanguage === "ja" ? "0.1em" : "0.05em"};
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            font-stretch: normal !important;
+          }
+          .jp-prose div[dir="auto"],
+          .jp-prose div[style*="font-size"] {
+            font-size: ${fontSize}px !important;
+            line-height: 1.9 !important;
+          }
+          .jp-prose span,
+          .jp-prose span.s1,
+          .jp-prose span.s2,
+          .jp-prose span[class*="s"],
+          .jp-prose span[style*="font-size"] {
+            font-size: ${fontSize}px !important;
+            line-height: 1.9 !important;
           }
           .jp-prose h1 { 
             font-size: 1.6em; 
@@ -1792,6 +1816,7 @@ export default function BlogDetailMobile({
             font-weight: 600; 
             color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"}; 
             letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "normal"};
+            word-break: break-word !important;
           }
           .jp-prose h2 { 
             font-size: 1.4em; 
@@ -1799,6 +1824,7 @@ export default function BlogDetailMobile({
             font-weight: 600; 
             color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"}; 
             letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "normal"};
+            word-break: break-word !important;
           }
           .jp-prose h3 { 
             font-size: 1.25em; 
@@ -1806,6 +1832,7 @@ export default function BlogDetailMobile({
             font-weight: 600; 
             color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"}; 
             letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "normal"};
+            word-break: break-word !important;
           }
           .jp-prose blockquote {
             border-left: 4px solid ${themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
@@ -1819,6 +1846,8 @@ export default function BlogDetailMobile({
             color: ${themeMode === "dark" ? "#d2a86a" : "#9333ea"}; 
             text-decoration: none; 
             border-bottom: 1px dotted ${themeMode === "dark" ? "#d2a86a" : "#9333ea"};
+            word-break: break-all;
+            overflow-wrap: break-word;
           }
           .jp-prose a:hover { 
             border-bottom-style: solid;
@@ -1828,6 +1857,16 @@ export default function BlogDetailMobile({
         }; }
           .jp-prose strong { color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
         }; font-weight: 600; }
+          .jp-prose * {
+            max-width: 100%;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            box-sizing: border-box !important;
+          }
+          .jp-prose div, .jp-prose span {
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+          }
           
           /* iOS Safari specific fixes */
           @media screen and (-webkit-min-device-pixel-ratio: 0) {

@@ -1091,6 +1091,8 @@ export default function BlogDetail({
                 lineHeight: sz.lh,
                 letterSpacing: language === "ja" ? 0.5 : 0.3,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
+                wordBreak: "break-word",
+                overflowWrap: "break-word",
                 ...bookFont[language],
               }}
               dangerouslySetInnerHTML={{ __html: displayContent }}
@@ -1292,31 +1294,57 @@ export default function BlogDetail({
         body {
           zoom: 1.2;
         }
+        .jp-prose * {
+          max-width: 100%;
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          box-sizing: border-box !important;
+        }
+        /* Force override inline styles with higher specificity */
+        .jp-prose p,
+        .jp-prose p.p1,
+        .jp-prose p.p2,
+        .jp-prose p.p3,
+        .jp-prose p[style*="font-size"],
+        .jp-prose p[class*="p"] { 
+          color: ${themeMode === "dark" ? "#f5ede0" : "#374151"} !important; 
+          margin: ${window.innerWidth < 768 ? "0.6em 0" : "0.75em 0"} !important; 
+          text-align: justify; 
+          font-size: ${sz.px}px !important;
+          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+          letter-spacing: ${language === "ja" ? "0.05em" : "0.02em"} !important;
+          word-spacing: ${language === "ja" ? "0.1em" : "0.05em"};
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+          font-stretch: normal !important;
+        }
+        .jp-prose div[dir="auto"],
+        .jp-prose div[style*="font-size"] { 
+          font-size: ${sz.px}px !important;
+          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+        }
+        .jp-prose span,
+        .jp-prose span.s1,
+        .jp-prose span.s2,
+        .jp-prose span[class*="s"],
+        .jp-prose span[style*="font-size"] {
+          font-size: ${sz.px}px !important;
+          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+        }
         .jp-prose h1 { 
           font-weight: 600; 
-          margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.6em"
-        }; 
+          margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.6em"}; 
           letter-spacing: ${window.innerWidth < 768 ? "-0.02em" : language === "ja" ? "0.05em" : "normal"};
         }
         .jp-prose h2 { 
           font-weight: 600; 
-          margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.5em"
-        }; 
+          margin: ${window.innerWidth < 768 ? "0.7em 0 0.4em" : "0.9em 0 0.5em"}; 
           letter-spacing: ${window.innerWidth < 768 ? "-0.01em" : language === "ja" ? "0.05em" : "normal"};
         }
         .jp-prose h3 { 
           font-weight: 600; 
-          margin: ${window.innerWidth < 768 ? "0.7em 0 0.3em" : "0.9em 0 0.4em"
-        };
+          margin: ${window.innerWidth < 768 ? "0.7em 0 0.3em" : "0.9em 0 0.4em"};
           letter-spacing: ${language === "ja" ? "0.05em" : "normal"};
-        }
-        .jp-prose p { 
-          color: ${themeMode === "dark" ? "#f5ede0" : "#374151"}; 
-          margin: ${window.innerWidth < 768 ? "0.6em 0" : "0.75em 0"}; 
-          text-align: justify; 
-          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh};
-          letter-spacing: ${language === "ja" ? "0.05em" : "0.02em"};
-          word-spacing: ${language === "ja" ? "0.1em" : "0.05em"};
         }
         .jp-prose a { 
           color: ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"}; 
@@ -1345,8 +1373,11 @@ export default function BlogDetail({
             : "0 6px 16px rgba(0,0,0,0.12)"
           }`
         };
-          border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.1)"
-        };
+          border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.1)"};
+        }
+        .jp-prose div, .jp-prose span {
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
         }
       `}</style>
       {/* dynamic heading scale */}
