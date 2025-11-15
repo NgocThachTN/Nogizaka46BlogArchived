@@ -92,19 +92,32 @@ const formatEnglishName = (englishName) => {
   return englishName.charAt(0).toUpperCase() + englishName.slice(1).toLowerCase();
 };
 
-// Book-like serif fonts for reading content
+// Book-like serif fonts for reading content - Enhanced for Android
 const bookFont = {
   ja: {
     fontFamily:
-      "'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho','YuMincho','HG明朝E','MS Mincho','Droid Serif','serif'",
+      "'Noto Serif JP','Source Han Serif','Source Han Serif JP','NotoSerifCJK-Regular','游明朝','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG明朝E','MS Mincho','Roboto Slab','Droid Serif','serif'",
+    fontWeight: 400,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
+    textRendering: "optimizeLegibility",
+    fontDisplay: "swap",
   },
   en: {
     fontFamily:
-      "'Georgia','Cambria','Times New Roman','Droid Serif','serif'",
+      "'Georgia','Cambria','Times New Roman','Roboto Slab','Droid Serif','serif'",
+    fontWeight: 400,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
+    fontDisplay: "swap",
   },
   vi: {
     fontFamily:
-      "'Times New Roman','Georgia','Cambria','Droid Serif','serif'",
+      "'Times New Roman','Georgia','Cambria','Roboto Slab','Droid Serif','serif'",
+    fontWeight: 400,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
+    fontDisplay: "swap",
   },
 };
 

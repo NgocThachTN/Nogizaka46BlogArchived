@@ -57,29 +57,32 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
-// Book-like serif fonts for reading content - Enhanced for Android
+// Book-like serif fonts for reading content - Enhanced for Android  
 const bookFont = {
   ja: {
     fontFamily:
-      "'Noto Serif JP','Source Han Serif','Source Han Serif JP','游明朝','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG明朝E','MS Mincho','Droid Serif','serif'",
+      "'Noto Serif JP','Source Han Serif','Source Han Serif JP','NotoSerifCJK-Regular','游明朝','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG明朝E','MS Mincho','Roboto Slab','Droid Serif','serif'",
     fontWeight: 400,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
     textRendering: "optimizeLegibility",
+    fontDisplay: "swap",
   },
   en: {
     fontFamily:
-      "'Georgia','Cambria','Times New Roman','Droid Serif','serif'",
+      "'Georgia','Cambria','Times New Roman','Roboto Slab','Droid Serif','serif'",
     fontWeight: 400,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
+    fontDisplay: "swap",
   },
   vi: {
     fontFamily:
-      "'Times New Roman','Georgia','Cambria','Droid Serif','serif'",
+      "'Times New Roman','Georgia','Cambria','Roboto Slab','Droid Serif','serif'",
     fontWeight: 400,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
+    fontDisplay: "swap",
   },
 };
 
@@ -1327,8 +1330,8 @@ export default function BlogDetailMobile({
                   transform: "translateZ(0)",
                   WebkitBackfaceVisibility: "hidden",
                   backfaceVisibility: "hidden",
-                  color: themeMode === "dark" ? "#f5ede0" : "#1f2937",
-                  letterSpacing: cachedLanguage === "ja" ? "0.05em" : "0.02em",
+                  color: themeMode === "dark" ? "#f5ede0" : undefined,
+                  letterSpacing: cachedLanguage === "ja" ? 0.5 : 0.3,
                   ...bookFont[cachedLanguage],
                 }}
                 dangerouslySetInnerHTML={{
@@ -1530,8 +1533,8 @@ export default function BlogDetailMobile({
                 wordBreak: "break-word",
                 hyphens: "auto",
                 paddingBottom: "20px",
-                letterSpacing: cachedLanguage === "ja" ? "0.05em" : "0.02em",
-                color: themeMode === "dark" ? "#f5ede0" : "#1f2937",
+                letterSpacing: cachedLanguage === "ja" ? 0.5 : 0.3,
+                color: themeMode === "dark" ? "#f5ede0" : undefined,
                 ...bookFont[cachedLanguage],
                 /* iOS Safari specific fixes */
                 WebkitTransform: "translateZ(0)",
