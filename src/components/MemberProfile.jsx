@@ -95,6 +95,44 @@ const translateGeneration = (generation, lang) => {
   return generation;
 };
 
+// Helper function to translate birthday format
+const translateBirthday = (birthday, lang) => {
+  if (!birthday) return birthday;
+  if (lang === "ja") return birthday;
+
+  // Parse Japanese date format: 1998年8月10日
+  const jpMatch = birthday.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (jpMatch) {
+    const [_, year, month, day] = jpMatch;
+    if (lang === "en") {
+      // English format: August 10, 1998
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      return `${monthNames[parseInt(month) - 1]} ${parseInt(day)}, ${year}`;
+    }
+    if (lang === "vi") {
+      // Vietnamese format: 10/08/1998
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    }
+  }
+
+  // Parse slash format: 1998/8/10
+  const slashMatch = birthday.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (slashMatch) {
+    const [_, year, month, day] = slashMatch;
+    if (lang === "en") {
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      return `${monthNames[parseInt(month) - 1]} ${parseInt(day)}, ${year}`;
+    }
+    if (lang === "vi") {
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    }
+  }
+
+  return birthday;
+};
+
 // Helper function to format English name (first last -> last first)
 const formatEnglishName = (englishName) => {
   if (!englishName) return englishName;
@@ -260,7 +298,7 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
                 color: themeMode === "dark" ? "#d2a86a" : undefined,
               }}
             />
-            {memberInfo.birthday}
+            {translateBirthday(memberInfo.birthday, language)}
           </Descriptions.Item>
           <Descriptions.Item label={profileLabels.bloodType[language]}>
             <HeartOutlined
