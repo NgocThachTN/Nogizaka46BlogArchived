@@ -5,6 +5,17 @@ import {
   shouldUseProxy,
   getUserAgent,
 } from "../utils/deviceDetection.js";
+import {
+  shouldUseLocalDB,
+  getFolderFromMemberCode,
+  loadLocalBlogs,
+  loadLocalMemberInfo,
+  getMemberCodeFromFolder,
+} from "../utils/localBlogLoader.js";
+import {
+  loadGraduatedMember,
+  isGraduatedMember,
+} from "../utils/graduatedMembersLoader.js";
 
 const BASE_URL = "https://www.nogizaka46.com";
 const BLOG_URL = `/s/n46/diary/MEMBER/list`;
@@ -31,6 +42,39 @@ export const prefetchBlogDetail = async (blogId) => {
 // Fetch tất cả các blog của member với parallel fetching + progress callback
 export const fetchAllBlogs = async (memberCode, { onProgress, signal } = {}) => {
   try {
+    // ===== EXCEPTION: Try local database first =====
+    if (shouldUseLocalDB()) {
+      const folderName = getFolderFromMemberCode(memberCode);
+      if (folderName) {
+        console.log(`🗂️ Attempting to load from local DB: ${folderName}`);
+        const localBlogs = await loadLocalBlogs(folderName);
+
+        if (localBlogs.length > 0) {
+          console.log(`✅ Loaded ${localBlogs.length} blogs from local DB`);
+
+          // Get member info from local
+          const memberInfo = await loadLocalMemberInfo(folderName);
+
+          // Enhance blogs with member info
+          const enhancedBlogs = localBlogs.map(blog => ({
+            ...blog,
+            author: memberInfo?.name || blog.author,
+            memberCode: memberCode,
+          }));
+
+          // Simulate progress callback
+          if (onProgress) {
+            onProgress(enhancedBlogs, true); // true = complete
+          }
+
+          return enhancedBlogs;
+        } else {
+          console.warn(`⚠️ Local DB empty for ${folderName}, falling back to API`);
+        }
+      }
+    }
+    // ===== END EXCEPTION =====
+
     let allBlogs = [];
     let currentPage = 0;
     let hasNextPage = true;
@@ -177,6 +221,43 @@ const fetchBlogPage = async (page, memberCode) => {
 // Fetch chi tiết một blog - Optimized with minimal parsing
 export const fetchBlogDetail = async (blogId) => {
   try {
+    // ===== EXCEPTION: Check local database first =====
+    if (shouldUseLocalDB()) {
+      // Try all member folders to find the blog
+      const folders = ["asuka.saito", "erika.ikuta", "nanase.nishino", "mizuki.yamashita", "momoko.oozono", "nanami.hashimoto"];
+
+      for (const folderName of folders) {
+        try {
+          const localBlogs = await loadLocalBlogs(folderName);
+          const localBlog = localBlogs.find(b => b.id === String(blogId) || b.originalUrl.includes(blogId));
+
+          if (localBlog) {
+            console.log(`✅ Found blog ${blogId} in local DB: ${folderName}`);
+
+            // Get member info
+            const memberInfo = await loadLocalMemberInfo(folderName);
+            const memberCode = getMemberCodeFromFolder(folderName);
+
+            const detail = {
+              ...localBlog,
+              author: memberInfo?.name || localBlog.author,
+              memberCode: memberCode,
+              memberImage: memberInfo?.image || null,
+            };
+
+            _detailCache.set(String(blogId), detail);
+            return detail;
+          }
+        } catch {
+          // Continue to next folder
+          continue;
+        }
+      }
+
+      console.warn(`⚠️ Blog ${blogId} not found in local DB, falling back to API`);
+    }
+    // ===== END EXCEPTION =====
+
     const params = {
       cd: "MEMBER",
       ima: Math.floor(Date.now() / 1000),
@@ -259,10 +340,29 @@ export const fetchBlogDetail = async (blogId) => {
 };
 
 // Helper function to get image URL
-export const getImageUrl = (imagePath) => {
+// Helper function to get image URL
+export const getImageUrl = (imagePath, options = {}) => {
   if (!imagePath) return "";
   if (imagePath.startsWith("http")) return imagePath;
-  return `${BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
+
+  // ===== Handle local database paths =====
+  if (imagePath.startsWith("/blogdb/")) {
+    // Local database image - return as-is (will be resolved by public folder)
+    // Ignore width/resize options for local images (no CDN/resize API)
+    return imagePath;
+  }
+  // ===== END local database handling =====
+
+  // Online API image path (with optional width param for CDN resize)
+  let url = `${BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
+
+  // Add width param if provided (for online CDN resize)
+  if (options.w) {
+    const separator = url.includes("?") ? "&" : "?";
+    url += `${separator}w=${options.w}`;
+  }
+
+  return url;
 };
 
 // Cached member list API fetch
@@ -303,6 +403,17 @@ export const fetchMemberInfo = async (memberCode) => {
   try {
     const normalizedCode = String(memberCode).trim();
 
+    // ===== PRIORITY 1: Check graduated members from local DB =====
+    if (shouldUseLocalDB()) {
+      const graduatedMember = await loadGraduatedMember(normalizedCode);
+      if (graduatedMember) {
+        console.log(`✅ Loaded graduated member ${normalizedCode} from local DB:`, graduatedMember.name);
+        return graduatedMember;
+      }
+    }
+    // ===== END PRIORITY 1 =====
+
+    // Special case for 6期生リレー
     if (normalizedCode === "40008" || normalizedCode === "40008.0") {
       return {
         code: "40008",
@@ -313,6 +424,7 @@ export const fetchMemberInfo = async (memberCode) => {
       };
     }
 
+    // PRIORITY 2: Fetch from online API
     const members = await fetchMemberListAPI();
     const member = members.find(m => String(m.code).trim() === normalizedCode);
     return member || null;

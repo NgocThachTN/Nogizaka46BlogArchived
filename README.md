@@ -25,6 +25,8 @@
 - Client-side caching & smooth navigation
 - SPA routing ready for Vercel
 - Basic i18n setup with language switcher
+- **🗂️ Local Database Support** – Load archived blogs from local files (see [docs/LOCAL_DATABASE.md](docs/LOCAL_DATABASE.md))
+- **🎓 Graduated Members Section** – Display alumni members with archive blogs (see [docs/GRADUATED_MEMBERS.md](docs/GRADUATED_MEMBERS.md))
 
 ---
 
@@ -41,6 +43,30 @@
 - `npm run build` – create production build  
 - `preview` – serve built app  
 - `lint` – optional (if configured)
+
+---
+
+## 🗂️ Local Database Exception
+
+**NEW:** Load blogs from local `blogdb/` folder instead of online API!
+
+Perfect for:
+- ✅ Testing with archived data
+- ✅ Offline development  
+- ✅ Graduated members backup
+
+**Quick start:**
+```bash
+# Enable local database mode
+echo "VITE_USE_LOCAL_DB=true" >> .env
+
+# Add your blog data to blogdb/[member-folder]/result.json
+# See docs/LOCAL_DATABASE.md for format & instructions
+```
+
+📖 **Full documentation:** [docs/LOCAL_DATABASE.md](docs/LOCAL_DATABASE.md)
+
+---
 
 ## 🌍 i18n Usage (quick)
 

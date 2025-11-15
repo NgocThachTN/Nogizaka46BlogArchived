@@ -179,12 +179,12 @@ export default function BlogDetailMobile({
   // Back to member blogs - Enhanced with multiple fallbacks
   const onBackToMemberBlogs = useCallback(() => {
     // Try multiple sources for member code
-    const code = 
-      blog?.memberCode || 
-      memberInfo?.code || 
+    const code =
+      blog?.memberCode ||
+      memberInfo?.code ||
       blog?.arti_code || // API response field
       blog?.artiCode;    // Alternative field name
-    
+
     if (code) {
       console.log('Navigating to member blogs with code:', code);
       navigate(`/blogs/${code}`);
@@ -448,229 +448,229 @@ export default function BlogDetailMobile({
           WebkitBackdropFilter: "blur(10px)",
         }}
       >
-          <div style={{ padding: "10px 6px 10px" }}>
-            <Space
-              align="center"
-              style={{ width: "100%", justifyContent: "space-between" }}
-            >
-              {/* Left side - Navigation */}
-              <Space size={4}>
+        <div style={{ padding: "10px 6px 10px" }}>
+          <Space
+            align="center"
+            style={{ width: "100%", justifyContent: "space-between" }}
+          >
+            {/* Left side - Navigation */}
+            <Space size={4}>
+              <Button
+                type="text"
+                size="small"
+                icon={<HomeOutlined />}
+                onClick={() => navigate("/members")}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36,33,29,0.8)"
+                      : "rgba(255, 255, 255, 0.6)",
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.2)"
+                      : "1px solid rgba(0,0,0,0.08)",
+                  color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                }}
+              />
+              <Button
+                type="text"
+                size="small"
+                icon={<UnorderedListOutlined />}
+                onClick={onBackToMemberBlogs}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36,33,29,0.8)"
+                      : "rgba(255, 255, 255, 0.6)",
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.2)"
+                      : "1px solid rgba(0,0,0,0.08)",
+                  color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                }}
+              />
+              {prevId && (
                 <Button
                   type="text"
                   size="small"
-                  icon={<HomeOutlined />}
-                  onClick={() => navigate("/members")}
+                  disabled={!prevId || navLock}
+                  onClick={() => fastGo && fastGo(prevId)}
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 6,
-                    background:
-                      themeMode === "dark"
-                        ? "rgba(36,33,29,0.8)"
-                        : "rgba(255, 255, 255, 0.6)",
-                    border:
-                      themeMode === "dark"
-                        ? "1px solid rgba(207,191,166,0.2)"
-                        : "1px solid rgba(0,0,0,0.08)",
-                    color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                    width: 26,
+                    height: 26,
+                    borderRadius: 5,
+                    background: "rgba(255, 255, 255, 0.6)",
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    color: "#8b4513",
+                    fontSize: 14,
+                    fontWeight: 600,
                   }}
-                />
+                >
+                  {pendingNavId &&
+                    pendingNavId === prevId &&
+                    !getCachedBlogDetail(prevId) ? (
+                    <LoadingOutlined style={{ fontSize: 12 }} />
+                  ) : (
+                    "‹"
+                  )}
+                </Button>
+              )}
+              {nextId && (
                 <Button
                   type="text"
                   size="small"
-                  icon={<UnorderedListOutlined />}
-                  onClick={onBackToMemberBlogs}
+                  disabled={!nextId || navLock}
+                  onClick={() => fastGo && fastGo(nextId)}
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 6,
-                    background:
-                      themeMode === "dark"
-                        ? "rgba(36,33,29,0.8)"
-                        : "rgba(255, 255, 255, 0.6)",
-                    border:
-                      themeMode === "dark"
-                        ? "1px solid rgba(207,191,166,0.2)"
-                        : "1px solid rgba(0,0,0,0.08)",
-                    color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                    width: 26,
+                    height: 26,
+                    borderRadius: 5,
+                    background: "rgba(139, 69, 19, 0.1)",
+                    border: "1px solid rgba(139, 69, 19, 0.2)",
+                    color: "#8b4513",
+                    fontSize: 14,
+                    fontWeight: 600,
                   }}
-                />
-                {prevId && (
-                  <Button
-                    type="text"
-                    size="small"
-                    disabled={!prevId || navLock}
-                    onClick={() => fastGo && fastGo(prevId)}
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 5,
-                      background: "rgba(255, 255, 255, 0.6)",
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      color: "#8b4513",
-                      fontSize: 14,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {pendingNavId &&
-                      pendingNavId === prevId &&
-                      !getCachedBlogDetail(prevId) ? (
-                      <LoadingOutlined style={{ fontSize: 12 }} />
-                    ) : (
-                      "‹"
-                    )}
-                  </Button>
-                )}
-                {nextId && (
-                  <Button
-                    type="text"
-                    size="small"
-                    disabled={!nextId || navLock}
-                    onClick={() => fastGo && fastGo(nextId)}
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 5,
-                      background: "rgba(139, 69, 19, 0.1)",
-                      border: "1px solid rgba(139, 69, 19, 0.2)",
-                      color: "#8b4513",
-                      fontSize: 14,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {pendingNavId &&
-                      pendingNavId === nextId &&
-                      !getCachedBlogDetail(nextId) ? (
-                      <LoadingOutlined style={{ fontSize: 12 }} />
-                    ) : (
-                      "›"
-                    )}
-                  </Button>
-                )}
-              </Space>
-
-              {/* Center - Language selection */}
-              <div
-                style={{ flex: 1, display: "flex", justifyContent: "center" }}
-              >
-                <Segmented
-                  size="small"
-                  value={cachedLanguage}
-                  onChange={(val) => setLanguage(val)}
-                  options={[
-                    { label: "JPN", value: "ja" },
-                    { label: "ENG", value: "en" },
-                    { label: "VN", value: "vi" },
-                  ]}
-                  style={{
-                    background:
-                      themeMode === "dark"
-                        ? "rgba(36,33,29,0.8)"
-                        : "rgba(255, 255, 255, 0.6)",
-                    border:
-                      themeMode === "dark"
-                        ? "1px solid rgba(207,191,166,0.2)"
-                        : "1px solid rgba(0,0,0,0.08)",
-                    borderRadius: 8,
-                  }}
-                />
-              </div>
-
-              {/* Right side - Settings */}
-              <Space size={4}>
-                {setThemeMode && (
-                  <Button
-                    type="text"
-                    size="small"
-                    onClick={() =>
-                      setThemeMode(themeMode === "dark" ? "light" : "dark")
-                    }
-                    icon={
-                      themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
-                    }
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 5,
-                      background:
-                        themeMode === "dark"
-                          ? "rgba(36,33,29,0.8)"
-                          : "rgba(255, 255, 255, 0.6)",
-                      border:
-                        themeMode === "dark"
-                          ? "1px solid rgba(207,191,166,0.2)"
-                          : "1px solid rgba(0,0,0,0.08)",
-                      color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
-                    }}
-                  />
-                )}
-                {/* Translation status - Hidden on very small screens */}
-                {(translating || isPending) && window.innerWidth >= 360 ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "4px 8px",
-                      background:
-                        themeMode === "dark"
-                          ? "#9c6b3f"
-                          : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
-                      borderRadius: 6,
-                      color: "white",
-                      fontSize: 11,
-                      fontWeight: 500,
-                    }}
-                  >
-                    <LoadingOutlined
-                      spin
-                      style={{ marginRight: 4, fontSize: 10 }}
-                    />
-                    {cachedLanguage === "vi"
-                      ? "Dịch"
-                      : cachedLanguage === "en"
-                        ? "Trans"
-                        : "翻訳"}
-                  </div>
-                ) : window.innerWidth >= 360 ? (
-                  <div
-                    style={{
-                      padding: "4px 6px",
-                      background: "rgba(255, 255, 255, 0.6)",
-                      borderRadius: 6,
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      color: "#8b4513",
-                      fontSize: 10,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {cachedLanguage?.toUpperCase?.() || "JA"}
-                  </div>
-                ) : null}
-
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<FontSizeOutlined />}
-                  onClick={() => setDrawerVisible(true)}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 6,
-                    background:
-                      themeMode === "dark"
-                        ? "rgba(36,33,29,0.8)"
-                        : "rgba(255, 255, 255, 0.6)",
-                    border:
-                      themeMode === "dark"
-                        ? "1px solid rgba(207,191,166,0.2)"
-                        : "1px solid rgba(0,0,0,0.08)",
-                    color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
-                  }}
-                />
-              </Space>
+                >
+                  {pendingNavId &&
+                    pendingNavId === nextId &&
+                    !getCachedBlogDetail(nextId) ? (
+                    <LoadingOutlined style={{ fontSize: 12 }} />
+                  ) : (
+                    "›"
+                  )}
+                </Button>
+              )}
             </Space>
-          </div>
+
+            {/* Center - Language selection */}
+            <div
+              style={{ flex: 1, display: "flex", justifyContent: "center" }}
+            >
+              <Segmented
+                size="small"
+                value={cachedLanguage}
+                onChange={(val) => setLanguage(val)}
+                options={[
+                  { label: "JPN", value: "ja" },
+                  { label: "ENG", value: "en" },
+                  { label: "VN", value: "vi" },
+                ]}
+                style={{
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36,33,29,0.8)"
+                      : "rgba(255, 255, 255, 0.6)",
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.2)"
+                      : "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 8,
+                }}
+              />
+            </div>
+
+            {/* Right side - Settings */}
+            <Space size={4}>
+              {setThemeMode && (
+                <Button
+                  type="text"
+                  size="small"
+                  onClick={() =>
+                    setThemeMode(themeMode === "dark" ? "light" : "dark")
+                  }
+                  icon={
+                    themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
+                  }
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 5,
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36,33,29,0.8)"
+                        : "rgba(255, 255, 255, 0.6)",
+                    border:
+                      themeMode === "dark"
+                        ? "1px solid rgba(207,191,166,0.2)"
+                        : "1px solid rgba(0,0,0,0.08)",
+                    color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                  }}
+                />
+              )}
+              {/* Translation status - Hidden on very small screens */}
+              {(translating || isPending) && window.innerWidth >= 360 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "4px 8px",
+                    background:
+                      themeMode === "dark"
+                        ? "#9c6b3f"
+                        : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
+                    borderRadius: 6,
+                    color: "white",
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}
+                >
+                  <LoadingOutlined
+                    spin
+                    style={{ marginRight: 4, fontSize: 10 }}
+                  />
+                  {cachedLanguage === "vi"
+                    ? "Dịch"
+                    : cachedLanguage === "en"
+                      ? "Trans"
+                      : "翻訳"}
+                </div>
+              ) : window.innerWidth >= 360 ? (
+                <div
+                  style={{
+                    padding: "4px 6px",
+                    background: "rgba(255, 255, 255, 0.6)",
+                    borderRadius: 6,
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    color: "#8b4513",
+                    fontSize: 10,
+                    fontWeight: 500,
+                  }}
+                >
+                  {cachedLanguage?.toUpperCase?.() || "JA"}
+                </div>
+              ) : null}
+
+              <Button
+                type="text"
+                size="small"
+                icon={<FontSizeOutlined />}
+                onClick={() => setDrawerVisible(true)}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36,33,29,0.8)"
+                      : "rgba(255, 255, 255, 0.6)",
+                  border:
+                    themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.2)"
+                      : "1px solid rgba(0,0,0,0.08)",
+                  color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                }}
+              />
+            </Space>
+          </Space>
         </div>
+      </div>
     ),
     [
       cachedLanguage,

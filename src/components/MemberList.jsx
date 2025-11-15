@@ -28,6 +28,7 @@ import {
 } from "@ant-design/icons";
 import MemberListMobile from "./MemberListMobile";
 import { prefetchMemberInfo } from "../services/blogService";
+import { loadAllGraduatedMembers, shouldUseLocalDB } from "../utils/graduatedMembersLoader";
 
 const { Title, Text } = Typography;
 
@@ -69,6 +70,21 @@ const t = {
     ja: "総ブログ数",
     en: "Total Members",
     vi: "Tổng Số Thành Viên",
+  },
+  graduatedMembers: {
+    ja: "卒業生",
+    en: "Graduated Members",
+    vi: "Thành viên đã tốt nghiệp",
+  },
+  currentMembers: {
+    ja: "現役メンバー",
+    en: "Current Members",
+    vi: "Thành viên hiện tại",
+  },
+  graduated: {
+    ja: "卒業",
+    en: "Graduated",
+    vi: "Đã tốt nghiệp",
   },
 };
 
@@ -125,10 +141,12 @@ const MemberList = ({
     : "ja";
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
+  const [graduatedMembers, setGraduatedMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [genFilter, setGenFilter] = useState("ALL");
   const [keyword, setKeyword] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showGraduated, setShowGraduated] = useState(false);
 
   // Handle window resize
   useEffect(() => {
@@ -141,6 +159,8 @@ const MemberList = ({
     const fetchMembers = async () => {
       try {
         setLoading(true);
+
+        // Fetch current members from API
         const resp = await axios.get(
           "https://www.nogizaka46.com/s/n46/api/list/member?callback=res",
           { responseType: "text" }
@@ -170,6 +190,20 @@ const MemberList = ({
         }));
 
         setMembers(normalized);
+
+        // ===== Load graduated members from local database =====
+        if (shouldUseLocalDB()) {
+          try {
+            const graduated = await loadAllGraduatedMembers();
+            console.log(`✅ Loaded ${graduated.length} graduated members from local DB`);
+            setGraduatedMembers(graduated);
+          } catch (error) {
+            console.warn("Failed to load graduated members:", error);
+            setGraduatedMembers([]);
+          }
+        }
+        // ===== END graduated members loading =====
+
       } catch (e) {
         console.error(e);
         notification.error({
@@ -675,6 +709,212 @@ const MemberList = ({
             </ProCard>
           ))
         )}
+
+        {/* ===== GRADUATED MEMBERS SECTION ===== */}
+        {graduatedMembers.length > 0 && (
+          <ProCard
+            title={
+              <Space align="center">
+                <StarOutlined style={{ color: "#888" }} />
+                <span style={{ ...jpFont, fontWeight: 700, color: "#888" }}>
+                  {t.graduatedMembers[currentLanguage]}
+                </span>
+                <Tag color="default" style={{ marginLeft: 6 }}>
+                  {graduatedMembers.length}
+                </Tag>
+              </Space>
+            }
+            bordered
+            headerBordered
+            collapsible
+            defaultCollapsed={false}
+            style={{
+              borderRadius: 14,
+              background:
+                themeMode === "dark"
+                  ? "rgba(36, 33, 29, 0.85)"
+                  : "rgba(253, 246, 227, 0.8)",
+              marginTop: 24,
+            }}
+            bodyStyle={{ paddingTop: 16 }}
+          >
+            <List
+              grid={{
+                gutter: 16,
+                xs: 2,
+                sm: 3,
+                md: 4,
+                lg: 5,
+                xl: 5,
+                xxl: 5,
+              }}
+              dataSource={graduatedMembers}
+              renderItem={(m) => (
+                <List.Item key={m.code}>
+                  <ProCard
+                    hoverable
+                    bordered={false}
+                    className="member-card graduated-card"
+                    onClick={() => navigate(`/blogs/${m.code}`)}
+                    style={{
+                      borderRadius: 16,
+                      overflow: "hidden",
+                      background:
+                        themeMode === "dark"
+                          ? "rgba(36, 33, 29, 0.9)"
+                          : "rgba(253, 246, 227, 0.9)",
+                      boxShadow:
+                        themeMode === "dark"
+                          ? "0 4px 12px rgba(0,0,0,0.35)"
+                          : "0 4px 12px rgba(139, 69, 19, 0.1)",
+                      transition: "all 0.3s ease",
+                      opacity: 0.85,
+                    }}
+                  >
+                    <div
+                      className="thumb"
+                      style={{
+                        position: "relative",
+                        paddingBottom: "120%",
+                        overflow: "hidden",
+                        background:
+                          themeMode === "dark" ? "#1e1c19" : "#f7f7f9",
+                        borderRadius: "12px",
+                      }}
+                    >
+                      <img
+                        src={m.img}
+                        alt={m.name}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          filter: "grayscale(20%)",
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://via.placeholder.com/300x300?text=Graduated";
+                        }}
+                      />
+                      <div
+                        className="graduated-badge"
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          background: "rgba(0,0,0,0.7)",
+                          color: "#fff",
+                          padding: "4px 8px",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {t.graduated[currentLanguage]}
+                      </div>
+                    </div>
+
+                    <div style={{ padding: "16px 12px" }}>
+                      <Space
+                        direction="vertical"
+                        size={8}
+                        style={{ width: "100%" }}
+                      >
+                        <div>
+                          <Text
+                            strong
+                            style={{
+                              ...jpFont,
+                              fontSize: 16,
+                              display: "block",
+                              marginBottom: 2,
+                            }}
+                          >
+                            {m.name}
+                          </Text>
+                          {m.englishName && (
+                            <Text
+                              type="secondary"
+                              style={{
+                                fontSize: 12,
+                                display: "block",
+                              }}
+                            >
+                              {m.englishName}
+                            </Text>
+                          )}
+                        </div>
+
+                        <Space size={4} wrap>
+                          <Tag
+                            color="purple"
+                            style={{
+                              borderRadius: 12,
+                              fontSize: 11,
+                              padding: "2px 8px",
+                            }}
+                          >
+                            {m.cate?.replace(
+                              "期生",
+                              currentLanguage === "ja"
+                                ? "期生"
+                                : currentLanguage === "en"
+                                  ? " Gen"
+                                  : " Thế hệ"
+                            )}
+                          </Tag>
+                          {m.graduationDate && (
+                            <Tag
+                              style={{
+                                background:
+                                  themeMode === "dark"
+                                    ? "rgba(207,191,166,0.08)"
+                                    : "rgba(147, 51, 234, 0.05)",
+                                border:
+                                  themeMode === "dark"
+                                    ? "1px solid rgba(207,191,166,0.25)"
+                                    : "1px solid rgba(147, 51, 234, 0.2)",
+                                borderRadius: 12,
+                                fontSize: 11,
+                              }}
+                            >
+                              📅 {m.graduationDate}
+                            </Tag>
+                          )}
+                        </Space>
+
+                        {m.tag && m.tag.length > 0 && (
+                          <Space size={4} wrap style={{ marginTop: 4 }}>
+                            {m.tag.slice(0, 3).map((tag, idx) => (
+                              <Tag
+                                key={idx}
+                                style={{
+                                  fontSize: 10,
+                                  padding: "1px 6px",
+                                  borderRadius: 8,
+                                  background:
+                                    themeMode === "dark"
+                                      ? "rgba(207,191,166,0.05)"
+                                      : "rgba(147, 51, 234, 0.03)",
+                                  border: "none",
+                                }}
+                              >
+                                {tag}
+                              </Tag>
+                            ))}
+                          </Space>
+                        )}
+                      </Space>
+                    </div>
+                  </ProCard>
+                </List.Item>
+              )}
+            />
+          </ProCard>
+        )}
+        {/* ===== END GRADUATED MEMBERS ===== */}
       </ProCard>
     </PageContainer>
   );

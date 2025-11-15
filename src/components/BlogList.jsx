@@ -1,4 +1,4 @@
-// BlogList.jsx — Ant Design Pro • Mobile-First Fast Render
+﻿// BlogList.jsx — Ant Design Pro • Mobile-First Fast Render
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Typography,
@@ -8,7 +8,6 @@ import {
   Avatar,
   Input,
   Space,
-  Divider,
   Pagination,
   Tooltip,
   Badge,
@@ -47,7 +46,7 @@ import RecentBlogs from "./RecentBlogs";
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
-// Translation keys
+// Translation keys — UTF-8 chuẩn
 const t = {
   searchPlaceholder: {
     ja: "ブログを検索...",
@@ -59,23 +58,51 @@ const t = {
     en: "No blogs found",
     vi: "Không tìm thấy blog",
   },
-  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
+  loading: {
+    ja: "読み込み中...",
+    en: "Loading...",
+    vi: "Đang tải...",
+  },
   error: {
     ja: "エラーが発生しました",
     en: "An error occurred",
     vi: "Đã xảy ra lỗi",
   },
-  retry: { ja: "再試行", en: "Retry", vi: "Thử lại" },
-  blogArticle: { ja: "ブログ記事", en: "Blog Article", vi: "Bài viết blog" },
-  readMore: { ja: "続きを読む", en: "Read More", vi: "Đọc thêm" },
-  totalPosts: { ja: "総投稿数", en: "Total Posts", vi: "Tổng số bài viết" },
+  retry: {
+    ja: "再試行",
+    en: "Retry",
+    vi: "Thử lại",
+  },
+  blogArticle: {
+    ja: "ブログ記事",
+    en: "Blog Article",
+    vi: "Bài viết blog",
+  },
+  readMore: {
+    ja: "続きを読む",
+    en: "Read More",
+    vi: "Đọc thêm",
+  },
+  totalPosts: {
+    ja: "総投稿数",
+    en: "Total Posts",
+    vi: "Tổng số bài viết",
+  },
   memberBlogs: {
     ja: "メンバーブログ",
     en: "Member Blogs",
     vi: "Blog thành viên",
   },
-  calendar: { ja: "カレンダー", en: "Calendar", vi: "Lịch" },
-  list: { ja: "リスト", en: "List", vi: "Danh sách" },
+  calendar: {
+    ja: "カレンダー",
+    en: "Calendar",
+    vi: "Lịch",
+  },
+  list: {
+    ja: "リスト",
+    en: "List",
+    vi: "Danh sách",
+  },
 };
 
 /** ---------- Simple in-memory cache ---------- **/
@@ -84,7 +111,7 @@ const _cache = {
   memberByCode: new Map(), // key: memberCode -> { info, ts }
   scrollY: new Map(), // key: memberCode -> number
 };
-const STALE_MS = 1000 * 60 * 3; // 3 phút coi là “fresh”
+const STALE_MS = 1000 * 60 * 3; // 3 phút coi là "fresh"
 
 export default function BlogList({
   language = "ja",
@@ -100,7 +127,7 @@ export default function BlogList({
   const { memberCode } = useParams();
   const screens = useBreakpoint();
 
-  // PAGE_SIZE dynamic: mobile nhỏ hơn để render ít card/ lần
+  // PAGE_SIZE dynamic: mobile nhỏ hơn để render ít card/lần
   const PAGE_SIZE = useMemo(() => (screens.xs ? 6 : 9), [screens.xs]);
 
   const [blogs, setBlogs] = useState([]);
@@ -227,10 +254,16 @@ export default function BlogList({
 
           // Update cache
           if (blogsData.length > 0) {
-            _cache.blogsByMember.set(memberCode, { list: blogsData, ts: Date.now() });
+            _cache.blogsByMember.set(memberCode, {
+              list: blogsData,
+              ts: Date.now(),
+            });
           }
           if (member) {
-            _cache.memberByCode.set(memberCode, { info: member, ts: Date.now() });
+            _cache.memberByCode.set(memberCode, {
+              info: member,
+              ts: Date.now(),
+            });
           }
         }
       } catch (e) {
@@ -561,7 +594,7 @@ export default function BlogList({
                     // contain layout/paint giúp trình duyệt tối ưu composite
                     contain: "content",
                     willChange: "transform",
-                    height: "100%", // Đảm bảo tất cả card có cùng chiều cao
+                    height: "100%", // đảm bảo tất cả card có cùng chiều cao
                     display: "flex",
                     flexDirection: "column",
                     background:
@@ -591,41 +624,67 @@ export default function BlogList({
                       flexShrink: 0, // Không cho phép thu nhỏ
                     }}
                   >
-                    <img
-                      src={
-                        blog.thumbnail
-                          ? getImageUrl(blog.thumbnail, {
-                            w: screens.xs ? 640 : 960,
-                          })
-                          : "https://via.placeholder.com/600x320/f0f0f0/666666?text=No+Image"
-                      }
-                      srcSet={
-                        blog.thumbnail
-                          ? [
-                            `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
-                            `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
-                            `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
-                            `${getImageUrl(blog.thumbnail, {
-                              w: 1280,
-                            })} 1280w`,
-                          ].join(", ")
-                          : undefined
-                      }
-                      sizes={
-                        screens.xs ? "(max-width: 576px) 100vw, 640px" : "33vw"
-                      }
-                      alt={blog.title}
-                      loading={idx === 0 ? "eager" : "lazy"}
-                      // ảnh eager đầu tiên để cảm giác “vào là thấy”, còn lại lazy
-                      decoding="async"
-                      fetchpriority={idx === 0 ? "high" : "low"}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        transition: "transform .25s",
-                      }}
-                    />
+                    {blog.thumbnail ? (
+                      <img
+                        src={getImageUrl(blog.thumbnail, {
+                          w: screens.xs ? 640 : 960,
+                        })}
+                        srcSet={[
+                          `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
+                          `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
+                          `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
+                          `${getImageUrl(blog.thumbnail, { w: 1280 })} 1280w`,
+                        ].join(", ")}
+                        sizes={
+                          screens.xs
+                            ? "(max-width: 576px) 100vw, 640px"
+                            : "33vw"
+                        }
+                        alt={blog.title}
+                        loading={idx === 0 ? "eager" : "lazy"}
+                        // ảnh eager đầu tiên để cảm giác "vào là thấy", còn lại lazy
+                        decoding="async"
+                        fetchpriority={idx === 0 ? "high" : "low"}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          transition: "transform .25s",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background:
+                            themeMode === "dark"
+                              ? "linear-gradient(135deg, #2a2826 0%, #1e1c19 100%)"
+                              : "linear-gradient(135deg, #f5f6fa 0%, #e8eaf0 100%)",
+                          color: themeMode === "dark" ? "#888" : "#999",
+                          fontSize: 14,
+                          fontWeight: 500,
+                        }}
+                      >
+                        <svg
+                          width="48"
+                          height="48"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          style={{ marginBottom: 8, opacity: 0.5 }}
+                        >
+                          <path
+                            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span>No Image</span>
+                      </div>
+                    )}
                     <div style={{ position: "absolute", top: 8, left: 8 }}>
                       <Badge
                         count={
@@ -677,7 +736,7 @@ export default function BlogList({
                       </Title>
                     </Tooltip>
 
-                    {/* Action Buttons - Sử dụng ProCard để layout tốt hơn */}
+                    {/* Action Buttons */}
                     <div style={{ marginTop: "auto", width: "100%" }}>
                       <Space
                         style={{
