@@ -111,7 +111,7 @@ export const loadGraduatedMember = async (memberCode) => {
             name: localData.name || member.name,
             kana: localData.name_hiragana || "",
             englishName: member.englishName,
-            english_name: member.englishName.toLowerCase(), // for formatEnglishName
+            english_name: member.englishName, // Keep original format "Saito Asuka" for consistency with API
             nameHiragana: localData.name_hiragana,
             img: `${LOCAL_DB_PATH}/${member.folder}/${localData.image}`,
             cate: member.generation,

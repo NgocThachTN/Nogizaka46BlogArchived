@@ -99,9 +99,17 @@ const translateGeneration = (generation, lang) => {
 const formatEnglishName = (englishName) => {
   if (!englishName) return englishName;
 
-  // Split by space and reverse order (nagi inoue -> inoue nagi)
+  // Check if name is already capitalized (from local DB) - don't process
+  // e.g., "Saito Asuka" should stay as is
   const parts = englishName.trim().split(/\s+/);
   if (parts.length === 2) {
+    // Check if first character of first word is uppercase (indicates already formatted)
+    const firstChar = parts[0].charAt(0);
+    if (firstChar === firstChar.toUpperCase()) {
+      // Already formatted (e.g., "Saito Asuka"), return as is
+      return englishName;
+    }
+    // Lowercase from API (e.g., "asuka saito"), reverse order
     return `${parts[1]} ${parts[0]}`;
   }
 
