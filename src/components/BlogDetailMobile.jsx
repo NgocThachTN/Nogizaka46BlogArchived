@@ -57,19 +57,29 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
-// Book-like serif fonts for reading content
+// Book-like serif fonts for reading content - Enhanced for Android
 const bookFont = {
   ja: {
     fontFamily:
-      "'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho','YuMincho','HG明朝E','MS Mincho','Droid Serif','serif'",
+      "'Noto Serif JP','Source Han Serif','Source Han Serif JP','游明朝','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG明朝E','MS Mincho','Droid Serif','serif'",
+    fontWeight: 400,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
+    textRendering: "optimizeLegibility",
   },
   en: {
     fontFamily:
       "'Georgia','Cambria','Times New Roman','Droid Serif','serif'",
+    fontWeight: 400,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
   },
   vi: {
     fontFamily:
       "'Times New Roman','Georgia','Cambria','Droid Serif','serif'",
+    fontWeight: 400,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
   },
 };
 
