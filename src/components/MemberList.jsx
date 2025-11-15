@@ -222,25 +222,29 @@ const MemberList = ({
 
   // Tạo danh sách Gen
   const genList = useMemo(() => {
-    const s = new Set(members.map((m) => getGen(m)).filter(Boolean));
+    // Show generation options based on current view (current or graduated)
+    const allMembers = showGraduated ? graduatedMembers : members;
+    const s = new Set(allMembers.map((m) => getGen(m)).filter(Boolean));
     // sắp theo GEN_ORDER
     const ordered = GEN_ORDER.filter((g) => s.has(g));
     // thêm những gen lạ (nếu có)
     const rest = Array.from(s).filter((g) => !GEN_ORDER.includes(g));
     return ["ALL", ...ordered, ...rest];
-  }, [members]);
+  }, [members, graduatedMembers, showGraduated]);
 
   // Lọc theo từ khoá + Gen
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
-    return members.filter((m) => {
+    // Show only graduated members when showGraduated is true, otherwise show only current members
+    const allMembers = showGraduated ? graduatedMembers : members;
+    return allMembers.filter((m) => {
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
       const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""
         }`.toLowerCase();
       return hay.includes(kw);
     });
-  }, [members, genFilter, keyword]);
+  }, [members, graduatedMembers, genFilter, keyword, showGraduated]);
 
   // Nhóm theo Gen & sắp thứ tự
   const grouped = useMemo(() => {
@@ -404,33 +408,64 @@ const MemberList = ({
             size="middle"
             style={{ width: "100%", justifyContent: "space-between" }}
           >
-            <Segmented
-              options={genList.map((g) => ({
-                label:
-                  g === "ALL"
-                    ? currentLanguage === "ja"
-                      ? "すべて"
-                      : currentLanguage === "en"
-                        ? "All"
-                        : "Tất cả"
-                    : g
-                      .replace(
-                        "期生",
-                        currentLanguage === "ja"
-                          ? "期生"
-                          : currentLanguage === "en"
-                            ? " Gen"
-                            : " Thế hệ"
-                      )
-                      .replace(
-                        /^(\d+)\s*(Gen|Thế hệ)$/,
-                        currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+            <Space wrap size="middle">
+              {/* Toggle Current/Graduated Members */}
+              {shouldUseLocalDB() && graduatedMembers.length > 0 && (
+                <Segmented
+                  value={showGraduated ? "graduated" : "current"}
+                  onChange={(val) => setShowGraduated(val === "graduated")}
+                  options={[
+                    {
+                      label: (
+                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          <StarOutlined />
+                          {t.currentMembers[currentLanguage]} ({members.length})
+                        </span>
                       ),
-                value: g,
-              }))}
-              value={genFilter}
-              onChange={(v) => setGenFilter(v)}
-            />
+                      value: "current",
+                    },
+                    {
+                      label: (
+                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          {t.graduatedMembers[currentLanguage]} ({graduatedMembers.length})
+                        </span>
+                      ),
+                      value: "graduated",
+                    },
+                  ]}
+                />
+              )}
+
+              {/* Generation Filter */}
+              <Segmented
+                options={genList.map((g) => ({
+                  label:
+                    g === "ALL"
+                      ? currentLanguage === "ja"
+                        ? "すべて"
+                        : currentLanguage === "en"
+                          ? "All"
+                          : "Tất cả"
+                      : g
+                        .replace(
+                          "期生",
+                          currentLanguage === "ja"
+                            ? "期生"
+                            : currentLanguage === "en"
+                              ? " Gen"
+                              : " Thế hệ"
+                        )
+                        .replace(
+                          /^(\d+)\s*(Gen|Thế hệ)$/,
+                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                        ),
+                  value: g,
+                }))}
+                value={genFilter}
+                onChange={(v) => setGenFilter(v)}
+              />
+            </Space>
+
             <Input
               allowClear
               prefix={<SearchOutlined />}
@@ -709,212 +744,6 @@ const MemberList = ({
             </ProCard>
           ))
         )}
-
-        {/* ===== GRADUATED MEMBERS SECTION ===== */}
-        {graduatedMembers.length > 0 && (
-          <ProCard
-            title={
-              <Space align="center">
-                <StarOutlined style={{ color: "#888" }} />
-                <span style={{ ...jpFont, fontWeight: 700, color: "#888" }}>
-                  {t.graduatedMembers[currentLanguage]}
-                </span>
-                <Tag color="default" style={{ marginLeft: 6 }}>
-                  {graduatedMembers.length}
-                </Tag>
-              </Space>
-            }
-            bordered
-            headerBordered
-            collapsible
-            defaultCollapsed={false}
-            style={{
-              borderRadius: 14,
-              background:
-                themeMode === "dark"
-                  ? "rgba(36, 33, 29, 0.85)"
-                  : "rgba(253, 246, 227, 0.8)",
-              marginTop: 24,
-            }}
-            bodyStyle={{ paddingTop: 16 }}
-          >
-            <List
-              grid={{
-                gutter: 16,
-                xs: 2,
-                sm: 3,
-                md: 4,
-                lg: 5,
-                xl: 5,
-                xxl: 5,
-              }}
-              dataSource={graduatedMembers}
-              renderItem={(m) => (
-                <List.Item key={m.code}>
-                  <ProCard
-                    hoverable
-                    bordered={false}
-                    className="member-card graduated-card"
-                    onClick={() => navigate(`/blogs/${m.code}`)}
-                    style={{
-                      borderRadius: 16,
-                      overflow: "hidden",
-                      background:
-                        themeMode === "dark"
-                          ? "rgba(36, 33, 29, 0.9)"
-                          : "rgba(253, 246, 227, 0.9)",
-                      boxShadow:
-                        themeMode === "dark"
-                          ? "0 4px 12px rgba(0,0,0,0.35)"
-                          : "0 4px 12px rgba(139, 69, 19, 0.1)",
-                      transition: "all 0.3s ease",
-                      opacity: 0.85,
-                    }}
-                  >
-                    <div
-                      className="thumb"
-                      style={{
-                        position: "relative",
-                        paddingBottom: "120%",
-                        overflow: "hidden",
-                        background:
-                          themeMode === "dark" ? "#1e1c19" : "#f7f7f9",
-                        borderRadius: "12px",
-                      }}
-                    >
-                      <img
-                        src={m.img}
-                        alt={m.name}
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          filter: "grayscale(20%)",
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://via.placeholder.com/300x300?text=Graduated";
-                        }}
-                      />
-                      <div
-                        className="graduated-badge"
-                        style={{
-                          position: "absolute",
-                          top: 8,
-                          right: 8,
-                          background: "rgba(0,0,0,0.7)",
-                          color: "#fff",
-                          padding: "4px 8px",
-                          borderRadius: "8px",
-                          fontSize: "11px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {t.graduated[currentLanguage]}
-                      </div>
-                    </div>
-
-                    <div style={{ padding: "16px 12px" }}>
-                      <Space
-                        direction="vertical"
-                        size={8}
-                        style={{ width: "100%" }}
-                      >
-                        <div>
-                          <Text
-                            strong
-                            style={{
-                              ...jpFont,
-                              fontSize: 16,
-                              display: "block",
-                              marginBottom: 2,
-                            }}
-                          >
-                            {m.name}
-                          </Text>
-                          {m.englishName && (
-                            <Text
-                              type="secondary"
-                              style={{
-                                fontSize: 12,
-                                display: "block",
-                              }}
-                            >
-                              {m.englishName}
-                            </Text>
-                          )}
-                        </div>
-
-                        <Space size={4} wrap>
-                          <Tag
-                            color="purple"
-                            style={{
-                              borderRadius: 12,
-                              fontSize: 11,
-                              padding: "2px 8px",
-                            }}
-                          >
-                            {m.cate?.replace(
-                              "期生",
-                              currentLanguage === "ja"
-                                ? "期生"
-                                : currentLanguage === "en"
-                                  ? " Gen"
-                                  : " Thế hệ"
-                            )}
-                          </Tag>
-                          {m.graduationDate && (
-                            <Tag
-                              style={{
-                                background:
-                                  themeMode === "dark"
-                                    ? "rgba(207,191,166,0.08)"
-                                    : "rgba(147, 51, 234, 0.05)",
-                                border:
-                                  themeMode === "dark"
-                                    ? "1px solid rgba(207,191,166,0.25)"
-                                    : "1px solid rgba(147, 51, 234, 0.2)",
-                                borderRadius: 12,
-                                fontSize: 11,
-                              }}
-                            >
-                              📅 {m.graduationDate}
-                            </Tag>
-                          )}
-                        </Space>
-
-                        {m.tag && m.tag.length > 0 && (
-                          <Space size={4} wrap style={{ marginTop: 4 }}>
-                            {m.tag.slice(0, 3).map((tag, idx) => (
-                              <Tag
-                                key={idx}
-                                style={{
-                                  fontSize: 10,
-                                  padding: "1px 6px",
-                                  borderRadius: 8,
-                                  background:
-                                    themeMode === "dark"
-                                      ? "rgba(207,191,166,0.05)"
-                                      : "rgba(147, 51, 234, 0.03)",
-                                  border: "none",
-                                }}
-                              >
-                                {tag}
-                              </Tag>
-                            ))}
-                          </Space>
-                        )}
-                      </Space>
-                    </div>
-                  </ProCard>
-                </List.Item>
-              )}
-            />
-          </ProCard>
-        )}
-        {/* ===== END GRADUATED MEMBERS ===== */}
       </ProCard>
     </PageContainer>
   );
