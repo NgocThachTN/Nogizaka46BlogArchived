@@ -814,7 +814,8 @@ export default function BlogDetailMobile({
                           return blog.author;
                         }
 
-                        // For English/Vietnamese: convert Japanese to English
+                        // For English/Vietnamese: convert Japanese to English 2
+                        //123
                         if (isJapaneseName) {
                           const englishName = japaneseToEnglish[blog.author];
                           return englishName ? formatEnglishName(englishName) : blog.author;
