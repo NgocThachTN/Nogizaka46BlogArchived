@@ -821,6 +821,7 @@ export default function BlogDetailMobile({
                         }
 
                         // Already English name - just format it
+                        //123
                         return formatEnglishName(blog.author);
                       }
 
