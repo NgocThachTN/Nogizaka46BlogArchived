@@ -1,8 +1,45 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GEMINI_API_KEY } from "../config/env";
+import { GEMINI_API_KEYS } from "../config/env";
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+// API key rotation state
+let currentKeyIndex = 0;
+let apiInstances = [];
+let models = [];
+
+// Initialize all API instances
+const initializeApiInstances = () => {
+  if (GEMINI_API_KEYS.length === 0) {
+    console.warn("No API keys available for translation");
+    return;
+  }
+
+  apiInstances = GEMINI_API_KEYS.map(key => new GoogleGenerativeAI(key));
+  models = apiInstances.map(genAI => genAI.getGenerativeModel({ model: "gemini-2.0-flash" }));
+
+  console.log(`Initialized ${models.length} Gemini API instance(s) for translation`);
+};
+
+// Initialize on module load
+initializeApiInstances();
+
+// Get current model and rotate to next
+const getModelAndRotate = () => {
+  if (models.length === 0) {
+    throw new Error("No API keys configured for translation");
+  }
+
+  const currentModel = models[currentKeyIndex];
+  const keyNumber = currentKeyIndex + 1;
+
+  // Rotate to next key for next request
+  currentKeyIndex = (currentKeyIndex + 1) % models.length;
+
+  if (models.length > 1) {
+    console.log(`Using API key #${keyNumber} (will use #${currentKeyIndex + 1} next)`);
+  }
+
+  return currentModel;
+};
 
 const cleanTextForTranslation = (text) => {
   return text.replace(/\s+/g, " ").trim();
@@ -214,6 +251,9 @@ export async function translateJapaneseToEnglish(text, onProgress) {
   const chunks = splitTextIntoChunks(text);
   let translatedText = "";
 
+  // Get model for this translation (rotates for each new translation call)
+  const model = getModelAndRotate();
+
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     const isLastChunk = i === chunks.length - 1;
@@ -245,6 +285,9 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
   const chunks = splitTextIntoChunks(text);
   let translatedText = "";
 
+  // Get model for this translation (rotates for each new translation call)
+  const model = getModelAndRotate();
+
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     const isLastChunk = i === chunks.length - 1;
@@ -274,6 +317,9 @@ export async function translateTitleToVietnamese(title) {
   if (!title) return "";
 
   try {
+    // Get model for this translation (rotates for each new translation call)
+    const model = getModelAndRotate();
+
     const prompt = `You are a professional translator. Translate this Japanese title to Vietnamese.
 
 TRANSLATION RULES:

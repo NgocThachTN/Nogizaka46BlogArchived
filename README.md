@@ -36,13 +36,38 @@
 - **Ant Design Pro Components** – clean, consistent UI  
 - **Axios + Cheerio** – crawl & parse official blog data  
 - **i18n** – JA/EN/VI  
-- **Gemini API** – automatic translations
+- **Gemini API** – automatic translations with **load balancing** (supports up to 2 API keys)
+
 ## 🛠 Scripts
--- `npm i` – install essential library 
-- `npm run dev:full` – start dev server and proxy server(without :full you cannot run web in localhost:5173
+- `npm i` – install essential library 
+- `npm run dev:full` – start dev server and proxy server (without :full you cannot run web in localhost:5173)
 - `npm run build` – create production build  
 - `preview` – serve built app  
 - `lint` – optional (if configured)
+
+---
+
+## 🔑 API Key Configuration
+
+**Multiple API Keys Support (NEW!)** – The system now supports up to 2 Gemini API keys for load balancing.
+
+### How it works:
+- **Single key**: Use `VITE_GEMINI_API_KEY` only - works as before
+- **Dual keys**: Add `VITE_GEMINI_API_KEY_2` - system automatically rotates between keys
+- **Rotation logic**: Each blog translation uses a different key (Blog 1 → Key 1, Blog 2 → Key 2, Blog 3 → Key 1, ...)
+
+### Setup:
+```bash
+# .env file
+VITE_GEMINI_API_KEY=your_first_api_key_here
+VITE_GEMINI_API_KEY_2=your_second_api_key_here  # Optional
+```
+
+**Benefits:**
+- ✅ Avoid rate limits when translating many blogs
+- ✅ Better reliability (fallback if one key hits quota)
+- ✅ Faster parallel translations
+- ✅ Automatic rotation - no manual switching needed
 
 ---
 

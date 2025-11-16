@@ -1,12 +1,30 @@
 import axios from "axios";
-import { GEMINI_API_KEY } from "../config/env";
+import { GEMINI_API_KEYS } from "../config/env";
+
+// API key rotation state for axios instances
+let currentAxiosKeyIndex = 0;
 
 const createAxiosWithRetry = () => {
+  // Get current API key and rotate
+  const getCurrentApiKey = () => {
+    if (GEMINI_API_KEYS.length === 0) {
+      throw new Error("No API keys configured");
+    }
+    const key = GEMINI_API_KEYS[currentAxiosKeyIndex];
+    currentAxiosKeyIndex = (currentAxiosKeyIndex + 1) % GEMINI_API_KEYS.length;
+
+    if (GEMINI_API_KEYS.length > 1) {
+      console.log(`GeminiServices: Using API key #${currentAxiosKeyIndex + 1}`);
+    }
+
+    return key;
+  };
+
   const instance = axios.create({
     baseURL: "https://generativelanguage.googleapis.com/v1beta",
     headers: {
       "Content-Type": "application/json",
-      "X-goog-api-key": GEMINI_API_KEY,
+      "X-goog-api-key": getCurrentApiKey(),
     },
     timeout: 120000, // 2 minutes timeout
   });
