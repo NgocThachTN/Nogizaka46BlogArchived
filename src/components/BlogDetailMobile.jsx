@@ -823,7 +823,7 @@ export default function BlogDetailMobile({
                         }
 
                         // Already English name - just format it
-                        //123
+                        //123456 test
                         return formatEnglishName(blog.author);
                       }
 
