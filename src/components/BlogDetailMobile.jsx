@@ -1332,6 +1332,7 @@ export default function BlogDetailMobile({
                   backfaceVisibility: "hidden",
                   color: themeMode === "dark" ? "#f5ede0" : undefined,
                   letterSpacing: cachedLanguage === "ja" ? 0.5 : 0.3,
+                  textAlign: "left",
                   ...bookFont[cachedLanguage],
                 }}
                 dangerouslySetInnerHTML={{
@@ -1535,6 +1536,7 @@ export default function BlogDetailMobile({
                 paddingBottom: "20px",
                 letterSpacing: cachedLanguage === "ja" ? 0.5 : 0.3,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
+                textAlign: "left",
                 ...bookFont[cachedLanguage],
                 /* iOS Safari specific fixes */
                 WebkitTransform: "translateZ(0)",
@@ -1803,7 +1805,7 @@ export default function BlogDetailMobile({
           .jp-prose p[style*="font-size"],
           .jp-prose p[class*="p"] {
             margin: 0.85em 0 !important;
-            text-align: justify;
+            text-align: left !important;
             line-height: 1.9 !important;
             font-size: ${fontSize}px !important;
             color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"} !important;

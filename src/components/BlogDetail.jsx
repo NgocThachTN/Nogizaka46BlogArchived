@@ -1106,6 +1106,7 @@ export default function BlogDetail({
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
                 wordBreak: "break-word",
                 overflowWrap: "break-word",
+                textAlign: "left",
                 ...bookFont[language],
               }}
               dangerouslySetInnerHTML={{ __html: displayContent }}
@@ -1322,7 +1323,7 @@ export default function BlogDetail({
         .jp-prose p[class*="p"] { 
           color: ${themeMode === "dark" ? "#f5ede0" : "#374151"} !important; 
           margin: ${window.innerWidth < 768 ? "0.6em 0" : "0.75em 0"} !important; 
-          text-align: justify; 
+          text-align: left !important; 
           font-size: ${sz.px}px !important;
           line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
           letter-spacing: ${language === "ja" ? "0.05em" : "0.02em"} !important;
