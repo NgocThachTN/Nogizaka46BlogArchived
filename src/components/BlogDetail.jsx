@@ -1331,6 +1331,7 @@ export default function BlogDetail({
           word-break: break-word !important;
           overflow-wrap: break-word !important;
           font-stretch: normal !important;
+          font-family: ${bookFont[language].fontFamily} !important;
         }
         .jp-prose div[dir="auto"],
         .jp-prose div[style*="font-size"] { 
@@ -1341,7 +1342,16 @@ export default function BlogDetail({
         .jp-prose span.s1,
         .jp-prose span.s2,
         .jp-prose span[class*="s"],
-        .jp-prose span[style*="font-size"] {
+        .jp-prose span[style*="font-size"],
+        .jp-prose span[style*="UICTFontTextStyleBody"] {
+          font-size: ${sz.px}px !important;
+          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+          font-family: ${bookFont[language].fontFamily} !important;
+          color: ${themeMode === "dark" ? "#f5ede0" : "#374151"} !important;
+        }
+        /* Override UICTFontTextStyleBody specifically */
+        .jp-prose *[style*="UICTFontTextStyleBody"] {
+          font-family: ${bookFont[language].fontFamily} !important;
           font-size: ${sz.px}px !important;
           line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
         }

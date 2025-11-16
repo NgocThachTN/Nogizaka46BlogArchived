@@ -1814,6 +1814,7 @@ export default function BlogDetailMobile({
             word-break: break-word !important;
             overflow-wrap: break-word !important;
             font-stretch: normal !important;
+            font-family: ${bookFont[cachedLanguage].fontFamily} !important;
           }
           .jp-prose div[dir="auto"],
           .jp-prose div[style*="font-size"] {
@@ -1824,7 +1825,16 @@ export default function BlogDetailMobile({
           .jp-prose span.s1,
           .jp-prose span.s2,
           .jp-prose span[class*="s"],
-          .jp-prose span[style*="font-size"] {
+          .jp-prose span[style*="font-size"],
+          .jp-prose span[style*="UICTFontTextStyleBody"] {
+            font-size: ${fontSize}px !important;
+            line-height: 1.9 !important;
+            font-family: ${bookFont[cachedLanguage].fontFamily} !important;
+            color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"} !important;
+          }
+          /* Override UICTFontTextStyleBody specifically */
+          .jp-prose *[style*="UICTFontTextStyleBody"] {
+            font-family: ${bookFont[cachedLanguage].fontFamily} !important;
             font-size: ${fontSize}px !important;
             line-height: 1.9 !important;
           }
