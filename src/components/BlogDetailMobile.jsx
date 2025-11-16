@@ -57,6 +57,24 @@ const jpFont = {
     "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
+// Helper function to format English name (capitalize and reverse order)
+const formatEnglishName = (englishName) => {
+  if (!englishName) return englishName;
+
+  // Split by space (e.g., "ikeda eisa" -> ["ikeda", "eisa"])
+  const parts = englishName.trim().toLowerCase().split(/\s+/);
+
+  if (parts.length === 2) {
+    // Capitalize first letter of each part
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+    // Reverse order: last name first, first name last (eisa ikeda -> Eisa Ikeda)
+    return `${capitalize(parts[1])} ${capitalize(parts[0])}`;
+  }
+
+  // If not 2 parts, just capitalize first letter
+  return englishName.charAt(0).toUpperCase() + englishName.slice(1).toLowerCase();
+};
+
 // Book-like serif fonts for reading content - Enhanced for Android  
 const bookFont = {
   ja: {
@@ -776,7 +794,41 @@ export default function BlogDetailMobile({
                       fontSize: "13px",
                     }}
                   >
-                    {memberInfo?.name || blog?.author || "Unknown Author"}
+                    {(() => {
+                      // Mobile: use same logic as desktop with language support
+                      const japaneseToEnglish = {
+                        "齋藤 飛鳥": "Asuka Saito",
+                        "生田 絵梨花": "Erika Ikuta", 
+                        "西野 七瀬": "Nanase Nishino",
+                        "山下 美月": "Mizuki Yamashita",
+                        "大園 桃子": "Momoko Oozono",
+                        "橋本 奈々未": "Nanami Hashimoto"
+                      };
+
+                      // Check blog.author first (from local database)
+                      if (blog?.author) {
+                        if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(blog.author)) {
+                          // Japanese name - convert to English and format
+                          const englishName = japaneseToEnglish[blog.author];
+                          return englishName ? formatEnglishName(englishName) : blog.author;
+                        }
+                        // Already English name - just format it
+                        return formatEnglishName(blog.author);
+                      }
+
+                      // Check memberInfo (from API or local)
+                      if (memberInfo?.name) {
+                        if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(memberInfo.name)) {
+                          // Japanese name - convert to English and format
+                          const englishName = japaneseToEnglish[memberInfo.name];
+                          return englishName ? formatEnglishName(englishName) : memberInfo.name;
+                        }
+                        // Already English name - just format it
+                        return formatEnglishName(memberInfo.name);
+                      }
+
+                      return "Unknown Author";
+                    })()}
                   </Text>
                   <div
                     style={{
