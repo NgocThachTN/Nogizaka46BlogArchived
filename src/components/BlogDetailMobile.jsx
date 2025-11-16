@@ -798,7 +798,7 @@ export default function BlogDetailMobile({
                       // Mobile: use same logic as desktop with language support
                       const japaneseToEnglish = {
                         "齋藤 飛鳥": "Asuka Saito",
-                        "生田 絵梨花": "Erika Ikuta", 
+                        "生田 絵梨花": "Erika Ikuta",
                         "西野 七瀬": "Nanase Nishino",
                         "山下 美月": "Mizuki Yamashita",
                         "大園 桃子": "Momoko Oozono",
@@ -807,22 +807,38 @@ export default function BlogDetailMobile({
 
                       // Check blog.author first (from local database)
                       if (blog?.author) {
-                        if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(blog.author)) {
-                          // Japanese name - convert to English and format
+                        const isJapaneseName = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(blog.author);
+
+                        // If language is Japanese, keep Japanese name
+                        if (language === 'ja') {
+                          return blog.author;
+                        }
+
+                        // For English/Vietnamese: convert Japanese to English
+                        if (isJapaneseName) {
                           const englishName = japaneseToEnglish[blog.author];
                           return englishName ? formatEnglishName(englishName) : blog.author;
                         }
+
                         // Already English name - just format it
                         return formatEnglishName(blog.author);
                       }
 
                       // Check memberInfo (from API or local)
                       if (memberInfo?.name) {
-                        if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(memberInfo.name)) {
-                          // Japanese name - convert to English and format
+                        const isJapaneseName = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(memberInfo.name);
+
+                        // If language is Japanese, keep Japanese name
+                        if (language === 'ja') {
+                          return memberInfo.name;
+                        }
+
+                        // For English/Vietnamese: convert Japanese to English
+                        if (isJapaneseName) {
                           const englishName = japaneseToEnglish[memberInfo.name];
                           return englishName ? formatEnglishName(englishName) : memberInfo.name;
                         }
+
                         // Already English name - just format it
                         return formatEnglishName(memberInfo.name);
                       }
@@ -891,7 +907,7 @@ export default function BlogDetailMobile({
         </div>
       </div>
     ),
-    [blog, displayTitle, memberInfo, themeMode]
+    [blog, displayTitle, memberInfo, themeMode, language]
   );
 
   // Setup scroll handlers and hide browser address bar on mount
