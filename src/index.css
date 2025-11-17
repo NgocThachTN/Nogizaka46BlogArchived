@@ -315,6 +315,28 @@ html,
   margin: 0;
   padding: 0;
   -webkit-overflow-scrolling: touch;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Android-specific Japanese font optimization */
+@supports (-webkit-appearance: none) and (not (-webkit-overflow-scrolling: touch)) {
+  body,
+  html {
+    font-family: 'Noto Sans JP', 'Droid Sans Japanese', 'Meiryo', 'MS PGothic', 'Roboto', sans-serif !important;
+  }
+  
+  /* Japanese content with proper font stack for Android */
+  [lang="ja"],
+  .jp-prose,
+  .japanese-text {
+    font-family: 'Noto Serif JP', 'Noto Sans JP', 'Droid Sans Japanese', 'Meiryo', 'MS PGothic', 'Roboto', sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'palt' 1;
+  }
 }
 
 /* Fix for iOS Safari viewport height */

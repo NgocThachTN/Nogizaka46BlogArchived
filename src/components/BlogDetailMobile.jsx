@@ -55,7 +55,10 @@ const { Title, Text } = Typography;
 
 const jpFont = {
   fontFamily:
-    "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
+    "'Noto Sans JP','Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','MS Gothic','MS PGothic','Meiryo','Droid Sans Japanese','sans-serif'",
+  fontDisplay: "swap",
+  WebkitFontSmoothing: "antialiased",
+  MozOsxFontSmoothing: "grayscale",
 };
 
 // Helper function to format English name (capitalize and reverse order)
@@ -82,16 +85,17 @@ const formatEnglishName = (englishName) => {
 const bookFont = {
   ja: {
     fontFamily:
-      "'Noto Serif JP','Source Han Serif','Source Han Serif JP','NotoSerifCJK-Regular','游明朝','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG明朝E','MS Mincho','Roboto Slab','Droid Serif','serif'",
+      "'Noto Serif JP','Source Han Serif JP','Source Han Serif','Yu Mincho','YuMincho','游明朝','Hiragino Mincho ProN','MS Mincho','MS PMincho','Meiryo','Droid Sans Japanese','Roboto','serif'",
     fontWeight: 400,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
     textRendering: "optimizeLegibility",
     fontDisplay: "swap",
+    fontFeatureSettings: "'palt' 1",
   },
   en: {
     fontFamily:
-      "'Georgia','Cambria','Times New Roman','Roboto Slab','Droid Serif','serif'",
+      "'Georgia','Cambria','Times New Roman','Roboto Slab','Roboto','Droid Serif','serif'",
     fontWeight: 400,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
@@ -99,7 +103,7 @@ const bookFont = {
   },
   vi: {
     fontFamily:
-      "'Times New Roman','Georgia','Cambria','Roboto Slab','Droid Serif','serif'",
+      "'Times New Roman','Georgia','Cambria','Roboto Slab','Roboto','Droid Serif','serif'",
     fontWeight: 400,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
@@ -1913,6 +1917,9 @@ export default function BlogDetailMobile({
 
       {/* Full-bleed overrides */}
       <style>{`
+          /* Google Fonts - Noto Sans JP & Noto Serif JP for Android */
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Noto+Serif+JP:wght@300;400;500;600;700&display=swap');
+          
           /* Hide scrollbar for Chrome, Safari and Opera */
           *::-webkit-scrollbar {
             display: none;
@@ -2161,6 +2168,45 @@ export default function BlogDetailMobile({
               transform: translateZ(0);
               -webkit-backface-visibility: hidden;
               backface-visibility: hidden;
+            }
+          }
+          
+          /* Android specific font optimizations */
+          @supports (-webkit-appearance: none) and (not (-webkit-overflow-scrolling: touch)) {
+            body {
+              font-family: 'Noto Sans JP', 'Droid Sans Japanese', 'Roboto', sans-serif;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+              text-rendering: optimizeLegibility;
+            }
+            
+            .jp-prose {
+              font-family: 'Noto Serif JP', 'Noto Sans JP', 'Droid Sans Japanese', 'Roboto', sans-serif !important;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+              text-rendering: optimizeLegibility;
+              font-feature-settings: 'palt' 1;
+            }
+            
+            .jp-prose * {
+              font-family: inherit !important;
+            }
+          }
+          
+          /* Force font for Android Chrome/WebView */
+          @media screen and (max-width: 768px) {
+            * {
+              -webkit-text-size-adjust: 100%;
+              text-size-adjust: 100%;
+            }
+            
+            .jp-prose,
+            .jp-prose p,
+            .jp-prose span,
+            .jp-prose div {
+              font-family: 'Noto Serif JP', 'Noto Sans JP', 'Droid Sans Japanese', 'Meiryo', 'MS PGothic', 'Roboto', sans-serif !important;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
             }
           }
           
