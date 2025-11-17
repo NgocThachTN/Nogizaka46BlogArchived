@@ -65,6 +65,10 @@ import {
   translateJapaneseToVietnamese,
   translateTitleToVietnamese,
 } from "../api/GeminiTranslate";
+import {
+  initKuroshiro,
+  addFuriganaToHtml,
+} from "../utils/furiganaHelper";
 
 const { Title, Text } = Typography;
 dayjs.locale("ja");
@@ -152,6 +156,9 @@ const t = {
   readTime: { ja: "読了目安", en: "Read time", vi: "Thời gian đọc" },
   minutes: { ja: "分", en: "min", vi: "phút" },
   blogArticle: { ja: "ブログ記事", en: "Blog Article", vi: "Tiêu Đề Blog" },
+  furigana: { ja: "ふりがな", en: "Furigana", vi: "Phiên âm" },
+  furiganaOn: { ja: "ふりがな表示中", en: "Furigana ON", vi: "Đang hiển thị" },
+  furiganaOff: { ja: "ふりがな非表示", en: "Furigana OFF", vi: "Đã tắt" },
   fontSizes: {
     sm: { ja: "小", en: "Small", vi: "Nhỏ" },
     md: { ja: "標準", en: "Normal", vi: "Chuẩn" },
@@ -194,6 +201,12 @@ export default function BlogDetail({
   const [translationProgress, setTranslationProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  // Furigana states
+  const [showFurigana, setShowFurigana] = useState(false);
+  const [furiganaContent, setFuriganaContent] = useState("");
+  const [furiganaLoading, setFuriganaLoading] = useState(false);
+  const [kuroshiroReady, setKuroshiroReady] = useState(false);
+
   const [navIds, setNavIds] = useState({ prevId: null, nextId: null });
   const [navLock, setNavLock] = useState(false);
   const [pendingNavId, setPendingNavId] = useState(null); // hiển thị spinner nhỏ ở header khi chưa có cache
@@ -214,6 +227,19 @@ export default function BlogDetail({
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Initialize Kuroshiro on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        await initKuroshiro();
+        setKuroshiroReady(true);
+        console.log("Kuroshiro ready for furigana");
+      } catch (error) {
+        console.error("Failed to initialize Kuroshiro:", error);
+      }
+    })();
   }, []);
 
   // Reset translation state when blog changes
@@ -602,6 +628,37 @@ export default function BlogDetail({
     })();
   }, [language, blog?.content, blog?.title, id]);
 
+  // Handle furigana toggle
+  useEffect(() => {
+    (async () => {
+      if (!blog?.content || !kuroshiroReady || language !== "ja") {
+        setShowFurigana(false);
+        setFuriganaContent("");
+        return;
+      }
+
+      if (showFurigana && !furiganaContent) {
+        try {
+          setFuriganaLoading(true);
+          const furiganaHtml = await addFuriganaToHtml(blog.content);
+          setFuriganaContent(furiganaHtml);
+        } catch (error) {
+          console.error("Failed to generate furigana:", error);
+          message.error("Không thể tạo furigana. Vui lòng thử lại.");
+          setShowFurigana(false);
+        } finally {
+          setFuriganaLoading(false);
+        }
+      }
+    })();
+  }, [showFurigana, blog?.content, kuroshiroReady, language, furiganaContent]);
+
+  // Reset furigana when blog changes
+  useEffect(() => {
+    setShowFurigana(false);
+    setFuriganaContent("");
+  }, [id]);
+
   // Display title/content by language
   const displayTitle =
     language === "ja"
@@ -610,7 +667,9 @@ export default function BlogDetail({
 
   const displayContent =
     language === "ja" || translating || !trHtml[language]
-      ? blog?.content
+      ? showFurigana && furiganaContent
+        ? furiganaContent
+        : blog?.content
       : cleanDisplayText(trHtml[language]);
 
   // ---- SPEED-FOCUSED NAVIGATION ----
@@ -840,6 +899,21 @@ export default function BlogDetail({
               },
             ]}
           />,
+          language === "ja" && kuroshiroReady ? (
+            <Tooltip
+              key="furigana-toggle"
+              title={showFurigana ? t.furiganaOn[language] : t.furiganaOff[language]}
+            >
+              <Button
+                type={showFurigana ? "primary" : "default"}
+                loading={furiganaLoading}
+                onClick={() => setShowFurigana(!showFurigana)}
+                disabled={furiganaLoading || !blog?.content}
+              >
+                {t.furigana[language]}
+              </Button>
+            </Tooltip>
+          ) : null,
           setThemeMode ? (
             <Button
               key="theme"
@@ -1345,6 +1419,26 @@ export default function BlogDetail({
       <style>{`
         body {
           zoom: 1.2;
+        }
+        /* Furigana (Ruby) Styling */
+        .jp-prose ruby {
+          ruby-position: over;
+          ruby-align: center;
+        }
+        .jp-prose rt {
+          font-size: 0.5em;
+          line-height: 1.2;
+          color: ${themeMode === "dark" ? "#d2a86a" : "#8b4513"};
+          font-weight: 400;
+          letter-spacing: 0.05em;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .jp-prose rp {
+          display: none;
+        }
+        .jp-prose ruby > span {
+          display: inline-block;
         }
         .jp-prose * {
           max-width: 100%;
