@@ -7,9 +7,20 @@ let isInitializing = false;
 let initPromise = null;
 
 /**
- * Khởi tạo Kuroshiro (chỉ chạy 1 lần) với timeout
+ * Check if we're in a browser environment
+ */
+const isBrowser = () => typeof window !== 'undefined' && typeof document !== 'undefined';
+
+/**
+ * Khởi tạo Kuroshiro (chỉ chạy 1 lần) với timeout - CHỈ TRONG BROWSER
  */
 export async function initKuroshiro() {
+  // CRITICAL: Only run in browser
+  if (!isBrowser()) {
+    console.warn("Kuroshiro cannot be initialized on server side");
+    return null;
+  }
+
   if (kuroshiroInstance) return kuroshiroInstance;
   
   if (isInitializing) {
@@ -22,8 +33,8 @@ export async function initKuroshiro() {
     try {
       const kuroshiro = new Kuroshiro();
       
-      // Tạo timeout promise (60s cho production)
-      const timeoutMs = 60000;
+      // Tạo timeout promise (30s - giảm từ 60s)
+      const timeoutMs = 30000;
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error("Kuroshiro initialization timeout")), timeoutMs)
       );
@@ -56,9 +67,20 @@ export async function initKuroshiro() {
  */
 export async function convertToFurigana(text) {
     if (!text) return text;
+    
+    // CRITICAL: Only run in browser
+    if (!isBrowser()) {
+      console.warn("convertToFurigana called on server side");
+      return text;
+    }
 
     try {
         const kuroshiro = await initKuroshiro();
+        
+        if (!kuroshiro) {
+          console.warn("Kuroshiro not available");
+          return text;
+        }
 
         // Convert sang furigana mode với HTML ruby tags
         const result = await kuroshiro.convert(text, {
@@ -81,6 +103,12 @@ export async function convertToFurigana(text) {
  */
 export async function addFuriganaToHtml(htmlContent) {
   if (!htmlContent) return htmlContent;
+  
+  // CRITICAL: Only run in browser
+  if (!isBrowser()) {
+    console.warn("addFuriganaToHtml called on server side");
+    return htmlContent;
+  }
 
   try {
     const kuroshiro = await initKuroshiro();
@@ -89,7 +117,7 @@ export async function addFuriganaToHtml(htmlContent) {
       return htmlContent;
     }
     
-    // Tạo temporary div để parse HTML
+    // Tạo temporary div để parse HTML (CHỈ trong browser)
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = htmlContent;
     
@@ -152,6 +180,12 @@ export async function addFuriganaToHtml(htmlContent) {
  */
 export async function toggleFurigana(element, originalHtml, showFurigana) {
     if (!element) return;
+    
+    // CRITICAL: Only run in browser
+    if (!isBrowser()) {
+      console.warn("toggleFurigana called on server side");
+      return;
+    }
 
     try {
         if (showFurigana) {

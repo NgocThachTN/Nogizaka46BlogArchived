@@ -9,6 +9,22 @@ export default defineConfig({
       path: "path-browserify",
     },
   },
+  build: {
+    // Optimize for Vercel deployment
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split Kuroshiro into separate chunk for lazy loading
+          'furigana': ['kuroshiro', 'kuroshiro-analyzer-kuromoji'],
+        },
+      },
+    },
+  },
+  ssr: {
+    // Don't try to load these packages on server-side
+    noExternal: [],
+    external: ['kuroshiro', 'kuroshiro-analyzer-kuromoji'],
+  },
   server: {
     proxy: {
       "/gemini": {
