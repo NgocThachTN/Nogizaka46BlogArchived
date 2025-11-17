@@ -26,7 +26,6 @@ import {
   GlobalOutlined,
   BulbOutlined,
   MoonOutlined,
-  ReadOutlined,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -711,7 +710,6 @@ export default function BlogDetailMobile({
                   disabled={
                     furiganaLoading || kuroshiroInitializing || !blog?.content
                   }
-                  icon={<ReadOutlined />}
                   style={{
                     width: 26,
                     height: 26,
@@ -734,9 +732,18 @@ export default function BlogDetailMobile({
                       : themeMode === "dark"
                       ? "#d2a86a"
                       : "#8b4513",
-                    fontSize: 12,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontFamily:
+                      "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif",
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
+                >
+                  {furiganaLoading || kuroshiroInitializing ? null : "ふ"}
+                </Button>
               )}
               {setThemeMode && (
                 <Button
@@ -1840,8 +1847,18 @@ export default function BlogDetailMobile({
                   disabled={
                     furiganaLoading || kuroshiroInitializing || !blog?.content
                   }
-                  icon={<ReadOutlined />}
                 >
+                  <span
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 600,
+                      fontFamily:
+                        "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif",
+                      marginRight: 8,
+                    }}
+                  >
+                    ふ
+                  </span>
                   {showFurigana ? "Tắt Furigana" : "Bật Furigana"}
                 </Button>
                 <Text
