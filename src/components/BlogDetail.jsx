@@ -206,6 +206,7 @@ export default function BlogDetail({
   const [furiganaContent, setFuriganaContent] = useState("");
   const [furiganaLoading, setFuriganaLoading] = useState(false);
   const [kuroshiroReady, setKuroshiroReady] = useState(false);
+  const [kuroshiroInitializing, setKuroshiroInitializing] = useState(false);
 
   const [navIds, setNavIds] = useState({ prevId: null, nextId: null });
   const [navLock, setNavLock] = useState(false);
@@ -229,26 +230,9 @@ export default function BlogDetail({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initialize Kuroshiro lazily (không block blog loading)
-  useEffect(() => {
-    // Delay initialization để không block blog loading
-    const timer = setTimeout(() => {
-      (async () => {
-        try {
-          console.log("Starting Kuroshiro initialization...");
-          await initKuroshiro();
-          setKuroshiroReady(true);
-          console.log("Kuroshiro ready for furigana");
-        } catch (error) {
-          console.warn("Failed to initialize Kuroshiro:", error);
-          // Không throw error - chỉ log warning
-          setKuroshiroReady(false);
-        }
-      })();
-    }, 2000); // Delay 2s để blog load trước
-
-    return () => clearTimeout(timer);
-  }, []);
+  // KHÔNG tự động initialize Kuroshiro - chỉ khi user click
+  // useEffect bị comment để tránh block loading
+  // Kuroshiro sẽ được init khi user click nút furigana
 
   // Reset translation state when blog changes
   useEffect(() => {
@@ -654,18 +638,39 @@ export default function BlogDetail({
     })();
   }, [language, blog?.content, blog?.title, id]);
 
-  // Handle furigana toggle
+  // Handle furigana toggle - init on-demand
   useEffect(() => {
     (async () => {
-      if (!blog?.content || !kuroshiroReady || language !== "ja") {
+      if (!blog?.content || language !== "ja") {
         setShowFurigana(false);
         setFuriganaContent("");
         return;
       }
 
+      // Chỉ xử lý khi user bật furigana
       if (showFurigana && !furiganaContent) {
         try {
           setFuriganaLoading(true);
+          
+          // Init Kuroshiro nếu chưa ready
+          if (!kuroshiroReady && !kuroshiroInitializing) {
+            setKuroshiroInitializing(true);
+            console.log("Initializing Kuroshiro on-demand...");
+            
+            try {
+              await initKuroshiro();
+              setKuroshiroReady(true);
+              console.log("Kuroshiro initialized successfully");
+            } catch (initError) {
+              console.error("Failed to initialize Kuroshiro:", initError);
+              message.error("Không thể khởi tạo công cụ furigana. Vui lòng thử lại.");
+              setShowFurigana(false);
+              setFuriganaLoading(false);
+              setKuroshiroInitializing(false);
+              return;
+            }
+            setKuroshiroInitializing(false);
+          }
           
           // Add timeout để tránh block vô hạn
           const timeoutPromise = new Promise((_, reject) => 
@@ -685,7 +690,7 @@ export default function BlogDetail({
         }
       }
     })();
-  }, [showFurigana, blog?.content, kuroshiroReady, language, furiganaContent]);
+  }, [showFurigana, blog?.content, kuroshiroReady, language, furiganaContent, kuroshiroInitializing]);
 
   // Reset furigana when blog changes
   useEffect(() => {
@@ -933,16 +938,16 @@ export default function BlogDetail({
               },
             ]}
           />,
-          language === "ja" && kuroshiroReady ? (
+          language === "ja" ? (
             <Tooltip
               key="furigana-toggle"
               title={showFurigana ? t.furiganaOn[language] : t.furiganaOff[language]}
             >
               <Button
                 type={showFurigana ? "primary" : "default"}
-                loading={furiganaLoading}
+                loading={furiganaLoading || kuroshiroInitializing}
                 onClick={() => setShowFurigana(!showFurigana)}
-                disabled={furiganaLoading || !blog?.content}
+                disabled={furiganaLoading || kuroshiroInitializing || !blog?.content}
               >
                 {t.furigana[language]}
               </Button>
