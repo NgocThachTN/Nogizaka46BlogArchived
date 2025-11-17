@@ -1,0 +1,31 @@
+# Development files
+local-proxy-server.js
+.env.local
+.env.development
+
+# Node modules (Vercel will install from package.json)
+node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Test files
+**/*.test.js
+**/*.spec.js
+
+# Documentation
+docs
+README.md
+
+# Local database (if large)
+blogdb/**/*.json
+blogdb/**/img
+
+# Logs
+*.log
+npm-debug.log*

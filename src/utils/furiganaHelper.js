@@ -20,17 +20,33 @@ export async function initKuroshiro() {
     isInitializing = true;
     initPromise = (async () => {
         try {
+            // Check if we're in browser environment
+            if (typeof window === 'undefined' || typeof document === 'undefined') {
+                console.warn('Kuroshiro requires browser environment');
+                isInitializing = false;
+                return null;
+            }
+
             const kuroshiro = new Kuroshiro();
-            // Sử dụng CDN dictionary cho browser
-            await kuroshiro.init(new KuromojiAnalyzer({
-                dictPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/"
-            }));
+            // Sử dụng CDN dictionary cho browser với timeout
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Kuroshiro initialization timeout')), 30000)
+            );
+
+            await Promise.race([
+                kuroshiro.init(new KuromojiAnalyzer({
+                    dictPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/"
+                })),
+                timeoutPromise
+            ]);
+
             kuroshiroInstance = kuroshiro;
             console.log("Kuroshiro initialized successfully");
             return kuroshiroInstance;
         } catch (error) {
             console.error("Failed to initialize Kuroshiro:", error);
-            throw error;
+            isInitializing = false;
+            return null; // Return null instead of throwing
         } finally {
             isInitializing = false;
         }
@@ -74,6 +90,17 @@ export async function addFuriganaToHtml(htmlContent) {
 
     try {
         const kuroshiro = await initKuroshiro();
+
+        // If Kuroshiro failed to initialize, return original content
+        if (!kuroshiro) {
+            console.warn('Kuroshiro not available, returning original content');
+            return htmlContent;
+        }
+
+        // Check browser environment
+        if (typeof document === 'undefined') {
+            return htmlContent;
+        }
 
         // Tạo temporary div để parse HTML
         const tempDiv = document.createElement("div");

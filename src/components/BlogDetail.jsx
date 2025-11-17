@@ -229,17 +229,28 @@ export default function BlogDetail({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initialize Kuroshiro on mount
+  // Initialize Kuroshiro on mount (non-blocking, lazy)
   useEffect(() => {
-    (async () => {
-      try {
-        await initKuroshiro();
-        setKuroshiroReady(true);
-        console.log("Kuroshiro ready for furigana");
-      } catch (error) {
-        console.error("Failed to initialize Kuroshiro:", error);
-      }
-    })();
+    // Defer Kuroshiro initialization to not block initial render
+    const timer = setTimeout(() => {
+      (async () => {
+        try {
+          const instance = await initKuroshiro();
+          if (instance) {
+            setKuroshiroReady(true);
+            console.log("Kuroshiro ready for furigana");
+          } else {
+            console.warn("Kuroshiro initialization failed, furigana will be disabled");
+            setKuroshiroReady(false);
+          }
+        } catch (error) {
+          console.error("Failed to initialize Kuroshiro:", error);
+          setKuroshiroReady(false);
+        }
+      })();
+    }, 1000); // Delay 1s to let page render first
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Reset translation state when blog changes
@@ -640,8 +651,25 @@ export default function BlogDetail({
       if (showFurigana && !furiganaContent) {
         try {
           setFuriganaLoading(true);
-          const furiganaHtml = await addFuriganaToHtml(blog.content);
-          setFuriganaContent(furiganaHtml);
+
+          // Add timeout for furigana generation
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Furigana generation timeout')), 15000)
+          );
+
+          const furiganaHtml = await Promise.race([
+            addFuriganaToHtml(blog.content),
+            timeoutPromise
+          ]);
+
+          if (furiganaHtml && furiganaHtml !== blog.content) {
+            setFuriganaContent(furiganaHtml);
+          } else {
+            // Fallback to original content
+            console.warn('Furigana generation returned original content');
+            setShowFurigana(false);
+            message.warning("Furigana không khả dụng cho bài viết này.");
+          }
         } catch (error) {
           console.error("Failed to generate furigana:", error);
           message.error("Không thể tạo furigana. Vui lòng thử lại.");
