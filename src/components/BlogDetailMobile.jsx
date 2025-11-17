@@ -26,6 +26,7 @@ import {
   GlobalOutlined,
   BulbOutlined,
   MoonOutlined,
+  ReadOutlined,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -49,6 +50,7 @@ import {
   fetchMemberInfoByName,
 } from "../services/blogService";
 import { isIOS, isIOS18Plus, isIPhoneXS } from "../utils/deviceDetection";
+import { initKuroshiro, addFuriganaToHtml } from "../utils/furiganaHelper";
 
 const { Title, Text } = Typography;
 
@@ -72,10 +74,12 @@ const formatEnglishName = (englishName) => {
   }
 
   // If not 2 parts, just capitalize first letter
-  return englishName.charAt(0).toUpperCase() + englishName.slice(1).toLowerCase();
+  return (
+    englishName.charAt(0).toUpperCase() + englishName.slice(1).toLowerCase()
+  );
 };
 
-// Book-like serif fonts for reading content - Enhanced for Android  
+// Book-like serif fonts for reading content - Enhanced for Android
 const bookFont = {
   ja: {
     fontFamily:
@@ -214,15 +218,15 @@ export default function BlogDetailMobile({
       blog?.memberCode ||
       memberInfo?.code ||
       blog?.arti_code || // API response field
-      blog?.artiCode;    // Alternative field name
+      blog?.artiCode; // Alternative field name
 
     if (code) {
-      console.log('Navigating to member blogs with code:', code);
+      console.log("Navigating to member blogs with code:", code);
       navigate(`/blogs/${code}`);
     } else {
       // Fallback: Go to member list if no code available
-      console.warn('No member code available, navigating to member list');
-      navigate('/members');
+      console.warn("No member code available, navigating to member list");
+      navigate("/members");
     }
   }, [blog, memberInfo, navigate]);
 
@@ -240,6 +244,13 @@ export default function BlogDetailMobile({
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
+
+  // Furigana states
+  const [showFurigana, setShowFurigana] = useState(false);
+  const [furiganaContent, setFuriganaContent] = useState("");
+  const [furiganaLoading, setFuriganaLoading] = useState(false);
+  const [kuroshiroReady, setKuroshiroReady] = useState(false);
+  const [kuroshiroInitializing, setKuroshiroInitializing] = useState(false);
 
   // iOS member loader - removed as we now use fetchMemberInfo for all member IDs
 
@@ -263,6 +274,8 @@ export default function BlogDetailMobile({
         setCachedDisplayContent(null);
         setCachedLanguage(language);
         setRetryCount(0); // Reset retry count for new blog
+        setShowFurigana(false); // Reset furigana when blog changes
+        setFuriganaContent("");
         prevBlogIdRef.current = blog.id;
 
         // Reset scroll position when switching blogs
@@ -418,9 +431,73 @@ export default function BlogDetailMobile({
   const increaseFontSize = () => setFontSize((v) => Math.min(v + 2, 30));
   const decreaseFontSize = () => setFontSize((v) => Math.max(v - 2, 16));
 
-  // Optimized HTML with lazy images - sử dụng cached content
+  // Handle furigana toggle - init on-demand
+  useEffect(() => {
+    (async () => {
+      if (!blog?.content || language !== "ja") {
+        setShowFurigana(false);
+        setFuriganaContent("");
+        return;
+      }
+
+      // Chỉ xử lý khi user bật furigana
+      if (showFurigana && !furiganaContent) {
+        try {
+          setFuriganaLoading(true);
+
+          // Init Kuroshiro nếu chưa ready
+          if (!kuroshiroReady && !kuroshiroInitializing) {
+            setKuroshiroInitializing(true);
+            try {
+              await initKuroshiro();
+              setKuroshiroReady(true);
+              setKuroshiroInitializing(false);
+              console.log("Kuroshiro initialized successfully");
+            } catch (initError) {
+              console.error("Failed to initialize Kuroshiro:", initError);
+              setShowFurigana(false);
+              setFuriganaLoading(false);
+              setKuroshiroInitializing(false);
+              return;
+            }
+          }
+
+          // Add timeout để tránh block vô hạn
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Furigana timeout")), 30000)
+          );
+
+          const furiganaPromise = addFuriganaToHtml(blog.content);
+          const furiganaHtml = await Promise.race([
+            furiganaPromise,
+            timeoutPromise,
+          ]);
+
+          setFuriganaContent(furiganaHtml);
+        } catch (error) {
+          console.error("Failed to generate furigana:", error);
+          setShowFurigana(false);
+        } finally {
+          setFuriganaLoading(false);
+        }
+      }
+    })();
+  }, [
+    showFurigana,
+    blog?.content,
+    kuroshiroReady,
+    language,
+    furiganaContent,
+    kuroshiroInitializing,
+  ]);
+
+  // Optimized HTML with lazy images - sử dụng cached content with furigana support
   const optimizedHtml = useMemo(() => {
-    const content = cachedDisplayContent || blog?.content || "";
+    // Use furigana content if enabled and available
+    const content =
+      showFurigana && furiganaContent
+        ? furiganaContent
+        : cachedDisplayContent || blog?.content || "";
 
     // iOS Safari specific debugging
     if (isIOS()) {
@@ -453,6 +530,8 @@ export default function BlogDetailMobile({
     blog,
     displayTitle,
     memberInfo,
+    showFurigana,
+    furiganaContent,
   ]);
 
   // Fixed Navigation Bar (always visible) - Clean Android design
@@ -544,8 +623,8 @@ export default function BlogDetailMobile({
                   }}
                 >
                   {pendingNavId &&
-                    pendingNavId === prevId &&
-                    !getCachedBlogDetail(prevId) ? (
+                  pendingNavId === prevId &&
+                  !getCachedBlogDetail(prevId) ? (
                     <LoadingOutlined style={{ fontSize: 12 }} />
                   ) : (
                     "‹"
@@ -570,8 +649,8 @@ export default function BlogDetailMobile({
                   }}
                 >
                   {pendingNavId &&
-                    pendingNavId === nextId &&
-                    !getCachedBlogDetail(nextId) ? (
+                  pendingNavId === nextId &&
+                  !getCachedBlogDetail(nextId) ? (
                     <LoadingOutlined style={{ fontSize: 12 }} />
                   ) : (
                     "›"
@@ -581,9 +660,7 @@ export default function BlogDetailMobile({
             </Space>
 
             {/* Center - Language selection */}
-            <div
-              style={{ flex: 1, display: "flex", justifyContent: "center" }}
-            >
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
               <Segmented
                 size="small"
                 value={cachedLanguage}
@@ -609,6 +686,41 @@ export default function BlogDetailMobile({
 
             {/* Right side - Settings */}
             <Space size={4}>
+              {/* Furigana toggle - only show for Japanese */}
+              {cachedLanguage === "ja" && (
+                <Button
+                  type={showFurigana ? "primary" : "text"}
+                  size="small"
+                  loading={furiganaLoading || kuroshiroInitializing}
+                  onClick={() => setShowFurigana(!showFurigana)}
+                  disabled={
+                    furiganaLoading || kuroshiroInitializing || !blog?.content
+                  }
+                  icon={<ReadOutlined />}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
+                    background: showFurigana
+                      ? themeMode === "dark"
+                        ? "#9c6b3f"
+                        : "#9333ea"
+                      : themeMode === "dark"
+                      ? "rgba(36,33,29,0.8)"
+                      : "rgba(255, 255, 255, 0.6)",
+                    border: showFurigana
+                      ? "none"
+                      : themeMode === "dark"
+                      ? "1px solid rgba(207,191,166,0.2)"
+                      : "1px solid rgba(0,0,0,0.08)",
+                    color: showFurigana
+                      ? "white"
+                      : themeMode === "dark"
+                      ? "#d2a86a"
+                      : "#8b4513",
+                  }}
+                />
+              )}
               {setThemeMode && (
                 <Button
                   type="text"
@@ -659,8 +771,8 @@ export default function BlogDetailMobile({
                   {cachedLanguage === "vi"
                     ? "Dịch"
                     : cachedLanguage === "en"
-                      ? "Trans"
-                      : "翻訳"}
+                    ? "Trans"
+                    : "翻訳"}
                 </div>
               ) : window.innerWidth >= 360 ? (
                 <div
@@ -717,6 +829,10 @@ export default function BlogDetailMobile({
       themeMode,
       setThemeMode,
       onBackToMemberBlogs,
+      showFurigana,
+      furiganaLoading,
+      kuroshiroInitializing,
+      blog,
     ]
   );
 
@@ -802,15 +918,18 @@ export default function BlogDetailMobile({
                         "西野 七瀬": "Nanase Nishino",
                         "山下 美月": "Mizuki Yamashita",
                         "大園 桃子": "Momoko Oozono",
-                        "橋本 奈々未": "Nanami Hashimoto"
+                        "橋本 奈々未": "Nanami Hashimoto",
                       };
 
                       // Check blog.author first (from local database)
                       if (blog?.author) {
-                        const isJapaneseName = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(blog.author);
+                        const isJapaneseName =
+                          /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(
+                            blog.author
+                          );
 
                         // If language is Japanese, keep Japanese name
-                        if (language === 'ja') {
+                        if (language === "ja") {
                           return blog.author;
                         }
 
@@ -819,7 +938,9 @@ export default function BlogDetailMobile({
                         //test
                         if (isJapaneseName) {
                           const englishName = japaneseToEnglish[blog.author];
-                          return englishName ? formatEnglishName(englishName) : blog.author;
+                          return englishName
+                            ? formatEnglishName(englishName)
+                            : blog.author;
                         }
 
                         // Already English name - just format it
@@ -829,17 +950,23 @@ export default function BlogDetailMobile({
 
                       // Check memberInfo (from API or local)
                       if (memberInfo?.name) {
-                        const isJapaneseName = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(memberInfo.name);
+                        const isJapaneseName =
+                          /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(
+                            memberInfo.name
+                          );
 
                         // If language is Japanese, keep Japanese name
-                        if (language === 'ja') {
+                        if (language === "ja") {
                           return memberInfo.name;
                         }
 
                         // For English/Vietnamese: convert Japanese to English
                         if (isJapaneseName) {
-                          const englishName = japaneseToEnglish[memberInfo.name];
-                          return englishName ? formatEnglishName(englishName) : memberInfo.name;
+                          const englishName =
+                            japaneseToEnglish[memberInfo.name];
+                          return englishName
+                            ? formatEnglishName(englishName)
+                            : memberInfo.name;
                         }
 
                         // Already English name - just format it
@@ -939,10 +1066,10 @@ export default function BlogDetailMobile({
     hideBrowserBar();
 
     // Also hide when window resizes (orientation change)
-    window.addEventListener('resize', hideBrowserBar);
+    window.addEventListener("resize", hideBrowserBar);
 
     return () => {
-      window.removeEventListener('resize', hideBrowserBar);
+      window.removeEventListener("resize", hideBrowserBar);
     };
   }, []);
 
@@ -1162,8 +1289,8 @@ export default function BlogDetailMobile({
               {language === "vi"
                 ? "Không tìm thấy bài viết"
                 : language === "en"
-                  ? "Blog post not found"
-                  : "ブログが見つかりません"}
+                ? "Blog post not found"
+                : "ブログが見つかりません"}
             </Title>
           </Card>
         </ProCard>
@@ -1571,8 +1698,8 @@ export default function BlogDetailMobile({
                       {cachedLanguage === "vi"
                         ? "Đang xử lý..."
                         : cachedLanguage === "en"
-                          ? "Processing..."
-                          : "処理中..."}
+                        ? "Processing..."
+                        : "処理中..."}
                     </div>
                   </div>
                 </Space>
@@ -1712,6 +1839,34 @@ export default function BlogDetailMobile({
             </Text>
           </Card>
 
+          {/* Furigana toggle - only for Japanese */}
+          {cachedLanguage === "ja" && (
+            <Card title="Phiên âm (Furigana)" size="small" bordered>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Button
+                  block
+                  type={showFurigana ? "primary" : "default"}
+                  loading={furiganaLoading || kuroshiroInitializing}
+                  onClick={() => setShowFurigana(!showFurigana)}
+                  disabled={
+                    furiganaLoading || kuroshiroInitializing || !blog?.content
+                  }
+                  icon={<ReadOutlined />}
+                >
+                  {showFurigana ? "Tắt Furigana" : "Bật Furigana"}
+                </Button>
+                <Text
+                  type="secondary"
+                  style={{ display: "block", fontSize: 12 }}
+                >
+                  {showFurigana
+                    ? "Đang hiển thị phiên âm cho chữ Kanji"
+                    : "Hiển thị cách đọc (Hiragana) cho chữ Kanji"}
+                </Text>
+              </Space>
+            </Card>
+          )}
+
           <Card title="Cỡ chữ" size="small" bordered>
             <Space direction="vertical" style={{ width: "100%" }}>
               <div style={{ textAlign: "center", fontSize: 16 }}>
@@ -1839,14 +1994,16 @@ export default function BlogDetailMobile({
             margin: 14px auto;
             max-width: 100%;
             height: auto;
-            box-shadow: ${themeMode === "dark"
-          ? "0 4px 12px rgba(0,0,0,0.45)"
-          : "0 4px 12px rgba(0,0,0,0.08)"
-        };
-            border: 1px solid ${themeMode === "dark"
-          ? "rgba(207,191,166,0.2)"
-          : "rgba(0,0,0,0.06)"
-        };
+            box-shadow: ${
+              themeMode === "dark"
+                ? "0 4px 12px rgba(0,0,0,0.45)"
+                : "0 4px 12px rgba(0,0,0,0.08)"
+            };
+            border: 1px solid ${
+              themeMode === "dark"
+                ? "rgba(207,191,166,0.2)"
+                : "rgba(0,0,0,0.06)"
+            };
             display: block;
             /* Minimal CSS to prevent jank */
             pointer-events: none;
@@ -1857,10 +2014,11 @@ export default function BlogDetailMobile({
             transform: translateZ(0);
             /* No transitions or complex properties */
             opacity: 1;
-            background: ${themeMode === "dark"
-          ? "rgba(255,255,255,0.04)"
-          : "rgba(0,0,0,0.05)"
-        };
+            background: ${
+              themeMode === "dark"
+                ? "rgba(255,255,255,0.04)"
+                : "rgba(0,0,0,0.05)"
+            };
             /* iOS-specific optimizations */
             -webkit-backface-visibility: hidden;
             -webkit-transform: translateZ(0);
@@ -1880,7 +2038,9 @@ export default function BlogDetailMobile({
             line-height: 1.9 !important;
             font-size: ${fontSize}px !important;
             color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"} !important;
-            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "0.02em"} !important;
+            letter-spacing: ${
+              cachedLanguage === "ja" ? "0.05em" : "0.02em"
+            } !important;
             word-spacing: ${cachedLanguage === "ja" ? "0.1em" : "0.05em"};
             word-break: break-word !important;
             overflow-wrap: break-word !important;
@@ -1934,17 +2094,22 @@ export default function BlogDetailMobile({
             word-break: break-word !important;
           }
           .jp-prose blockquote {
-            border-left: 4px solid ${themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
-        }; background: ${themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
-        };
+            border-left: 4px solid ${
+              themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
+            }; background: ${
+        themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
+      };
             padding: 12px 16px; border-radius: 8px; margin: 1em 0;
-            font-size: 1.05em; color: ${themeMode === "dark" ? "#cfbfa6" : "#4b5563"
-        };
+            font-size: 1.05em; color: ${
+              themeMode === "dark" ? "#cfbfa6" : "#4b5563"
+            };
           }
           .jp-prose a { 
             color: ${themeMode === "dark" ? "#d2a86a" : "#9333ea"}; 
             text-decoration: none; 
-            border-bottom: 1px dotted ${themeMode === "dark" ? "#d2a86a" : "#9333ea"};
+            border-bottom: 1px dotted ${
+              themeMode === "dark" ? "#d2a86a" : "#9333ea"
+            };
             word-break: break-all;
             overflow-wrap: break-word;
           }
@@ -1952,10 +2117,12 @@ export default function BlogDetailMobile({
             border-bottom-style: solid;
           }
           .jp-prose ul, .jp-prose ol { padding-left: 1.2em; margin: 0.8em 0; }
-          .jp-prose li { margin: 0.4em 0; color: ${themeMode === "dark" ? "#eae2d3" : "#374151"
-        }; }
-          .jp-prose strong { color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
-        }; font-weight: 600; }
+          .jp-prose li { margin: 0.4em 0; color: ${
+            themeMode === "dark" ? "#eae2d3" : "#374151"
+          }; }
+          .jp-prose strong { color: ${
+            themeMode === "dark" ? "#f7e6c8" : "#111827"
+          }; font-weight: 600; }
           .jp-prose * {
             max-width: 100%;
             word-wrap: break-word !important;
@@ -2005,6 +2172,26 @@ export default function BlogDetailMobile({
               image-rendering: -webkit-optimize-contrast;
               image-rendering: crisp-edges;
             }
+          }
+
+          /* Furigana (Ruby) Styling for Mobile */
+          .jp-prose ruby {
+            ruby-position: over;
+            ruby-align: center;
+            ruby-overhang: none;
+          }
+          .jp-prose rt {
+            font-size: 0.5em;
+            line-height: 1.2;
+            color: ${themeMode === "dark" ? "#cfbfa6" : "#6b7280"};
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          .jp-prose rb {
+            line-height: 2.2;
+            padding-bottom: 0.3em;
           }
         `}</style>
     </PageContainer>
