@@ -39,9 +39,14 @@ export async function initKuroshiro() {
         setTimeout(() => reject(new Error("Kuroshiro initialization timeout")), timeoutMs)
       );
       
-      // Race giữa init và timeout
+      // Sử dụng local dictionary (offline mode)
+      // Dictionary files được lưu trong public/dict/ và serve bởi Vite/Vercel
+      const dictPath = import.meta.env.PROD 
+        ? "/dict/"  // Production: serve từ public/dict/
+        : "/dict/"; // Development: cũng từ public/dict/
+      
       const initPromise = kuroshiro.init(new KuromojiAnalyzer({ 
-        dictPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/"
+        dictPath: dictPath
       }));
       
       await Promise.race([initPromise, timeoutPromise]);

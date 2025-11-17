@@ -1,0 +1,3 @@
+# This directory contains kuromoji dictionary files
+# Files are downloaded via: npm run download-dict
+

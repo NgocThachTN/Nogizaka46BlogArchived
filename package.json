@@ -7,6 +7,8 @@
     "dev": "vite",
     "dev:full": "concurrently \"npm run proxy\" \"npm run dev\"",
     "proxy": "node local-proxy-server.js",
+    "download-dict": "node scripts/download-kuromoji-dict.js",
+    "prebuild": "npm run download-dict",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
