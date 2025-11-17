@@ -1046,7 +1046,7 @@ export default function BlogDetail({
                         // For English/Vietnamese: convert Japanese names to English format
                         const japaneseToEnglish = {
                           "齋藤 飛鳥": "Asuka Saito",
-                          "生田 絵梨花": "Erika Ikuta", 
+                          "生田 絵梨花": "Erika Ikuta",
                           "西野 七瀬": "Nanase Nishino",
                           "山下 美月": "Mizuki Yamashita",
                           "大園 桃子": "Momoko Oozono",

@@ -8,6 +8,7 @@ import { ProLayout } from "@ant-design/pro-components";
 import { ConfigProvider, theme, Segmented } from "antd";
 import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 import { useEffect, useMemo, useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import BlogList from "./components/BlogList";
 import BlogListMobile from "./components/BlogListMobile";
 import BlogDetail from "./components/BlogDetail";
@@ -211,6 +212,7 @@ function App() {
           </ProLayout>
         </div>
       </Router>
+      <SpeedInsights />
     </ConfigProvider>
   );
 }

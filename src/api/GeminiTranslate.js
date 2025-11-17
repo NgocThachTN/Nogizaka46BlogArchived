@@ -41,11 +41,6 @@ const getModelAndRotate = () => {
   return currentModel;
 };
 
-// Helper to detect Japanese characters
-const hasJapanese = (text) => {
-  // Check for Hiragana, Katakana, and Kanji
-  return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
-};
 
 const cleanTextForTranslation = (text) => {
   return text.replace(/\s+/g, " ").trim();
@@ -62,17 +57,17 @@ const cleanTranslationResult = (text) => {
   // Look for pattern where Japanese appears before Vietnamese
   const blocks = cleaned.split(/\n{2,}/); // Split by double newlines (paragraph breaks)
   const vietnameseBlocks = [];
-  
+
   for (const block of blocks) {
     const lines = block.split("\n");
     const processedLines = [];
-    
+
     for (const line of lines) {
       const trimmed = line.trim();
-      
+
       // Skip empty lines
       if (trimmed.length === 0) continue;
-      
+
       // Remove lines with instruction keywords
       if (
         trimmed.includes("IMPORTANT INSTRUCTIONS") ||
@@ -101,25 +96,25 @@ const cleanTranslationResult = (text) => {
       ) {
         continue;
       }
-      
+
       // Check if line has HTML tags - preserve it
       const hasHtmlTags = /<[^>]+>/.test(trimmed);
       if (hasHtmlTags) {
         processedLines.push(line);
         continue;
       }
-      
+
       // For non-HTML lines, check Japanese percentage
       const withoutSpaces = trimmed.replace(/\s+/g, '');
       const japaneseChars = withoutSpaces.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g);
       const japaneseRatio = japaneseChars ? japaneseChars.length / withoutSpaces.length : 0;
-      
+
       // If line is mostly Japanese (>50%), skip it entirely
       if (japaneseRatio > 0.5) {
         console.warn('Filtering out Japanese line (>50%):', trimmed.substring(0, 50));
         continue;
       }
-      
+
       // If line has some Japanese (>10% but <50%), try to extract Vietnamese parts
       if (japaneseRatio > 0.1) {
         // Split by sentences and keep only Vietnamese ones
@@ -132,7 +127,7 @@ const cleanTranslationResult = (text) => {
           const sentJapRatio = sentJapChars ? sentJapChars.length / sentWithoutSpaces.length : 0;
           return sentJapRatio < 0.3; // Keep if less than 30% Japanese
         });
-        
+
         if (vietnameseSentences.length > 0) {
           processedLines.push(vietnameseSentences.join(' ').trim());
         }
@@ -141,7 +136,7 @@ const cleanTranslationResult = (text) => {
         processedLines.push(line);
       }
     }
-    
+
     if (processedLines.length > 0) {
       vietnameseBlocks.push(processedLines.join("\n"));
     }
@@ -212,21 +207,31 @@ const createTranslationPrompt = (text, fromLang, toLang) => {
   const cleanedText = cleanTextForTranslation(text);
 
   if (toLang.toLowerCase() === "vietnamese") {
-    return `You are a professional translator specializing in Japanese to Vietnamese translation.
+    return `You are a professional translator specializing in Japanese to Vietnamese translation for idol blog posts.
 
 TASK: Translate ALL Japanese text below to Vietnamese. Your output must contain ZERO Japanese characters.
 
-TRANSLATION STYLE:
-- Use "mình" for I/me (first person)
-- Use "mọi người" for fans/everyone  
-- Address: "cậu" (same age), "chị" (older), "em" (younger)
-- Keep intimate, natural tone like idol diary
-- NEVER use "ạ", "nhé" at sentence endings
-- Maintain emotional tone and personality
+TRANSLATION STYLE GUIDE (Follow this tone exactly):
+- Use "mình" for I/me (first person), "bọn mình" for we/us
+- Use "mọi người" for fans/everyone
+- Natural, conversational tone like talking to friends
+- Express emotions genuinely: "Thật sự rất hạnh phúc", "Mình rất yêu", "Cảm ơn tất cả"
+- NEVER use formal endings: "ạ", "nhé", "nha" , "á" , "nè" are FORBIDDEN
+- Keep sentences simple and direct
+- Use "!!" for excitement, "..." for thoughtfulness
+
+TONE REFERENCE (match this style):
+"Xin chào! Mình là... Mình thật sự, thật sự rất hạnh phúc. Cảm ơn tất cả mọi người luôn ủng hộ bọn mình!! Mình nghĩ... Mình muốn... Một lần nữa, cảm ơn..."
+
+KEY RULES:
+- Capitalize the first letter of each sentence (proper Vietnamese grammar)
+- Natural flow: không formal, không cứng nhắc
+- Emotional expressions: "thật sự", "rất", "nhiều", "lắm"
+- End naturally without forced politeness
 
 FORMATTING:
 - Preserve ALL HTML tags exactly as they appear
-- Keep original structure, spacing, and formatting
+- Keep original structure, spacing, and line breaks
 - Translate text content only, keep all tags unchanged
 
 🚫 ABSOLUTE PROHIBITIONS - VIOLATING THESE = FAILED TRANSLATION:
@@ -235,13 +240,15 @@ FORMATTING:
 3. Do NOT create bilingual output (Japanese + Vietnamese)
 4. Do NOT add icons, emojis, or symbols (🎵 ✨ 💫 ❤️ etc.)
 5. Do NOT add explanatory notes or section headers
-6. Do NOT modify HTML structure
+6. Do NOT use "ạ", "nhé", "nha" at sentence endings
+7. Do NOT modify HTML structure
 
 ✅ SUCCESS CRITERIA:
 1. Output contains ONLY Vietnamese text (and HTML tags if present in input)
 2. Every single Japanese word is translated to Vietnamese
 3. No Japanese characters appear anywhere in your response
-4. Output reads naturally as pure Vietnamese text
+4. Output reads naturally like idol's diary in Vietnamese
+5. Tone matches the reference style: casual, warm, genuine
 
 WARNING: If your output contains ANY Japanese characters, the translation is FAILED and REJECTED.
 
@@ -376,18 +383,18 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
         const result = await model.generateContent(prompt);
         const rawTranslation = result.response.text();
         translation = cleanTranslationResult(rawTranslation);
-        
+
         // Final validation: Check if translation still contains significant Japanese
         const textWithoutHtml = translation.replace(/<[^>]+>/g, ' ');
         const japaneseChars = textWithoutHtml.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g);
         const japaneseRatio = japaneseChars ? japaneseChars.length / textWithoutHtml.length : 0;
-        
+
         if (japaneseRatio > 0.15) {
           // More than 15% Japanese - this is a bad translation
           console.error(`WARNING: Translation contains ${(japaneseRatio * 100).toFixed(1)}% Japanese text!`);
           console.error('Japanese chars found:', japaneseChars.length, 'Total chars:', textWithoutHtml.length);
           console.error('Sample:', textWithoutHtml.substring(0, 200));
-          
+
           if (retryCount < maxRetries) {
             retryCount++;
             console.warn(`Retrying translation (attempt ${retryCount + 1}/${maxRetries + 1})...`);
@@ -397,7 +404,7 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
             console.error('Max retries reached. Using best available translation despite Japanese content.');
           }
         }
-        
+
         // Translation is good (< 15% Japanese), proceed
         break;
       } catch (error) {
@@ -430,15 +437,18 @@ export async function translateTitleToVietnamese(title) {
     // Get model for this translation (rotates for each new translation call)
     const model = getModelAndRotate();
 
-    const prompt = `You are a professional translator specializing in Japanese to Vietnamese translation.
+    const prompt = `You are a professional translator specializing in Japanese to Vietnamese translation for idol blog titles.
 
 Your task: Translate this Japanese title to Vietnamese. Return ONLY Vietnamese translation.
 
 TRANSLATION STYLE:
-- Use "mình" for I/me, "mọi người" for fans
-- Keep intimate, natural tone like idol diary
-- Never use "ạ", "nhé"
+- Use "mình" for I/me, "bọn mình" for we/us
+- Natural, casual tone like talking to friends
+- Never use "ạ", "nhé", "nha"
+- Capitalize first letter of sentences (proper Vietnamese grammar)
 - Preserve nicknames and song titles
+
+TONE: Match this style - "Xin chào!", "Cảm ơn mọi người!!", "Hôm nay mình..."
 
 CRITICAL - ABSOLUTELY FORBIDDEN:
 ❌ Do NOT include ANY Japanese text in your output
@@ -449,6 +459,7 @@ CRITICAL - ABSOLUTELY FORBIDDEN:
 ✅ Return ONLY the Vietnamese translation (single line)
 ✅ Every Japanese word MUST be translated to Vietnamese
 ✅ Output must be 100% Vietnamese
+✅ Casual, warm tone
 
 Title to translate: ${title}`;
 
