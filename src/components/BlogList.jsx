@@ -4,27 +4,9 @@ import {
   Typography,
   Spin,
   Empty,
-  Button,
-  Avatar,
-  Input,
-  Space,
   Pagination,
-  Tooltip,
-  Badge,
   Grid,
-  Tag,
-  Select,
 } from "antd";
-import {
-  CalendarOutlined,
-  HeartOutlined,
-  ReadOutlined,
-  EyeOutlined,
-  SearchOutlined,
-  GlobalOutlined,
-  BulbOutlined,
-  MoonOutlined,
-} from "@ant-design/icons";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
 import {
   useState,
@@ -37,22 +19,19 @@ import {
 } from "react";
 import {
   fetchAllBlogs,
-  getImageUrl,
   fetchMemberInfo,
 } from "../services/blogService";
 import BlogCalendar from "./BlogCalendar";
 import RecentBlogs from "./RecentBlogs";
+import BlogListHeader from "./BlogList/Components/BlogListHeader";
+import BlogListFilterBar from "./BlogList/Components/BlogListFilterBar";
+import BlogCard from "./BlogList/Components/BlogCard";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
 // Translation keys — UTF-8 chuẩn
 const t = {
-  searchPlaceholder: {
-    ja: "ブログを検索...",
-    en: "Search blogs...",
-    vi: "Tìm kiếm blog...",
-  },
   noBlogs: {
     ja: "ブログが見つかりません",
     en: "No blogs found",
@@ -72,36 +51,6 @@ const t = {
     ja: "再試行",
     en: "Retry",
     vi: "Thử lại",
-  },
-  blogArticle: {
-    ja: "ブログ記事",
-    en: "Blog Article",
-    vi: "Bài viết blog",
-  },
-  readMore: {
-    ja: "続きを読む",
-    en: "Read More",
-    vi: "Đọc thêm",
-  },
-  totalPosts: {
-    ja: "総投稿数",
-    en: "Total Posts",
-    vi: "Tổng số bài viết",
-  },
-  memberBlogs: {
-    ja: "メンバーブログ",
-    en: "Member Blogs",
-    vi: "Blog thành viên",
-  },
-  calendar: {
-    ja: "カレンダー",
-    en: "Calendar",
-    vi: "Lịch",
-  },
-  list: {
-    ja: "リスト",
-    en: "List",
-    vi: "Danh sách",
   },
 };
 
@@ -127,8 +76,8 @@ export default function BlogList({
   const { memberCode } = useParams();
   const screens = useBreakpoint();
 
-  // PAGE_SIZE dynamic: mobile nhỏ hơn để render ít card/lần
-  const PAGE_SIZE = useMemo(() => (screens.xs ? 6 : 9), [screens.xs]);
+  // PAGE_SIZE: 9 bài mỗi trang (3 bài mỗi hàng x 3 hàng)
+  const PAGE_SIZE = 9;
 
   const [blogs, setBlogs] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -393,173 +342,30 @@ export default function BlogList({
         <ProCard
           colSpan={{ xs: 24, md: 16, xl: 17 }}
           ghost
-          direction="column"
-          gutter={[12, 12]}
         >
-          {/* COMPACT HERO (nhẹ trên mobile) */}
-          <ProCard
-            bordered
-            style={{
-              borderRadius: 16,
-              background:
-                themeMode === "dark"
-                  ? "rgba(36, 33, 29, 0.85)"
-                  : "rgba(253, 246, 227, 0.8)",
-              marginTop: 0,
-            }}
-            bodyStyle={{ padding: screens.xs ? 12 : 18 }}
-          >
-            <Space
-              direction={screens.xs ? "vertical" : "horizontal"}
-              align="center"
-              style={{ width: "100%", justifyContent: "center" }}
-              size={screens.xs ? 8 : 16}
-            >
-              <Avatar
-                size={screens.xs ? 52 : 64}
-                src={
-                  memberInfo?.img ||
-                  "https://via.placeholder.com/300x300?text=No+Image"
-                }
-                style={
-                  screens.xs ? {} : { boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }
-                }
-              />
-              <Space direction="vertical" align="center" size={2}>
-                <Title level={3} style={{ margin: 0, lineHeight: 1 }}>
-                  {t.memberBlogs[currentLanguage]}
-                </Title>
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  {memberInfo?.name || t.loading[currentLanguage]}{" "}
-                  {t.blogArticle[currentLanguage]}
-                </Text>
-                {(setLanguage || setThemeMode) && (
-                  <Space size={6} align="center" style={{ marginTop: 8 }}>
-                    {setLanguage && (
-                      <Select
-                        value={language}
-                        onChange={setLanguage}
-                        size="small"
-                        style={{ width: 140 }}
-                        options={[
-                          {
-                            value: "ja",
-                            label: (
-                              <span
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                }}
-                              >
-                                <GlobalOutlined
-                                  style={{ color: "#666", fontSize: "12px" }}
-                                />
-                                日本語
-                              </span>
-                            ),
-                          },
-                          {
-                            value: "en",
-                            label: (
-                              <span
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                }}
-                              >
-                                <GlobalOutlined
-                                  style={{ color: "#666", fontSize: "12px" }}
-                                />
-                                English
-                              </span>
-                            ),
-                          },
-                          {
-                            value: "vi",
-                            label: (
-                              <span
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                }}
-                              >
-                                <GlobalOutlined
-                                  style={{ color: "#666", fontSize: "12px" }}
-                                />
-                                Tiếng Việt
-                              </span>
-                            ),
-                          },
-                        ]}
-                      />
-                    )}
-                    {setThemeMode && (
-                      <Button
-                        size="small"
-                        type="text"
-                        onClick={() =>
-                          setThemeMode(themeMode === "dark" ? "light" : "dark")
-                        }
-                        icon={
-                          themeMode === "dark" ? (
-                            <BulbOutlined />
-                          ) : (
-                            <MoonOutlined />
-                          )
-                        }
-                        aria-label="Toggle dark mode"
-                        title={themeMode === "dark" ? "Light" : "Dark"}
-                      />
-                    )}
-                  </Space>
-                )}
-              </Space>
-            </Space>
-          </ProCard>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* COMPACT HERO (nhẹ trên mobile) */}
+            <BlogListHeader
+              memberInfo={memberInfo}
+              language={language}
+              setLanguage={setLanguage}
+              themeMode={themeMode}
+              setThemeMode={setThemeMode}
+              screens={screens}
+            />
 
-          {/* FILTER ROW */}
-          <ProCard
-            bordered
-            style={{
-              borderRadius: 14,
-              background:
-                themeMode === "dark"
-                  ? "rgba(36, 33, 29, 0.85)"
-                  : "rgba(253, 246, 227, 0.8)",
-            }}
-            bodyStyle={{ padding: 12 }}
-          >
-            <Space
-              style={{ width: "100%", justifyContent: "space-between" }}
-              wrap
-            >
-              <Input
-                allowClear
-                size={screens.xs ? "middle" : "large"}
-                prefix={<SearchOutlined />}
-                placeholder={t.searchPlaceholder[currentLanguage]}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                style={{ maxWidth: 360, width: "100%" }}
-              />
-              <Tag
-                color="purple"
-                style={{
-                  height: screens.xs ? 26 : 30,
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {t.totalPosts[currentLanguage]} {filtered.length}{" "}
-                {isPending ? "…" : ""}
-              </Tag>
-            </Space>
-          </ProCard>
+            {/* FILTER ROW */}
+            <BlogListFilterBar
+              language={language}
+              themeMode={themeMode}
+              screens={screens}
+              q={q}
+              setQ={setQ}
+              filteredCount={filtered.length}
+              isPending={isPending}
+            />
 
-          {/* LIST */}
+            {/* LIST */}
           {current.length === 0 ? (
             <ProCard
               bordered
@@ -582,277 +388,72 @@ export default function BlogList({
               />
             </ProCard>
           ) : (
-            <ProCard ghost gutter={[16, 16]} wrap>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(3, 1fr)", 
+              gap: "16px",
+              width: "100%"
+            }}>
               {current.map((blog, idx) => (
-                <ProCard
+                <BlogCard
                   key={blog.id}
-                  colSpan={{ xs: 24, sm: 12, lg: 8 }}
-                  hoverable={!screens.xs} // tắt hover trên mobile cho nhẹ
-                  bordered
-                  style={{
-                    borderRadius: 12,
-                    // contain layout/paint giúp trình duyệt tối ưu composite
-                    contain: "content",
-                    willChange: "transform",
-                    height: "100%", // đảm bảo tất cả card có cùng chiều cao
-                    display: "flex",
-                    flexDirection: "column",
-                    background:
-                      themeMode === "dark"
-                        ? "rgba(36, 33, 29, 0.9)"
-                        : "rgba(253, 246, 227, 0.9)",
-                  }}
-                  bodyStyle={{
-                    padding: 12,
-                    display: "flex",
-                    flexDirection: "column",
-                    height: "100%",
-                    overflow: "hidden", // Tránh tràn nội dung
-                  }}
-                  onClick={() => onOpen(blog.id)}
-                  className="blog-card"
-                >
-                  {/* Thumbnail */}
-                  <div
-                    style={{
-                      position: "relative",
-                      height: screens.xs ? 148 : 190,
-                      overflow: "hidden",
-                      borderRadius: "12px", // Bo cả 4 góc đồng đều
-                      background: themeMode === "dark" ? "#1e1c19" : "#f5f6fa",
-                      marginBottom: 12,
-                      flexShrink: 0, // Không cho phép thu nhỏ
-                    }}
-                  >
-                    {blog.thumbnail ? (
-                      <img
-                        src={getImageUrl(blog.thumbnail, {
-                          w: screens.xs ? 640 : 960,
-                        })}
-                        srcSet={[
-                          `${getImageUrl(blog.thumbnail, { w: 480 })} 480w`,
-                          `${getImageUrl(blog.thumbnail, { w: 640 })} 640w`,
-                          `${getImageUrl(blog.thumbnail, { w: 960 })} 960w`,
-                          `${getImageUrl(blog.thumbnail, { w: 1280 })} 1280w`,
-                        ].join(", ")}
-                        sizes={
-                          screens.xs
-                            ? "(max-width: 576px) 100vw, 640px"
-                            : "33vw"
-                        }
-                        alt={blog.title}
-                        loading={idx === 0 ? "eager" : "lazy"}
-                        // ảnh eager đầu tiên để cảm giác "vào là thấy", còn lại lazy
-                        decoding="async"
-                        fetchpriority={idx === 0 ? "high" : "low"}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          transition: "transform .25s",
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background:
-                            themeMode === "dark"
-                              ? "linear-gradient(135deg, #2a2826 0%, #1e1c19 100%)"
-                              : "linear-gradient(135deg, #f5f6fa 0%, #e8eaf0 100%)",
-                          color: themeMode === "dark" ? "#888" : "#999",
-                          fontSize: 14,
-                          fontWeight: 500,
-                        }}
-                      >
-                        <svg
-                          width="48"
-                          height="48"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          style={{ marginBottom: 8, opacity: 0.5 }}
-                        >
-                          <path
-                            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                        <span>No Image</span>
-                      </div>
-                    )}
-                    <div style={{ position: "absolute", top: 8, left: 8 }}>
-                      <Badge
-                        count={
-                          <Space size={4} style={{ fontSize: 12 }}>
-                            <CalendarOutlined />
-                            {blog.date}
-                          </Space>
-                        }
-                        style={{
-                          background:
-                            themeMode === "dark"
-                              ? "rgba(255,255,255,.15)"
-                              : "rgba(0,0,0,.55)",
-                          color: themeMode === "dark" ? "#f5ede0" : "#fff",
-                          padding: "3px 8px",
-                          borderRadius: 999,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Meta */}
-                  <div
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      flex: 1,
-                      minHeight: 0, // Cho phép flex item thu nhỏ
-                    }}
-                  >
-                    <Tooltip title={blog.title}>
-                      <Title
-                        level={5}
-                        style={{
-                          margin: 0,
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                          minHeight: "2.4em",
-                          lineHeight: 1.25,
-                          marginBottom: 12,
-                          flexShrink: 0,
-                          color: themeMode === "dark" ? "#f5ede0" : undefined,
-                        }}
-                      >
-                        {blog.title}
-                      </Title>
-                    </Tooltip>
-
-                    {/* Action Buttons */}
-                    <div style={{ marginTop: "auto", width: "100%" }}>
-                      <Space
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          flexWrap: "nowrap", // Không wrap để tránh tràn
-                        }}
-                        size={[8, 8]}
-                      >
-                        {/* Left side - View and Like buttons */}
-                        <Space size={4} style={{ flexShrink: 1, minWidth: 0 }}>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<EyeOutlined />}
-                            style={{
-                              padding: "4px 6px",
-                              fontSize: 11,
-                              height: 24,
-                              minWidth: "auto",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {screens.xs ? "" : "閲覧"}
-                          </Button>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<HeartOutlined />}
-                            style={{
-                              padding: "4px 6px",
-                              fontSize: 11,
-                              height: 24,
-                              minWidth: "auto",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {screens.xs ? "" : "いいね"}
-                          </Button>
-                        </Space>
-
-                        {/* Right side - Read More button */}
-                        <Button
-                          type="primary"
-                          size="small"
-                          icon={<ReadOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpen(blog.id);
-                          }}
-                          style={{
-                            flexShrink: 0,
-                            minWidth: screens.xs ? 50 : 70,
-                            fontSize: 11,
-                            height: 24,
-                            padding: "0 8px",
-                            background:
-                              themeMode === "dark" ? "#9c6b3f" : undefined,
-                          }}
-                        >
-                          {screens.xs ? "読む" : t.readMore[currentLanguage]}
-                        </Button>
-                      </Space>
-                    </div>
-                  </div>
-                </ProCard>
+                  blog={blog}
+                  index={idx}
+                  language={language}
+                  themeMode={themeMode}
+                  screens={screens}
+                  onOpen={onOpen}
+                />
               ))}
-            </ProCard>
+            </div>
           )}
 
-          {/* PAGINATION */}
-          {filtered.length > 0 && (
-            <ProCard ghost style={{ justifyContent: "center" }}>
-              <Pagination
-                current={page}
-                total={filtered.length}
-                pageSize={PAGE_SIZE}
-                onChange={(p) => {
-                  _cache.scrollY.set(memberCode, 0); // sang page mới thì về top
-                  setPage(p);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                showSizeChanger={false}
-                size={screens.xs ? "small" : "default"}
-              />
-            </ProCard>
-          )}
+            {/* PAGINATION */}
+            {filtered.length > 0 && (
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <Pagination
+                  current={page}
+                  total={filtered.length}
+                  pageSize={PAGE_SIZE}
+                  onChange={(p) => {
+                    _cache.scrollY.set(memberCode, 0); // sang page mới thì về top
+                    setPage(p);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  showSizeChanger={false}
+                  size={screens.xs ? "small" : "default"}
+                />
+              </div>
+            )}
+          </div>
         </ProCard>
 
         {/* Sidebar */}
         <ProCard
           colSpan={{ xs: 24, md: 8, xl: 7 }}
           ghost
-          direction="column"
-          gutter={[16, 16]}
         >
-          {/* Blog Calendar */}
-          <BlogCalendar
-            blogs={blogs}
-            memberInfo={memberInfo}
-            onBlogClick={onOpen}
-            isMobile={screens.xs}
-            language={language}
-            themeMode={themeMode}
-          />
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Blog Calendar */}
+            <BlogCalendar
+              blogs={blogs}
+              memberInfo={memberInfo}
+              onBlogClick={onOpen}
+              isMobile={screens.xs}
+              language={language}
+              themeMode={themeMode}
+            />
 
-          {/* Recent Blogs */}
-          <RecentBlogs
-            blogs={blogs}
-            onBlogClick={onOpen}
-            isMobile={screens.xs}
-            language={language}
-            themeMode={themeMode}
-            maxItems={5}
-          />
+            {/* Recent Blogs */}
+            <RecentBlogs
+              blogs={blogs}
+              onBlogClick={onOpen}
+              isMobile={screens.xs}
+              language={language}
+              themeMode={themeMode}
+              maxItems={5}
+            />
+          </div>
         </ProCard>
       </ProCard>
 

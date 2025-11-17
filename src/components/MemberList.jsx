@@ -3,94 +3,24 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Typography,
-  Tag,
   Spin,
-  Space,
-  Input,
-  Segmented,
   Empty,
-  List,
-  Tooltip,
-  Button,
-  Select,
   notification,
 } from "antd";
 import { ProCard, PageContainer } from "@ant-design/pro-components";
-import {
-  UserOutlined,
-  StarOutlined,
-  SearchOutlined,
-  LinkOutlined,
-  GlobalOutlined,
-  BulbOutlined,
-  MoonOutlined,
-} from "@ant-design/icons";
 import MemberListMobile from "./MemberListMobile";
-import { prefetchMemberInfo } from "../services/blogService";
 import { loadAllGraduatedMembers, shouldUseLocalDB } from "../utils/graduatedMembersLoader";
-
-const { Title, Text } = Typography;
+import MemberListHeader from "./MemberList/Components/MemberListHeader";
+import MemberListFilterBar from "./MemberList/Components/MemberListFilterBar";
+import GenerationGroup from "./MemberList/Components/GenerationGroup";
 
 // Translation keys
 const t = {
-  searchPlaceholder: {
-    ja: "メンバーを検索...",
-    en: "Search members...",
-    vi: "Tìm kiếm thành viên...",
-  },
   noMembers: {
     ja: "メンバーが見つかりません",
     en: "No members found",
     vi: "Không tìm thấy thành viên",
   },
-  loading: { ja: "読み込み中...", en: "Loading...", vi: "Đang tải..." },
-  error: {
-    ja: "エラーが発生しました",
-    en: "An error occurred",
-    vi: "Đã xảy ra lỗi",
-  },
-  retry: { ja: "再試行", en: "Retry", vi: "Thử lại" },
-  members: { ja: "メンバー", en: "Members", vi: "Thành viên" },
-  nogizaka46: { ja: "乃木坂46", en: "Nogizaka46", vi: "Nogizaka46" },
-  officialSite: {
-    ja: "公式サイト",
-    en: "Official Site",
-    vi: "Trang chính thức",
-  },
-  blog: { ja: "ブログ", en: "Blog", vi: "Blog" },
-  generation: { ja: "期生", en: "Generation", vi: "Thế hệ" },
-  other: { ja: "その他", en: "Other", vi: "Khác" },
-  blogTitle: {
-    ja: "乃木坂46 ブログ",
-    en: "Nogizaka46 Blog",
-    vi: "Nogizaka46 Blog ",
-  },
-  totalBlogs: {
-    ja: "総ブログ数",
-    en: "Total Members",
-    vi: "Tổng Số Thành Viên",
-  },
-  graduatedMembers: {
-    ja: "卒業生",
-    en: "Graduated Members",
-    vi: "Thành viên đã tốt nghiệp",
-  },
-  currentMembers: {
-    ja: "現役メンバー",
-    en: "Current Members",
-    vi: "Thành viên hiện tại",
-  },
-  graduated: {
-    ja: "卒業",
-    en: "Graduated",
-    vi: "Đã tốt nghiệp",
-  },
-};
-
-const jpFont = {
-  fontFamily:
-    "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
 };
 
 // Thứ tự Gen mong muốn
@@ -111,22 +41,6 @@ const getGen = (m) => {
     m.groupcode?.trim() ||
     (m.code === "10001" ? "その他" : "その他")
   );
-};
-
-// Tính tuổi (nếu có sinh nhật)
-const getAge = (birthday) => {
-  if (!birthday) return null;
-  const parts = birthday.split(/[/-]/);
-  if (parts.length < 3) return null;
-  const [y, m, d] = parts.map((x) => parseInt(x, 10));
-  if (!y || !m || !d) return null;
-  const today = new Date();
-  let age = today.getFullYear() - y;
-  const hasHadBirthday =
-    today.getMonth() + 1 > m ||
-    (today.getMonth() + 1 === m && today.getDate() >= d);
-  if (!hasHadBirthday) age -= 1;
-  return age;
 };
 
 const MemberList = ({
@@ -285,197 +199,31 @@ const MemberList = ({
         paddingBlockPageContainerContent: 0,
       }}
     >
-      <ProCard
-        ghost
-        direction="column"
-        gutter={[16, 16]}
-        wrap
-        style={{ marginTop: 0, paddingTop: 0 }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* Header với title và language selector */}
-        <ProCard
-          bordered
-          style={{
-            borderRadius: 14,
-            background:
-              themeMode === "dark"
-                ? "rgba(36, 33, 29, 0.85)"
-                : "rgba(253, 246, 227, 0.8)",
-          }}
-        >
-          <Space
-            style={{ width: "100%", justifyContent: "space-between" }}
-            align="center"
-          >
-            <Space direction="vertical" size={0}>
-              <Title level={2} style={{ margin: 0, color: "#9333ea" }}>
-                {t.blogTitle[currentLanguage]}
-              </Title>
-              <Text type="secondary" style={{ fontSize: 14 }}>
-                {t.generation[currentLanguage]} •{" "}
-                {t.totalBlogs[currentLanguage]}: {members.length}
-              </Text>
-            </Space>
-            <Space>
-              {setLanguage && (
-                <Select
-                  value={language}
-                  onChange={setLanguage}
-                  style={{ width: 140 }}
-                  options={[
-                    {
-                      value: "ja",
-                      label: (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <GlobalOutlined
-                            style={{ color: "#666", fontSize: "14px" }}
-                          />
-                          日本語
-                        </span>
-                      ),
-                    },
-                    {
-                      value: "en",
-                      label: (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <GlobalOutlined
-                            style={{ color: "#666", fontSize: "14px" }}
-                          />
-                          English
-                        </span>
-                      ),
-                    },
-                    {
-                      value: "vi",
-                      label: (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <GlobalOutlined
-                            style={{ color: "#666", fontSize: "14px" }}
-                          />
-                          Tiếng Việt
-                        </span>
-                      ),
-                    },
-                  ]}
-                />
-              )}
-              {setThemeMode && (
-                <Segmented
-                  size="middle"
-                  value={themeMode}
-                  onChange={(v) => setThemeMode(v)}
-                  options={[
-                    { label: "Light", value: "light", icon: <BulbOutlined /> },
-                    { label: "Dark", value: "dark", icon: <MoonOutlined /> },
-                  ]}
-                />
-              )}
-            </Space>
-          </Space>
-        </ProCard>
+        <MemberListHeader
+          language={language}
+          setLanguage={setLanguage}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          memberCount={members.length}
+        />
 
         {/* Bộ lọc */}
-        <ProCard
-          bordered
-          style={{
-            borderRadius: 14,
-            background:
-              themeMode === "dark"
-                ? "rgba(36, 33, 29, 0.85)"
-                : "rgba(253, 246, 227, 0.8)",
-          }}
-        >
-          <Space
-            wrap
-            size="middle"
-            style={{ width: "100%", justifyContent: "space-between" }}
-          >
-            <Space wrap size="middle">
-              {/* Toggle Current/Graduated Members */}
-              {shouldUseLocalDB() && graduatedMembers.length > 0 && (
-                <Segmented
-                  value={showGraduated ? "graduated" : "current"}
-                  onChange={(val) => setShowGraduated(val === "graduated")}
-                  options={[
-                    {
-                      label: (
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <StarOutlined />
-                          {t.currentMembers[currentLanguage]} ({members.length})
-                        </span>
-                      ),
-                      value: "current",
-                    },
-                    {
-                      label: (
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          {t.graduatedMembers[currentLanguage]} ({graduatedMembers.length})
-                        </span>
-                      ),
-                      value: "graduated",
-                    },
-                  ]}
-                />
-              )}
-
-              {/* Generation Filter */}
-              <Segmented
-                options={genList.map((g) => ({
-                  label:
-                    g === "ALL"
-                      ? currentLanguage === "ja"
-                        ? "すべて"
-                        : currentLanguage === "en"
-                          ? "All"
-                          : "Tất cả"
-                      : g
-                        .replace(
-                          "期生",
-                          currentLanguage === "ja"
-                            ? "期生"
-                            : currentLanguage === "en"
-                              ? " Gen"
-                              : " Thế hệ"
-                        )
-                        .replace(
-                          /^(\d+)\s*(Gen|Thế hệ)$/,
-                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                        ),
-                  value: g,
-                }))}
-                value={genFilter}
-                onChange={(v) => setGenFilter(v)}
-              />
-            </Space>
-
-            <Input
-              allowClear
-              prefix={<SearchOutlined />}
-              placeholder={t.searchPlaceholder[currentLanguage]}
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              style={{ maxWidth: 340 }}
-            />
-          </Space>
-        </ProCard>
+        <MemberListFilterBar
+          language={language}
+          themeMode={themeMode}
+          genList={genList}
+          genFilter={genFilter}
+          setGenFilter={setGenFilter}
+          keyword={keyword}
+          setKeyword={setKeyword}
+          showGraduated={showGraduated}
+          setShowGraduated={setShowGraduated}
+          shouldShowGraduatedToggle={shouldUseLocalDB() && graduatedMembers.length > 0}
+          currentMemberCount={members.length}
+          graduatedMemberCount={graduatedMembers.length}
+        />
 
         {loading ? (
           <div
@@ -503,248 +251,17 @@ const MemberList = ({
           </ProCard>
         ) : (
           grouped.map(({ gen, items }) => (
-            <ProCard
+            <GenerationGroup
               key={gen}
-              title={
-                <Space align="center">
-                  <StarOutlined />
-                  <span style={{ ...jpFont, fontWeight: 700 }}>
-                    {gen === "その他"
-                      ? t.other[currentLanguage]
-                      : gen
-                        .replace(
-                          "期生",
-                          currentLanguage === "ja"
-                            ? "期生"
-                            : currentLanguage === "en"
-                              ? " Gen"
-                              : " Thế hệ"
-                        )
-                        .replace(
-                          /^(\d+)\s*(Gen|Thế hệ)$/,
-                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                        )}
-                  </span>
-                  <Tag color="purple" style={{ marginLeft: 6 }}>
-                    {items.length}
-                  </Tag>
-                </Space>
-              }
-              bordered
-              headerBordered
-              style={{
-                borderRadius: 14,
-                background:
-                  themeMode === "dark"
-                    ? "rgba(36, 33, 29, 0.85)"
-                    : "rgba(253, 246, 227, 0.8)",
-              }}
-              bodyStyle={{ paddingTop: 16 }}
-            >
-              {/* List với grid 5 cột trên desktop */}
-              <List
-                grid={{
-                  gutter: 16,
-                  xs: 2,
-                  sm: 3,
-                  md: 4,
-                  lg: 5,
-                  xl: 5,
-                  xxl: 5,
-                }}
-                dataSource={items}
-                renderItem={(m) => {
-                  const age = getAge(m.birthday);
-                  return (
-                    <List.Item key={m.code}>
-                      <ProCard
-                        hoverable
-                        bordered={false}
-                        className="member-card"
-                        onClick={() => navigate(`/blogs/${m.code}`)}
-                        onMouseEnter={() => {
-                          // Prefetch member list API when hovering to prepare cache
-                          prefetchMemberInfo();
-                        }}
-                        style={{
-                          borderRadius: 16,
-                          overflow: "hidden",
-                          background:
-                            themeMode === "dark"
-                              ? "rgba(36, 33, 29, 0.9)"
-                              : "rgba(253, 246, 227, 0.9)",
-                          boxShadow:
-                            themeMode === "dark"
-                              ? "0 4px 12px rgba(0,0,0,0.35)"
-                              : "0 4px 12px rgba(139, 69, 19, 0.1)",
-                          transition: "all 0.3s ease",
-                        }}
-                      >
-                        <div
-                          className="thumb"
-                          style={{
-                            position: "relative",
-                            paddingBottom: "120%", // Tăng chiều cao ảnh
-                            overflow: "hidden",
-                            background:
-                              themeMode === "dark" ? "#1e1c19" : "#f7f7f9",
-                            borderRadius: "12px", // Bo cả 4 góc
-                          }}
-                        >
-                          <img
-                            src={m.img}
-                            alt={m.name}
-                            style={{
-                              position: "absolute",
-                              inset: 0,
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                            onError={(e) => {
-                              e.currentTarget.src =
-                                "https://via.placeholder.com/300x300?text=No+Image";
-                            }}
-                          />
-                          <div className="member-overlay"></div>
-                        </div>
-
-                        <div style={{ padding: "16px 12px" }}>
-                          <Space
-                            direction="vertical"
-                            size={8}
-                            style={{ width: "100%" }}
-                          >
-                            <div>
-                              <Text
-                                strong
-                                style={{
-                                  ...jpFont,
-                                  fontSize: 16,
-                                  display: "block",
-                                  marginBottom: 2,
-                                }}
-                              >
-                                {m.name}
-                              </Text>
-                              {m.english_name && (
-                                <Text
-                                  type="secondary"
-                                  style={{
-                                    fontSize: 12,
-                                    display: "block",
-                                    fontStyle: "italic",
-                                    textTransform: "capitalize",
-                                  }}
-                                >
-                                  {m.english_name}
-                                </Text>
-                              )}
-                            </div>
-
-                            <Space size={4} wrap style={{ marginTop: 4 }}>
-                              <Tag
-                                color="purple"
-                                style={{
-                                  borderRadius: 12,
-                                }}
-                              >
-                                {getGen(m)}
-                              </Tag>
-                              {m.birthday && (
-                                <Tag
-                                  style={{
-                                    background:
-                                      themeMode === "dark"
-                                        ? "rgba(207,191,166,0.08)"
-                                        : "rgba(147, 51, 234, 0.05)",
-                                    border:
-                                      themeMode === "dark"
-                                        ? "1px solid rgba(207,191,166,0.25)"
-                                        : "1px solid rgba(147, 51, 234, 0.2)",
-                                    borderRadius: 12,
-                                  }}
-                                >
-                                  🎂 {m.birthday}
-                                  {age != null ? ` (${age})` : ""}
-                                </Tag>
-                              )}
-                              {m.blood && (
-                                <Tag
-                                  style={{
-                                    background:
-                                      themeMode === "dark"
-                                        ? "rgba(207,191,166,0.08)"
-                                        : "rgba(147, 51, 234, 0.05)",
-                                    border:
-                                      themeMode === "dark"
-                                        ? "1px solid rgba(207,191,166,0.25)"
-                                        : "1px solid rgba(147, 51, 234, 0.2)",
-                                    borderRadius: 12,
-                                  }}
-                                >
-                                  🩸 {m.blood}
-                                </Tag>
-                              )}
-                              {m.constellation && (
-                                <Tag
-                                  style={{
-                                    background:
-                                      themeMode === "dark"
-                                        ? "rgba(207,191,166,0.08)"
-                                        : "rgba(147, 51, 234, 0.05)",
-                                    border:
-                                      themeMode === "dark"
-                                        ? "1px solid rgba(207,191,166,0.25)"
-                                        : "1px solid rgba(147, 51, 234, 0.2)",
-                                    borderRadius: 12,
-                                  }}
-                                >
-                                  ⭐ {m.constellation}
-                                </Tag>
-                              )}
-                            </Space>
-
-                            {m.link && (
-                              <Button
-                                type="link"
-                                size="small"
-                                icon={<LinkOutlined />}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(
-                                    m.link,
-                                    "_blank",
-                                    "noopener,noreferrer"
-                                  );
-                                }}
-                                style={{
-                                  color:
-                                    themeMode === "dark"
-                                      ? "#d2a86a"
-                                      : "#9333ea",
-                                  fontSize: 12,
-                                  padding: 0,
-                                  height: "auto",
-                                  marginTop: 4,
-                                  transition: "all 0.2s ease",
-                                }}
-                                className="official-button"
-                              >
-                                {t.officialSite[currentLanguage]}
-                              </Button>
-                            )}
-                          </Space>
-                        </div>
-                      </ProCard>
-                    </List.Item>
-                  );
-                }}
-              />
-            </ProCard>
+              gen={gen}
+              items={items}
+              language={language}
+              themeMode={themeMode}
+              onMemberClick={(memberCode) => navigate(`/blogs/${memberCode}`)}
+            />
           ))
         )}
-      </ProCard>
+      </div>
     </PageContainer>
   );
 };
