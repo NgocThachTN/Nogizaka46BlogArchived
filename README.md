@@ -1,13 +1,6 @@
 # Nogizaka46 Blog Archived
 
 > Fetch Nogizaka46 members’ blogs from the official site, with automatic multilingual translation via **Gemini API**.
-
-[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
-![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb)
-![Ant Design Pro](https://img.shields.io/badge/UI-Ant%20Design%20Pro-0170fe)
-![Vercel](https://img.shields.io/badge/Deploy-Vercel-000)
-
 ---
 
 ##  Overview
