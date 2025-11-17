@@ -558,22 +558,23 @@ export default function BlogDetailMobile({
           WebkitBackdropFilter: "blur(10px)",
         }}
       >
-        <div style={{ padding: "10px 6px 10px" }}>
+        <div style={{ padding: "8px 4px 8px" }}>
           <Space
             align="center"
-            style={{ width: "100%", justifyContent: "space-between" }}
+            style={{ width: "100%", justifyContent: "space-between", gap: 4 }}
           >
             {/* Left side - Navigation */}
-            <Space size={4}>
+            <Space size={2}>
               <Button
                 type="text"
                 size="small"
                 icon={<HomeOutlined />}
                 onClick={() => navigate("/members")}
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
+                  width: 26,
+                  height: 26,
+                  borderRadius: 5,
+                  padding: 0,
                   background:
                     themeMode === "dark"
                       ? "rgba(36,33,29,0.8)"
@@ -583,6 +584,7 @@ export default function BlogDetailMobile({
                       ? "1px solid rgba(207,191,166,0.2)"
                       : "1px solid rgba(0,0,0,0.08)",
                   color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                  fontSize: 12,
                 }}
               />
               <Button
@@ -591,9 +593,10 @@ export default function BlogDetailMobile({
                 icon={<UnorderedListOutlined />}
                 onClick={onBackToMemberBlogs}
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
+                  width: 26,
+                  height: 26,
+                  borderRadius: 5,
+                  padding: 0,
                   background:
                     themeMode === "dark"
                       ? "rgba(36,33,29,0.8)"
@@ -603,6 +606,7 @@ export default function BlogDetailMobile({
                       ? "1px solid rgba(207,191,166,0.2)"
                       : "1px solid rgba(0,0,0,0.08)",
                   color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                  fontSize: 12,
                 }}
               />
               {prevId && (
@@ -612,20 +616,21 @@ export default function BlogDetailMobile({
                   disabled={!prevId || navLock}
                   onClick={() => fastGo && fastGo(prevId)}
                   style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 5,
+                    width: 24,
+                    height: 24,
+                    borderRadius: 4,
+                    padding: 0,
                     background: "rgba(255, 255, 255, 0.6)",
                     border: "1px solid rgba(0,0,0,0.08)",
                     color: "#8b4513",
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: 600,
                   }}
                 >
                   {pendingNavId &&
                   pendingNavId === prevId &&
                   !getCachedBlogDetail(prevId) ? (
-                    <LoadingOutlined style={{ fontSize: 12 }} />
+                    <LoadingOutlined style={{ fontSize: 10 }} />
                   ) : (
                     "‹"
                   )}
@@ -638,20 +643,21 @@ export default function BlogDetailMobile({
                   disabled={!nextId || navLock}
                   onClick={() => fastGo && fastGo(nextId)}
                   style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 5,
+                    width: 24,
+                    height: 24,
+                    borderRadius: 4,
+                    padding: 0,
                     background: "rgba(139, 69, 19, 0.1)",
                     border: "1px solid rgba(139, 69, 19, 0.2)",
                     color: "#8b4513",
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: 600,
                   }}
                 >
                   {pendingNavId &&
                   pendingNavId === nextId &&
                   !getCachedBlogDetail(nextId) ? (
-                    <LoadingOutlined style={{ fontSize: 12 }} />
+                    <LoadingOutlined style={{ fontSize: 10 }} />
                   ) : (
                     "›"
                   )}
@@ -659,16 +665,23 @@ export default function BlogDetailMobile({
               )}
             </Space>
 
-            {/* Center - Language selection */}
-            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+            {/* Center - Language selection - Compact */}
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "center",
+                minWidth: 0,
+              }}
+            >
               <Segmented
                 size="small"
                 value={cachedLanguage}
                 onChange={(val) => setLanguage(val)}
                 options={[
-                  { label: "JPN", value: "ja" },
-                  { label: "ENG", value: "en" },
-                  { label: "VN", value: "vi" },
+                  { label: "JP", value: "ja" },
+                  { label: "EN", value: "en" },
+                  { label: "VI", value: "vi" },
                 ]}
                 style={{
                   background:
@@ -679,13 +692,15 @@ export default function BlogDetailMobile({
                     themeMode === "dark"
                       ? "1px solid rgba(207,191,166,0.2)"
                       : "1px solid rgba(0,0,0,0.08)",
-                  borderRadius: 8,
+                  borderRadius: 6,
+                  fontSize: 11,
+                  minHeight: 24,
                 }}
               />
             </div>
 
-            {/* Right side - Settings */}
-            <Space size={4}>
+            {/* Right side - Settings - Compact */}
+            <Space size={2}>
               {/* Furigana toggle - only show for Japanese */}
               {cachedLanguage === "ja" && (
                 <Button
@@ -698,9 +713,10 @@ export default function BlogDetailMobile({
                   }
                   icon={<ReadOutlined />}
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 6,
+                    width: 26,
+                    height: 26,
+                    borderRadius: 5,
+                    padding: 0,
                     background: showFurigana
                       ? themeMode === "dark"
                         ? "#9c6b3f"
@@ -718,6 +734,7 @@ export default function BlogDetailMobile({
                       : themeMode === "dark"
                       ? "#d2a86a"
                       : "#8b4513",
+                    fontSize: 12,
                   }}
                 />
               )}
@@ -735,6 +752,7 @@ export default function BlogDetailMobile({
                     width: 26,
                     height: 26,
                     borderRadius: 5,
+                    padding: 0,
                     background:
                       themeMode === "dark"
                         ? "rgba(36,33,29,0.8)"
@@ -744,50 +762,19 @@ export default function BlogDetailMobile({
                         ? "1px solid rgba(207,191,166,0.2)"
                         : "1px solid rgba(0,0,0,0.08)",
                     color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                    fontSize: 12,
                   }}
                 />
               )}
-              {/* Translation status - Hidden on very small screens */}
-              {(translating || isPending) && window.innerWidth >= 360 ? (
-                <div
+              {/* Translation status indicator - More compact */}
+              {translating || isPending ? (
+                <LoadingOutlined
+                  spin
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "4px 8px",
-                    background:
-                      themeMode === "dark"
-                        ? "#9c6b3f"
-                        : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
-                    borderRadius: 6,
-                    color: "white",
-                    fontSize: 11,
-                    fontWeight: 500,
+                    color: themeMode === "dark" ? "#d2a86a" : "#9333ea",
+                    fontSize: 14,
                   }}
-                >
-                  <LoadingOutlined
-                    spin
-                    style={{ marginRight: 4, fontSize: 10 }}
-                  />
-                  {cachedLanguage === "vi"
-                    ? "Dịch"
-                    : cachedLanguage === "en"
-                    ? "Trans"
-                    : "翻訳"}
-                </div>
-              ) : window.innerWidth >= 360 ? (
-                <div
-                  style={{
-                    padding: "4px 6px",
-                    background: "rgba(255, 255, 255, 0.6)",
-                    borderRadius: 6,
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    color: "#8b4513",
-                    fontSize: 10,
-                    fontWeight: 500,
-                  }}
-                >
-                  {cachedLanguage?.toUpperCase?.() || "JA"}
-                </div>
+                />
               ) : null}
 
               <Button
@@ -796,9 +783,10 @@ export default function BlogDetailMobile({
                 icon={<FontSizeOutlined />}
                 onClick={() => setDrawerVisible(true)}
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
+                  width: 26,
+                  height: 26,
+                  borderRadius: 5,
+                  padding: 0,
                   background:
                     themeMode === "dark"
                       ? "rgba(36,33,29,0.8)"
@@ -808,6 +796,7 @@ export default function BlogDetailMobile({
                       ? "1px solid rgba(207,191,166,0.2)"
                       : "1px solid rgba(0,0,0,0.08)",
                   color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                  fontSize: 12,
                 }}
               />
             </Space>
