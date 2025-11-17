@@ -13,12 +13,12 @@ const t = {
     graduatedMembers: {
         ja: "卒業生",
         en: "Graduated Members",
-        vi: "Thành viên đã tốt nghiệp",
+        vi: "Đã tốt nghiệp",
     },
     currentMembers: {
         ja: "現役メンバー",
         en: "Current Members",
-        vi: "Thành viên hiện tại",
+        vi: "Hiện tại",
     },
 };
 

@@ -366,47 +366,47 @@ export default function BlogList({
             />
 
             {/* LIST */}
-          {current.length === 0 ? (
-            <ProCard
-              bordered
-              style={{
-                borderRadius: 14,
-                minHeight: 220,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background:
-                  themeMode === "dark"
-                    ? "rgba(36, 33, 29, 0.85)"
-                    : "rgba(253, 246, 227, 0.8)",
-              }}
-            >
-              <Empty
-                description={
-                  q ? t.noBlogs[currentLanguage] : t.noBlogs[currentLanguage]
-                }
-              />
-            </ProCard>
-          ) : (
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(3, 1fr)", 
-              gap: "16px",
-              width: "100%"
-            }}>
-              {current.map((blog, idx) => (
-                <BlogCard
-                  key={blog.id}
-                  blog={blog}
-                  index={idx}
-                  language={language}
-                  themeMode={themeMode}
-                  screens={screens}
-                  onOpen={onOpen}
+            {current.length === 0 ? (
+              <ProCard
+                bordered
+                style={{
+                  borderRadius: 14,
+                  minHeight: 220,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background:
+                    themeMode === "dark"
+                      ? "rgba(36, 33, 29, 0.85)"
+                      : "rgba(253, 246, 227, 0.8)",
+                }}
+              >
+                <Empty
+                  description={
+                    q ? t.noBlogs[currentLanguage] : t.noBlogs[currentLanguage]
+                  }
                 />
-              ))}
-            </div>
-          )}
+              </ProCard>
+            ) : (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "16px",
+                width: "100%"
+              }}>
+                {current.map((blog, idx) => (
+                  <BlogCard
+                    key={blog.id}
+                    blog={blog}
+                    index={idx}
+                    language={language}
+                    themeMode={themeMode}
+                    screens={screens}
+                    onOpen={onOpen}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* PAGINATION */}
             {filtered.length > 0 && (

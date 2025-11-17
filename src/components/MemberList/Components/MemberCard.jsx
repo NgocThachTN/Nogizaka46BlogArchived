@@ -77,163 +77,163 @@ const MemberCard = ({ member, language, themeMode, onClick }) => {
                 transition: "all 0.3s ease",
                 height: "100%",
             }}
+        >
+            <div
+                className="thumb"
+                style={{
+                    position: "relative",
+                    paddingBottom: "120%", // Tăng chiều cao ảnh
+                    overflow: "hidden",
+                    background:
+                        themeMode === "dark" ? "#1e1c19" : "#f7f7f9",
+                    borderRadius: "12px", // Bo cả 4 góc
+                }}
             >
-                <div
-                    className="thumb"
+                <img
+                    src={member.img}
+                    alt={member.name}
                     style={{
-                        position: "relative",
-                        paddingBottom: "120%", // Tăng chiều cao ảnh
-                        overflow: "hidden",
-                        background:
-                            themeMode === "dark" ? "#1e1c19" : "#f7f7f9",
-                        borderRadius: "12px", // Bo cả 4 góc
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
                     }}
-                >
-                    <img
-                        src={member.img}
-                        alt={member.name}
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                        }}
-                        onError={(e) => {
-                            e.currentTarget.src =
-                                "https://via.placeholder.com/300x300?text=No+Image";
-                        }}
-                    />
-                    <div className="member-overlay"></div>
-                </div>
+                    onError={(e) => {
+                        e.currentTarget.src =
+                            "https://via.placeholder.com/300x300?text=No+Image";
+                    }}
+                />
+                <div className="member-overlay"></div>
+            </div>
 
-                <div style={{ padding: "16px 12px" }}>
-                    <Space
-                        direction="vertical"
-                        size={8}
-                        style={{ width: "100%" }}
-                    >
-                        <div>
+            <div style={{ padding: "16px 12px" }}>
+                <Space
+                    direction="vertical"
+                    size={8}
+                    style={{ width: "100%" }}
+                >
+                    <div>
+                        <Text
+                            strong
+                            style={{
+                                ...jpFont,
+                                fontSize: 16,
+                                display: "block",
+                                marginBottom: 2,
+                            }}
+                        >
+                            {member.name}
+                        </Text>
+                        {member.english_name && (
                             <Text
-                                strong
+                                type="secondary"
                                 style={{
-                                    ...jpFont,
-                                    fontSize: 16,
+                                    fontSize: 12,
                                     display: "block",
-                                    marginBottom: 2,
+                                    fontStyle: "italic",
+                                    textTransform: "capitalize",
                                 }}
                             >
-                                {member.name}
+                                {member.english_name}
                             </Text>
-                            {member.english_name && (
-                                <Text
-                                    type="secondary"
-                                    style={{
-                                        fontSize: 12,
-                                        display: "block",
-                                        fontStyle: "italic",
-                                        textTransform: "capitalize",
-                                    }}
-                                >
-                                    {member.english_name}
-                                </Text>
-                            )}
-                        </div>
+                        )}
+                    </div>
 
-                        <Space size={4} wrap style={{ marginTop: 4 }}>
+                    <Space size={4} wrap style={{ marginTop: 4 }}>
+                        <Tag
+                            color="purple"
+                            style={{
+                                borderRadius: 12,
+                            }}
+                        >
+                            {getGen(member)}
+                        </Tag>
+                        {member.birthday && (
                             <Tag
-                                color="purple"
                                 style={{
+                                    background:
+                                        themeMode === "dark"
+                                            ? "rgba(207,191,166,0.08)"
+                                            : "rgba(147, 51, 234, 0.05)",
+                                    border:
+                                        themeMode === "dark"
+                                            ? "1px solid rgba(207,191,166,0.25)"
+                                            : "1px solid rgba(147, 51, 234, 0.2)",
                                     borderRadius: 12,
                                 }}
                             >
-                                {getGen(member)}
+                                🎂 {member.birthday}
+                                {age != null ? ` (${age})` : ""}
                             </Tag>
-                            {member.birthday && (
-                                <Tag
-                                    style={{
-                                        background:
-                                            themeMode === "dark"
-                                                ? "rgba(207,191,166,0.08)"
-                                                : "rgba(147, 51, 234, 0.05)",
-                                        border:
-                                            themeMode === "dark"
-                                                ? "1px solid rgba(207,191,166,0.25)"
-                                                : "1px solid rgba(147, 51, 234, 0.2)",
-                                        borderRadius: 12,
-                                    }}
-                                >
-                                    🎂 {member.birthday}
-                                    {age != null ? ` (${age})` : ""}
-                                </Tag>
-                            )}
-                            {member.blood && (
-                                <Tag
-                                    style={{
-                                        background:
-                                            themeMode === "dark"
-                                                ? "rgba(207,191,166,0.08)"
-                                                : "rgba(147, 51, 234, 0.05)",
-                                        border:
-                                            themeMode === "dark"
-                                                ? "1px solid rgba(207,191,166,0.25)"
-                                                : "1px solid rgba(147, 51, 234, 0.2)",
-                                        borderRadius: 12,
-                                    }}
-                                >
-                                    🩸 {member.blood}
-                                </Tag>
-                            )}
-                            {member.constellation && (
-                                <Tag
-                                    style={{
-                                        background:
-                                            themeMode === "dark"
-                                                ? "rgba(207,191,166,0.08)"
-                                                : "rgba(147, 51, 234, 0.05)",
-                                        border:
-                                            themeMode === "dark"
-                                                ? "1px solid rgba(207,191,166,0.25)"
-                                                : "1px solid rgba(147, 51, 234, 0.2)",
-                                        borderRadius: 12,
-                                    }}
-                                >
-                                    ⭐ {member.constellation}
-                                </Tag>
-                            )}
-                        </Space>
-
-                        {member.link && (
-                            <Button
-                                type="link"
-                                size="small"
-                                icon={<LinkOutlined />}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(
-                                        member.link,
-                                        "_blank",
-                                        "noopener,noreferrer"
-                                    );
-                                }}
+                        )}
+                        {member.blood && (
+                            <Tag
                                 style={{
-                                    color:
+                                    background:
                                         themeMode === "dark"
-                                            ? "#d2a86a"
-                                            : "#9333ea",
-                                    fontSize: 12,
-                                    padding: 0,
-                                    height: "auto",
-                                    marginTop: 4,
-                                    transition: "all 0.2s ease",
+                                            ? "rgba(207,191,166,0.08)"
+                                            : "rgba(147, 51, 234, 0.05)",
+                                    border:
+                                        themeMode === "dark"
+                                            ? "1px solid rgba(207,191,166,0.25)"
+                                            : "1px solid rgba(147, 51, 234, 0.2)",
+                                    borderRadius: 12,
                                 }}
-                                className="official-button"
                             >
-                                {t.officialSite[currentLanguage]}
-                            </Button>
+                                🩸 {member.blood}
+                            </Tag>
+                        )}
+                        {member.constellation && (
+                            <Tag
+                                style={{
+                                    background:
+                                        themeMode === "dark"
+                                            ? "rgba(207,191,166,0.08)"
+                                            : "rgba(147, 51, 234, 0.05)",
+                                    border:
+                                        themeMode === "dark"
+                                            ? "1px solid rgba(207,191,166,0.25)"
+                                            : "1px solid rgba(147, 51, 234, 0.2)",
+                                    borderRadius: 12,
+                                }}
+                            >
+                                ⭐ {member.constellation}
+                            </Tag>
                         )}
                     </Space>
-                </div>
+
+                    {member.link && (
+                        <Button
+                            type="link"
+                            size="small"
+                            icon={<LinkOutlined />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                    member.link,
+                                    "_blank",
+                                    "noopener,noreferrer"
+                                );
+                            }}
+                            style={{
+                                color:
+                                    themeMode === "dark"
+                                        ? "#d2a86a"
+                                        : "#9333ea",
+                                fontSize: 12,
+                                padding: 0,
+                                height: "auto",
+                                marginTop: 4,
+                                transition: "all 0.2s ease",
+                            }}
+                            className="official-button"
+                        >
+                            {t.officialSite[currentLanguage]}
+                        </Button>
+                    )}
+                </Space>
+            </div>
         </ProCard>
     );
 };
