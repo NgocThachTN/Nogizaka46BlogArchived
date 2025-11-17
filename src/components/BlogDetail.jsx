@@ -229,26 +229,23 @@ export default function BlogDetail({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initialize Kuroshiro on mount (non-blocking, lazy)
+  // Initialize Kuroshiro lazily (không block blog loading)
   useEffect(() => {
-    // Defer Kuroshiro initialization to not block initial render
+    // Delay initialization để không block blog loading
     const timer = setTimeout(() => {
       (async () => {
         try {
-          const instance = await initKuroshiro();
-          if (instance) {
-            setKuroshiroReady(true);
-            console.log("Kuroshiro ready for furigana");
-          } else {
-            console.warn("Kuroshiro initialization failed, furigana will be disabled");
-            setKuroshiroReady(false);
-          }
+          console.log("Starting Kuroshiro initialization...");
+          await initKuroshiro();
+          setKuroshiroReady(true);
+          console.log("Kuroshiro ready for furigana");
         } catch (error) {
-          console.error("Failed to initialize Kuroshiro:", error);
+          console.warn("Failed to initialize Kuroshiro:", error);
+          // Không throw error - chỉ log warning
           setKuroshiroReady(false);
         }
       })();
-    }, 1000); // Delay 1s to let page render first
+    }, 2000); // Delay 2s để blog load trước
 
     return () => clearTimeout(timer);
   }, []);
@@ -306,10 +303,12 @@ export default function BlogDetail({
 
   // load blog (cache-first then revalidate)
   useEffect(() => {
+    let isCancelled = false;
+    
     (async () => {
       try {
         const cached = getCachedBlogDetail(id);
-        if (cached) {
+        if (cached && !isCancelled) {
           setBlog(cached);
           setLoading(false);
         } else {
@@ -324,7 +323,7 @@ export default function BlogDetail({
         // Fetch blog detail với retry cho iOS
         let data = null;
         let retryCount = 0;
-        const maxRetries = isIOS() ? 3 : 1;
+        const maxRetries = isIOS() ? 3 : 2; // Tăng retry cho production
 
         while (retryCount < maxRetries && !data) {
           try {
@@ -343,15 +342,17 @@ export default function BlogDetail({
         }
 
         if (!data) {
-          notification.error({
-            message: "Lỗi tải nội dung",
-            description: "Không thể tải nội dung blog. Vui lòng thử lại sau.",
-            placement: "topRight",
-            duration: 4,
-          });
+          if (!isCancelled) {
+            notification.error({
+              message: "Lỗi tải nội dung",
+              description: "Không thể tải nội dung blog. Vui lòng thử lại sau.",
+              placement: "topRight",
+              duration: 4,
+            });
+          }
           return;
         }
-        if (!data.content) {
+        if (!data.content && !isCancelled) {
           notification.warning({
             message: "Cảnh báo",
             description: "Blog không có nội dung.",
@@ -359,7 +360,9 @@ export default function BlogDetail({
             duration: 3,
           });
         }
-        setBlog(data);
+        if (!isCancelled) {
+          setBlog(data);
+        }
 
         // Member info với error handling cho iOS
         let member = null;
@@ -371,13 +374,17 @@ export default function BlogDetail({
           console.warn("Failed to fetch member info:", memberError);
           // Không block UI nếu không fetch được member info
         }
-        setMemberInfo(member);
+        if (!isCancelled) {
+          setMemberInfo(member);
+        }
 
         // Fetch member blogs for calendar với error handling
-        if (member?.code) {
+        if (member?.code && !isCancelled) {
           try {
             const blogs = await fetchAllBlogs(member.code);
-            setMemberBlogs(blogs || []);
+            if (!isCancelled) {
+              setMemberBlogs(blogs || []);
+            }
           } catch (e) {
             console.error("Failed to fetch member blogs:", e);
             // Không block UI nếu không fetch được member blogs
@@ -385,18 +392,26 @@ export default function BlogDetail({
         }
       } catch (e) {
         console.error("Error loading blog:", e);
-        notification.error({
-          message: "Lỗi hệ thống",
-          description: "Lỗi khi tải blog. Vui lòng thử lại sau.",
-          placement: "topRight",
-          duration: 4,
-        });
+        if (!isCancelled) {
+          notification.error({
+            message: "Lỗi hệ thống",
+            description: "Lỗi khi tải blog. Vui lòng thử lại sau.",
+            placement: "topRight",
+            duration: 4,
+          });
+        }
       } finally {
-        setLoading(false);
-        setPendingNavId(null);
-        setNavLock(false);
+        if (!isCancelled) {
+          setLoading(false);
+          setPendingNavId(null);
+          setNavLock(false);
+        }
       }
     })();
+    
+    return () => {
+      isCancelled = true;
+    };
   }, [id]);
 
   // persist size
@@ -651,28 +666,19 @@ export default function BlogDetail({
       if (showFurigana && !furiganaContent) {
         try {
           setFuriganaLoading(true);
-
-          // Add timeout for furigana generation
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Furigana generation timeout')), 15000)
+          
+          // Add timeout để tránh block vô hạn
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Furigana timeout")), 30000)
           );
-
-          const furiganaHtml = await Promise.race([
-            addFuriganaToHtml(blog.content),
-            timeoutPromise
-          ]);
-
-          if (furiganaHtml && furiganaHtml !== blog.content) {
-            setFuriganaContent(furiganaHtml);
-          } else {
-            // Fallback to original content
-            console.warn('Furigana generation returned original content');
-            setShowFurigana(false);
-            message.warning("Furigana không khả dụng cho bài viết này.");
-          }
+          
+          const furiganaPromise = addFuriganaToHtml(blog.content);
+          const furiganaHtml = await Promise.race([furiganaPromise, timeoutPromise]);
+          
+          setFuriganaContent(furiganaHtml);
         } catch (error) {
           console.error("Failed to generate furigana:", error);
-          message.error("Không thể tạo furigana. Vui lòng thử lại.");
+          message.warning("Không thể tạo furigana. Vui lòng thử lại sau.");
           setShowFurigana(false);
         } finally {
           setFuriganaLoading(false);
