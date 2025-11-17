@@ -9,6 +9,7 @@ import { ConfigProvider, theme, Segmented } from "antd";
 import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 import { useEffect, useMemo, useState } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 import BlogList from "./components/BlogList";
 import BlogListMobile from "./components/BlogListMobile";
 import BlogDetail from "./components/BlogDetail";
@@ -94,15 +95,15 @@ function App() {
       Card:
         themeMode === "dark"
           ? {
-              borderRadiusLG: 12,
-              boxShadowTertiary: "0 2px 8px rgba(0,0,0,0.35)",
-              colorBgContainer: "#24211d",
-            }
+            borderRadiusLG: 12,
+            boxShadowTertiary: "0 2px 8px rgba(0,0,0,0.35)",
+            colorBgContainer: "#24211d",
+          }
           : {
-              borderRadiusLG: 12,
-              boxShadowTertiary: "0 2px 8px rgba(139, 69, 19, 0.1)",
-              colorBgContainer: "#FDF6E3",
-            },
+            borderRadiusLG: 12,
+            boxShadowTertiary: "0 2px 8px rgba(139, 69, 19, 0.1)",
+            colorBgContainer: "#FDF6E3",
+          },
       Button: { borderRadius: 6, borderRadiusLG: 8 },
       Typography:
         themeMode === "dark"
@@ -122,9 +123,8 @@ function App() {
     >
       <Router>
         <div
-          className={`min-h-screen ${
-            themeMode === "dark" ? "dark-book-background" : "book-background"
-          }`}
+          className={`min-h-screen ${themeMode === "dark" ? "dark-book-background" : "book-background"
+            }`}
         >
           <ProLayout
             layout="side"
@@ -213,6 +213,7 @@ function App() {
         </div>
       </Router>
       <SpeedInsights />
+      <Analytics />
     </ConfigProvider>
   );
 }
