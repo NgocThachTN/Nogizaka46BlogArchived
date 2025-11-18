@@ -33,6 +33,7 @@ import {
   GlobalOutlined,
   BulbOutlined,
   MoonOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import {
   PageContainer,
@@ -794,6 +795,17 @@ export default function BlogListMobile({
                 align="center"
               >
                 <Space>
+                  <Button
+                    type="text"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate("/members")}
+                    style={{
+                      marginLeft: "-8px",
+                      borderRadius: 10,
+                      color: themeMode === "dark" ? "#d2a86a" : colors.primary,
+                    }}
+                    aria-label="Back to members"
+                  />
                   <Avatar
                     size={48}
                     src={
@@ -859,6 +871,7 @@ export default function BlogListMobile({
                       onChange={setLanguage}
                       size="small"
                       style={{ width: 120 }}
+                      dropdownStyle={{ zIndex: 9999 }}
                       options={[
                         {
                           value: "ja",
@@ -1465,9 +1478,28 @@ export default function BlogListMobile({
           font-family: 'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif !important;
         }
 
-        /* Smooth animations */
+        /* Language Select dropdown fix */
+        .ant-select-dropdown {
+          z-index: 9999 !important;
+          pointer-events: auto !important;
+        }
+        
+        /* Remove ALL global transitions to prevent lag */
         * {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: none !important;
+        }
+        
+        /* Only apply transitions to specific hover effects */
+        .ant-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        
+        .ant-btn {
+          transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        
+        img {
+          transition: filter 0.3s ease !important;
         }
         
         /* iOS Safari specific fixes */
