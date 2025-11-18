@@ -27,7 +27,6 @@ import {
   Button,
   Card,
   message,
-  Affix,
   Collapse,
   Badge,
   Divider,
@@ -48,7 +47,10 @@ import {
   BulbOutlined,
   MoonOutlined,
 } from "@ant-design/icons";
-import { loadAllGraduatedMembers, shouldUseLocalDB } from "../utils/graduatedMembersLoader";
+import {
+  loadAllGraduatedMembers,
+  shouldUseLocalDB,
+} from "../utils/graduatedMembersLoader";
 
 /** Typography */
 const { Title, Text } = Typography;
@@ -227,7 +229,9 @@ export default function MemberListMobile({
         if (shouldUseLocalDB()) {
           try {
             const graduated = await loadAllGraduatedMembers();
-            console.log(`✅ Loaded ${graduated.length} graduated members from local DB`);
+            console.log(
+              `✅ Loaded ${graduated.length} graduated members from local DB`
+            );
             if (!canceled) setGraduatedMembers(graduated);
           } catch (error) {
             console.warn("Failed to load graduated members:", error);
@@ -265,8 +269,9 @@ export default function MemberListMobile({
     return allMembers.filter((m) => {
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
-      const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""
-        }`.toLowerCase();
+      const hay = `${m.name} ${m.english_name || ""} ${
+        m.kana || ""
+      }`.toLowerCase();
       return hay.includes(kw);
     });
   }, [members, graduatedMembers, genFilter, keyword, showGraduated]);
@@ -368,8 +373,8 @@ export default function MemberListMobile({
             {currentLanguage === "ja"
               ? "6期生ブログ"
               : currentLanguage === "en"
-                ? "6th Gen Blog"
-                : "Blog Thế hệ 6"}
+              ? "6th Gen Blog"
+              : "Blog Thế hệ 6"}
           </Text>
           <Text
             type="secondary"
@@ -382,8 +387,8 @@ export default function MemberListMobile({
             {currentLanguage === "ja"
               ? "6期生リレー公式ブログ"
               : currentLanguage === "en"
-                ? "6th Gen Relay Official Blog"
-                : "Blog chính thức 6期生"}
+              ? "6th Gen Relay Official Blog"
+              : "Blog chính thức 6期生"}
           </Text>
           <Space size={4} wrap>
             <Tag
@@ -398,8 +403,8 @@ export default function MemberListMobile({
               {currentLanguage === "ja"
                 ? "6期生"
                 : currentLanguage === "en"
-                  ? "6th Gen"
-                  : "Thế hệ 6"}
+                ? "6th Gen"
+                : "Thế hệ 6"}
             </Tag>
             <Tag
               style={{
@@ -414,8 +419,8 @@ export default function MemberListMobile({
               {currentLanguage === "ja"
                 ? "ブログ"
                 : currentLanguage === "en"
-                  ? "Blog"
-                  : "Blog"}
+                ? "Blog"
+                : "Blog"}
             </Tag>
           </Space>
         </div>
@@ -600,8 +605,7 @@ export default function MemberListMobile({
         overflow: "hidden",
       }}
     >
-      {/* Sticky Hero */}
-      <Affix offsetTop={0}>
+      {/* Hero - scrolls with content */}
         <div
           style={{
             background:
@@ -613,7 +617,6 @@ export default function MemberListMobile({
                 ? "1px solid rgba(207,191,166,0.2)"
                 : "1px solid #f2f2f5",
             width: "100%",
-            zIndex: 998,
           }}
         >
           <ProCard
@@ -747,14 +750,22 @@ export default function MemberListMobile({
                   block
                   style={{
                     marginBottom: 12,
-                    background: themeMode === "dark"
-                      ? "rgba(36,33,29,0.85)"
-                      : "rgba(253, 246, 227, 0.9)",
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36,33,29,0.85)"
+                        : "rgba(253, 246, 227, 0.9)",
                   }}
                   options={[
                     {
                       label: (
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "center" }}>
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            justifyContent: "center",
+                          }}
+                        >
                           <StarOutlined />
                           {t.currentMembers[currentLanguage]} ({members.length})
                         </span>
@@ -763,8 +774,16 @@ export default function MemberListMobile({
                     },
                     {
                       label: (
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "center" }}>
-                          {t.graduatedMembers[currentLanguage]} ({graduatedMembers.length})
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {t.graduatedMembers[currentLanguage]} (
+                          {graduatedMembers.length})
                         </span>
                       ),
                       value: "graduated",
@@ -782,21 +801,21 @@ export default function MemberListMobile({
                       ? currentLanguage === "ja"
                         ? "すべて"
                         : currentLanguage === "en"
-                          ? "All"
-                          : "Tất cả"
+                        ? "All"
+                        : "Tất cả"
                       : g
-                        .replace(
-                          "期生",
-                          currentLanguage === "ja"
-                            ? "期生"
-                            : currentLanguage === "en"
+                          .replace(
+                            "期生",
+                            currentLanguage === "ja"
+                              ? "期生"
+                              : currentLanguage === "en"
                               ? " Gen"
                               : " Thế hệ"
-                        )
-                        .replace(
-                          /^(\d+)\s*(Gen|Thế hệ)$/,
-                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                        ),
+                          )
+                          .replace(
+                            /^(\d+)\s*(Gen|Thế hệ)$/,
+                            currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                          ),
                   value: g,
                 }))}
                 size="small"
@@ -825,7 +844,6 @@ export default function MemberListMobile({
             </div>
           </ProCard>
         </div>
-      </Affix>
 
       {/* Content */}
       <div
@@ -896,20 +914,20 @@ export default function MemberListMobile({
                         {gen === "その他"
                           ? t.other[currentLanguage]
                           : gen
-                            .replace(
-                              "期生",
-                              currentLanguage === "ja"
-                                ? "期生"
-                                : currentLanguage === "en"
+                              .replace(
+                                "期生",
+                                currentLanguage === "ja"
+                                  ? "期生"
+                                  : currentLanguage === "en"
                                   ? " Gen"
                                   : " Thế hệ"
-                            )
-                            .replace(
-                              /^(\d+)\s*(Gen|Thế hệ)$/,
-                              currentLanguage === "en"
-                                ? "Gen $1"
-                                : "Thế hệ $1"
-                            )}
+                              )
+                              .replace(
+                                /^(\d+)\s*(Gen|Thế hệ)$/,
+                                currentLanguage === "en"
+                                  ? "Gen $1"
+                                  : "Thế hệ $1"
+                              )}
                       </span>
                     </Space>
                     <Space>
@@ -1005,21 +1023,21 @@ export default function MemberListMobile({
                     ? currentLanguage === "ja"
                       ? "すべて"
                       : currentLanguage === "en"
-                        ? "All"
-                        : "Tất cả"
+                      ? "All"
+                      : "Tất cả"
                     : g
-                      .replace(
-                        "期生",
-                        currentLanguage === "ja"
-                          ? "期生"
-                          : currentLanguage === "en"
+                        .replace(
+                          "期生",
+                          currentLanguage === "ja"
+                            ? "期生"
+                            : currentLanguage === "en"
                             ? " Gen"
                             : " Thế hệ"
-                      )
-                      .replace(
-                        /^(\d+)\s*(Gen|Thế hệ)$/,
-                        currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                      ),
+                        )
+                        .replace(
+                          /^(\d+)\s*(Gen|Thế hệ)$/,
+                          currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                        ),
                 value: g,
               }))}
               value={genFilter}
@@ -1089,18 +1107,21 @@ export default function MemberListMobile({
           width: 100% !important;
         }
         .ant-collapse-item { 
-          border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "#f1f1f5"
-        } !important; 
+          border: 1px solid ${
+            themeMode === "dark" ? "rgba(207,191,166,0.2)" : "#f1f1f5"
+          } !important; 
           border-radius: 12px !important; 
           margin-bottom: 8px !important; 
-          background: ${themeMode === "dark"
-          ? "rgba(36,33,29,0.85)"
-          : "rgba(253, 246, 227, 0.8)"
-        } !important; 
-          box-shadow: ${themeMode === "dark"
-          ? "0 1px 4px rgba(0,0,0,0.35)"
-          : "0 1px 4px rgba(0,0,0,0.04)"
-        } !important; 
+          background: ${
+            themeMode === "dark"
+              ? "rgba(36,33,29,0.85)"
+              : "rgba(253, 246, 227, 0.8)"
+          } !important; 
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 1px 4px rgba(0,0,0,0.35)"
+              : "0 1px 4px rgba(0,0,0,0.04)"
+          } !important; 
           overflow: hidden !important; 
           width: 100% !important;
         }
@@ -1109,10 +1130,11 @@ export default function MemberListMobile({
         }
         .ant-collapse-header { 
           padding: 12px 16px !important; 
-          background: ${themeMode === "dark"
-          ? "linear-gradient(135deg, rgba(28,26,23,0.95), rgba(36,33,29,0.95))"
-          : "linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9))"
-        } !important; 
+          background: ${
+            themeMode === "dark"
+              ? "linear-gradient(135deg, rgba(28,26,23,0.95), rgba(36,33,29,0.95))"
+              : "linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9))"
+          } !important; 
           border: none !important; 
           border-radius: 12px !important; 
           cursor: pointer !important; 
@@ -1123,10 +1145,11 @@ export default function MemberListMobile({
         }
         .ant-collapse-content { 
           border: none !important; 
-          background: ${themeMode === "dark"
-          ? "rgba(36,33,29,0.85)"
-          : "rgba(253, 246, 227, 0.8)"
-        } !important; 
+          background: ${
+            themeMode === "dark"
+              ? "rgba(36,33,29,0.85)"
+              : "rgba(253, 246, 227, 0.8)"
+          } !important; 
           border-radius: 0 0 12px 12px !important; 
         }
         .ant-collapse-content-box { 
