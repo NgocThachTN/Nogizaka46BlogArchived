@@ -1178,6 +1178,24 @@ export default function MemberListMobile({
         * {
           -webkit-tap-highlight-color: transparent;
         }
+
+        /* Remove ALL global transitions to prevent lag */
+        * {
+          transition: none !important;
+        }
+        
+        /* Only apply transitions to specific hover effects */
+        .ant-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        
+        .ant-btn {
+          transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        
+        img {
+          transition: filter 0.3s ease !important;
+        }
       `}</style>
     </PageContainer>
   );
