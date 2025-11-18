@@ -1,10 +1,12 @@
 import React from "react";
 import { Typography, Space, Avatar, Select, Button } from "antd";
 import { ProCard } from "@ant-design/pro-components";
+import { useNavigate } from "react-router-dom";
 import {
     GlobalOutlined,
     BulbOutlined,
     MoonOutlined,
+    ArrowLeftOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -26,6 +28,11 @@ const t = {
         en: "Loading...",
         vi: "Đang tải...",
     },
+    backToHome: {
+        ja: "ホームに戻る",
+        en: "Back to Home",
+        vi: "Về trang chủ",
+    },
 };
 
 const BlogListHeader = ({
@@ -40,6 +47,8 @@ const BlogListHeader = ({
     const currentLanguage = ["ja", "en", "vi"].includes(language)
         ? language
         : "ja";
+    
+    const navigate = useNavigate();
 
     return (
         <ProCard
@@ -54,13 +63,33 @@ const BlogListHeader = ({
             }}
             bodyStyle={{ padding: screens.xs ? 12 : 18 }}
         >
-            <Space
-                direction={screens.xs ? "vertical" : "horizontal"}
-                align="center"
-                style={{ width: "100%", justifyContent: "center" }}
-                size={screens.xs ? 8 : 16}
-            >
-                <Avatar
+            <div style={{ position: "relative", width: "100%" }}>
+                <Button
+                    type="default"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate("/members")}
+                    style={{
+                        position: "absolute",
+                        left: 0,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        borderRadius: 10,
+                        color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                        borderColor: themeMode === "dark" ? "rgba(207,191,166,0.3)" : "rgba(139, 69, 19, 0.3)",
+                        background: themeMode === "dark" ? "rgba(36,33,29,0.5)" : "rgba(253, 246, 227, 0.5)",
+                    }}
+                    aria-label={t.backToHome[currentLanguage]}
+                    title={t.backToHome[currentLanguage]}
+                >
+                    {!screens.xs && t.backToHome[currentLanguage]}
+                </Button>
+                <Space
+                    direction={screens.xs ? "vertical" : "horizontal"}
+                    align="center"
+                    style={{ width: "100%", justifyContent: "center" }}
+                    size={screens.xs ? 8 : 16}
+                >
+                    <Avatar
                     size={screens.xs ? 52 : 64}
                     src={
                         memberInfo?.img ||
@@ -163,6 +192,7 @@ const BlogListHeader = ({
                     )}
                 </Space>
             </Space>
+            </div>
         </ProCard>
     );
 };
