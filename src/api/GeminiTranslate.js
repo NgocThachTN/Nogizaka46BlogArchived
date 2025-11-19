@@ -13,34 +13,46 @@ const initializeApiInstances = () => {
     return;
   }
 
-  apiInstances = GEMINI_API_KEYS.map(key => new GoogleGenerativeAI(key));
-  models = apiInstances.map(genAI => genAI.getGenerativeModel({ model: "gemini-2.0-flash" }));
+  apiInstances = GEMINI_API_KEYS.map((key) => new GoogleGenerativeAI(key));
+  models = apiInstances.map((genAI) =>
+    genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+  );
 
-  console.log(`Initialized ${models.length} Gemini API instance(s) for translation`);
+  console.log(
+    `Initialized ${models.length} Gemini API instance(s) for translation`
+  );
 };
 
 // Initialize on module load
 initializeApiInstances();
 
-// Get current model and rotate to next
-const getModelAndRotate = () => {
+// Get current model without rotating
+const getCurrentModel = () => {
+  if (models.length === 0) {
+    throw new Error("No API keys configured for translation");
+  }
+  return models[currentKeyIndex];
+};
+
+// Rotate to next API key (call this when starting a new blog translation)
+export const rotateToNextKey = () => {
   if (models.length === 0) {
     throw new Error("No API keys configured for translation");
   }
 
-  const currentModel = models[currentKeyIndex];
   const keyNumber = currentKeyIndex + 1;
 
-  // Rotate to next key for next request
+  // Rotate to next key
   currentKeyIndex = (currentKeyIndex + 1) % models.length;
 
   if (models.length > 1) {
-    console.log(`Using API key #${keyNumber} (will use #${currentKeyIndex + 1} next)`);
+    console.log(
+      `GeminiTranslate: Rotated to API key #${
+        currentKeyIndex + 1
+      } (was using #${keyNumber})`
+    );
   }
-
-  return currentModel;
 };
-
 
 const cleanTextForTranslation = (text) => {
   return text.replace(/\s+/g, " ").trim();
@@ -105,13 +117,20 @@ const cleanTranslationResult = (text) => {
       }
 
       // For non-HTML lines, check Japanese percentage
-      const withoutSpaces = trimmed.replace(/\s+/g, '');
-      const japaneseChars = withoutSpaces.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g);
-      const japaneseRatio = japaneseChars ? japaneseChars.length / withoutSpaces.length : 0;
+      const withoutSpaces = trimmed.replace(/\s+/g, "");
+      const japaneseChars = withoutSpaces.match(
+        /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g
+      );
+      const japaneseRatio = japaneseChars
+        ? japaneseChars.length / withoutSpaces.length
+        : 0;
 
       // If line is mostly Japanese (>50%), skip it entirely
       if (japaneseRatio > 0.5) {
-        console.warn('Filtering out Japanese line (>50%):', trimmed.substring(0, 50));
+        console.warn(
+          "Filtering out Japanese line (>50%):",
+          trimmed.substring(0, 50)
+        );
         continue;
       }
 
@@ -119,17 +138,21 @@ const cleanTranslationResult = (text) => {
       if (japaneseRatio > 0.1) {
         // Split by sentences and keep only Vietnamese ones
         const sentences = trimmed.split(/[。！？\n]/);
-        const vietnameseSentences = sentences.filter(sent => {
+        const vietnameseSentences = sentences.filter((sent) => {
           const sentTrimmed = sent.trim();
           if (!sentTrimmed) return false;
-          const sentWithoutSpaces = sentTrimmed.replace(/\s+/g, '');
-          const sentJapChars = sentWithoutSpaces.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g);
-          const sentJapRatio = sentJapChars ? sentJapChars.length / sentWithoutSpaces.length : 0;
+          const sentWithoutSpaces = sentTrimmed.replace(/\s+/g, "");
+          const sentJapChars = sentWithoutSpaces.match(
+            /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g
+          );
+          const sentJapRatio = sentJapChars
+            ? sentJapChars.length / sentWithoutSpaces.length
+            : 0;
           return sentJapRatio < 0.3; // Keep if less than 30% Japanese
         });
 
         if (vietnameseSentences.length > 0) {
-          processedLines.push(vietnameseSentences.join(' ').trim());
+          processedLines.push(vietnameseSentences.join(" ").trim());
         }
       } else {
         // Line is mostly Vietnamese, keep it
@@ -187,10 +210,13 @@ const cleanTitleTranslation = (text) => {
   cleaned = lines.join("\n").trim();
 
   // Remove any emojis or icons that Gemini might add
-  cleaned = cleaned.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+  cleaned = cleaned.replace(
+    /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,
+    ""
+  );
 
   // Remove common decorative symbols (use alternation instead of character class)
-  cleaned = cleaned.replace(/✨|💫|⭐|🎵|🎶|❤️|💕|💖|🌸|🌺|🌷|🎀/gu, '');
+  cleaned = cleaned.replace(/✨|💫|⭐|🎵|🎶|❤️|💕|💖|🌸|🌺|🌷|🎀/gu, "");
 
   // If the text contains both Japanese and Vietnamese, try to extract only Vietnamese
   // Look for patterns like "Japanese text Vietnamese text" and keep only Vietnamese
@@ -333,8 +359,14 @@ export async function translateJapaneseToEnglish(text, onProgress) {
   const chunks = splitTextIntoChunks(text);
   let translatedText = "";
 
-  // Get model for this translation (rotates for each new translation call)
-  const model = getModelAndRotate();
+  // Use current model (no rotation, assumes title already rotated if needed)
+  const keyNumber = currentKeyIndex + 1;
+  console.log(
+    `GeminiTranslate: Translating English body with API key #${keyNumber}`
+  );
+
+  // Get current model (same key for all chunks)
+  const model = getCurrentModel();
 
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
@@ -367,8 +399,14 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
   const chunks = splitTextIntoChunks(text);
   let translatedText = "";
 
-  // Get model for this translation (rotates for each new translation call)
-  const model = getModelAndRotate();
+  // Use current model (same key as title translation)
+  const keyNumber = currentKeyIndex + 1;
+  console.log(
+    `GeminiTranslate: Translating body with API key #${keyNumber} (same as title)`
+  );
+
+  // Get current model (same key for all chunks and title)
+  const model = getCurrentModel();
 
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
@@ -385,23 +423,42 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
         translation = cleanTranslationResult(rawTranslation);
 
         // Final validation: Check if translation still contains significant Japanese
-        const textWithoutHtml = translation.replace(/<[^>]+>/g, ' ');
-        const japaneseChars = textWithoutHtml.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g);
-        const japaneseRatio = japaneseChars ? japaneseChars.length / textWithoutHtml.length : 0;
+        const textWithoutHtml = translation.replace(/<[^>]+>/g, " ");
+        const japaneseChars = textWithoutHtml.match(
+          /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g
+        );
+        const japaneseRatio = japaneseChars
+          ? japaneseChars.length / textWithoutHtml.length
+          : 0;
 
         if (japaneseRatio > 0.15) {
           // More than 15% Japanese - this is a bad translation
-          console.error(`WARNING: Translation contains ${(japaneseRatio * 100).toFixed(1)}% Japanese text!`);
-          console.error('Japanese chars found:', japaneseChars.length, 'Total chars:', textWithoutHtml.length);
-          console.error('Sample:', textWithoutHtml.substring(0, 200));
+          console.error(
+            `WARNING: Translation contains ${(japaneseRatio * 100).toFixed(
+              1
+            )}% Japanese text!`
+          );
+          console.error(
+            "Japanese chars found:",
+            japaneseChars.length,
+            "Total chars:",
+            textWithoutHtml.length
+          );
+          console.error("Sample:", textWithoutHtml.substring(0, 200));
 
           if (retryCount < maxRetries) {
             retryCount++;
-            console.warn(`Retrying translation (attempt ${retryCount + 1}/${maxRetries + 1})...`);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+            console.warn(
+              `Retrying translation (attempt ${retryCount + 1}/${
+                maxRetries + 1
+              })...`
+            );
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s before retry
             continue;
           } else {
-            console.error('Max retries reached. Using best available translation despite Japanese content.');
+            console.error(
+              "Max retries reached. Using best available translation despite Japanese content."
+            );
           }
         }
 
@@ -411,11 +468,17 @@ export async function translateJapaneseToVietnamese(text, onProgress) {
         console.error("Translation error:", error);
         if (retryCount < maxRetries) {
           retryCount++;
-          console.warn(`Retrying after error (attempt ${retryCount + 1}/${maxRetries + 1})...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.warn(
+            `Retrying after error (attempt ${retryCount + 1}/${
+              maxRetries + 1
+            })...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           continue;
         }
-        throw new Error("Failed to translate chunk after retries: " + error.message);
+        throw new Error(
+          "Failed to translate chunk after retries: " + error.message
+        );
       }
     }
 
@@ -434,8 +497,13 @@ export async function translateTitleToVietnamese(title) {
   if (!title) return "";
 
   try {
-    // Get model for this translation (rotates for each new translation call)
-    const model = getModelAndRotate();
+    // Rotate to next key for this new blog translation
+    rotateToNextKey();
+    const keyNumber = currentKeyIndex + 1;
+    console.log(
+      `GeminiTranslate: Starting new blog translation with API key #${keyNumber} (title)`
+    );
+    const model = getCurrentModel();
 
     const prompt = `You are a professional translator specializing in Japanese to Vietnamese translation for idol blog titles.
 

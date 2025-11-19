@@ -5,28 +5,35 @@ import { GEMINI_API_KEYS } from "../config/env";
 let currentAxiosKeyIndex = 0;
 
 const createAxiosWithRetry = () => {
-  // Get current API key and rotate
-  const getCurrentApiKey = () => {
-    if (GEMINI_API_KEYS.length === 0) {
-      throw new Error("No API keys configured");
-    }
-    const key = GEMINI_API_KEYS[currentAxiosKeyIndex];
-    currentAxiosKeyIndex = (currentAxiosKeyIndex + 1) % GEMINI_API_KEYS.length;
-
-    if (GEMINI_API_KEYS.length > 1) {
-      console.log(`GeminiServices: Using API key #${currentAxiosKeyIndex + 1}`);
-    }
-
-    return key;
-  };
-
   const instance = axios.create({
     baseURL: "https://generativelanguage.googleapis.com/v1beta",
     headers: {
       "Content-Type": "application/json",
-      "X-goog-api-key": getCurrentApiKey(),
     },
     timeout: 120000, // 2 minutes timeout
+  });
+
+  // Add request interceptor to rotate API keys for each request
+  instance.interceptors.request.use((config) => {
+    if (GEMINI_API_KEYS.length === 0) {
+      throw new Error("No API keys configured");
+    }
+    
+    // Get current key and log BEFORE rotating
+    const key = GEMINI_API_KEYS[currentAxiosKeyIndex];
+    const keyNumber = currentAxiosKeyIndex + 1; // Human-readable key number (1-based)
+    
+    // Rotate to next key for next request
+    currentAxiosKeyIndex = (currentAxiosKeyIndex + 1) % GEMINI_API_KEYS.length;
+
+    // Set API key in header for this request
+    config.headers["X-goog-api-key"] = key;
+
+    if (GEMINI_API_KEYS.length > 1) {
+      console.log(`GeminiServices: Using API key #${keyNumber} (will use #${currentAxiosKeyIndex + 1} next)`);
+    }
+
+    return config;
   });
 
   // Add retry interceptor
