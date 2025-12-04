@@ -1,5 +1,5 @@
 // BlogListMobile.jsx — Ant Design Pro • Mobile-First Japanese Style
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   Typography,
   Spin,
@@ -108,6 +108,7 @@ export default function BlogListMobile({
     : "ja";
   const navigate = useNavigate();
   const { memberCode } = useParams();
+  const location = useLocation();
 
   const [blogs, setBlogs] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -147,7 +148,8 @@ export default function BlogListMobile({
     return () => clearInterval(interval);
   }, []);
 
-  // Hide mobile browser address bar on mount for better reading experience
+  // Hide mobile browser address bar logic removed to prevent scrolling issues
+  /*
   useEffect(() => {
     const hideBrowserBar = () => {
       if (window.innerWidth <= 768) {
@@ -174,9 +176,54 @@ export default function BlogListMobile({
       window.removeEventListener('orientationchange', hideBrowserBar);
     };
   }, []);
-
+  */
   // ---- Render instantly from cache with iOS optimizations ----
   useLayoutEffect(() => {
+    // 1. Disable browser scroll restoration
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    // 2. Define aggressive scroll to top function targeting ALL potential scroll containers
+    const forceScrollTop = () => {
+      // Window
+      window.scrollTo(0, 0);
+      
+      // Document
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      // Root element
+      const root = document.getElementById('root');
+      if (root) root.scrollTop = 0;
+
+      // Ant Design Pro containers
+      const pageContainers = document.querySelectorAll('.ant-pro-page-container');
+      pageContainers.forEach(el => el.scrollTop = 0);
+      
+      const childrenContainers = document.querySelectorAll('.ant-pro-page-container-children-container');
+      childrenContainers.forEach(el => el.scrollTop = 0);
+
+      // Any other potential scroll containers
+      const scrollables = document.querySelectorAll('div[style*="overflow"], div[class*="scroll"]');
+      scrollables.forEach(el => el.scrollTop = 0);
+    };
+
+    // 3. Execute immediately and repeatedly
+    forceScrollTop();
+    
+    // Run on next frame
+    requestAnimationFrame(forceScrollTop);
+
+    // Run with delays to catch any layout shifts or browser restoration attempts
+    const timers = [
+      setTimeout(forceScrollTop, 10),
+      setTimeout(forceScrollTop, 50),
+      setTimeout(forceScrollTop, 100),
+      setTimeout(forceScrollTop, 300),
+      setTimeout(forceScrollTop, 500) // Long delay for slow devices
+    ];
+
     const renderCachedContent = async () => {
       const b = _cache.blogsByMember.get(memberCode);
       const m = _cache.memberByCode.get(memberCode);
@@ -217,28 +264,16 @@ export default function BlogListMobile({
         setMemberInfo(m.info);
       }
 
-      // Restore scroll position with iOS optimization
-      const y = _cache.scrollY.get(memberCode);
-      if (typeof y === "number") {
-        if (isIOS) {
-          // iOS: More aggressive scroll restoration
-          setTimeout(() => {
-            window.scrollTo({
-              top: y,
-              behavior: "auto",
-            });
-            // Force iOS to update scroll position
-            document.documentElement.scrollTop = y;
-            document.body.scrollTop = y;
-          }, 200);
-        } else {
-          requestAnimationFrame(() => window.scrollTo(0, y));
-        }
-      }
+      // Execute scroll again after state updates
+      requestAnimationFrame(forceScrollTop);
     };
 
     renderCachedContent();
-  }, [memberCode]);
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [memberCode, location.pathname]); // Add location.pathname to trigger on navigation
 
   // ---- Load + revalidate với iOS optimizations ----
   useEffect(() => {
