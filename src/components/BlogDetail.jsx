@@ -125,13 +125,13 @@ const bookFont = {
   },
 };
 
-// size preset — big for JP reading (increased 20%)
+// size preset — big for JP reading (increased ~20% to replace zoom:1.2)
 const SIZE_PRESETS = {
-  sm: { px: 20, lh: 1.9, h1: 2.0, h2: 1.7, h3: 1.45 },
-  md: { px: 22, lh: 2.1, h1: 2.2, h2: 1.85, h3: 1.6 },
-  lg: { px: 25, lh: 2.2, h1: 2.4, h2: 2.0, h3: 1.75 },
-  xl: { px: 28, lh: 2.3, h1: 2.6, h2: 2.15, h3: 1.85 },
-  xxl: { px: 31, lh: 2.4, h1: 2.8, h2: 2.3, h3: 2.0 },
+  sm: { px: 24, lh: 1.9, h1: 2.0, h2: 1.7, h3: 1.45 },
+  md: { px: 26, lh: 2.1, h1: 2.2, h2: 1.85, h3: 1.6 },
+  lg: { px: 30, lh: 2.2, h1: 2.4, h2: 2.0, h3: 1.75 },
+  xl: { px: 34, lh: 2.3, h1: 2.6, h2: 2.15, h3: 1.85 },
+  xxl: { px: 38, lh: 2.4, h1: 2.8, h2: 2.3, h3: 2.0 },
 };
 
 const t = {
@@ -1456,9 +1456,6 @@ export default function BlogDetail({
 
       {/* prose base */}
       <style>{`
-        body {
-          zoom: 1.2;
-        }
         /* Furigana (Ruby) Styling */
         .jp-prose ruby {
           ruby-position: over;
