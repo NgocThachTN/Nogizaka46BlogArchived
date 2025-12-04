@@ -1626,7 +1626,7 @@ export default function BlogDetail({
           width: calc(100% - 32px) !important;
           max-width: calc(100% - 32px) !important;
           min-width: 0 !important;
-          margin: 0 16px 16px 16px !important;
+          margin: 12px 16px 16px 16px !important;
           padding: 14px 20px !important;
           background: ${themeMode === "dark" ? "rgba(36, 33, 29, 0.85)" : "rgba(253, 246, 227, 0.8)"} !important;
           border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.25)" : "rgba(139, 69, 19, 0.2)"} !important;
