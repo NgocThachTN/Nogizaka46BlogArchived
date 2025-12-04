@@ -814,179 +814,186 @@ export default function BlogDetail({
       contentWidth="Fluid"
       header={{
         title: "乃木坂46ブログ",
-        style: { paddingInline: 24 },
-        extra: [
-          <Button key="back" icon={<LeftOutlined />} onClick={onBack}>
-            {t.back[language]}
-          </Button>,
-          <Button key="member-blogs" onClick={onBackToMemberBlogs} type="default">
-            {t.backToMemberBlogs[language]}
-          </Button>,
+        style: { paddingInline: 16, paddingBlock: 8 },
+        extra: (
+          <div style={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: '6px', 
+            alignItems: 'center',
+            justifyContent: 'flex-end'
+          }}>
+            <Button key="back" icon={<LeftOutlined />} onClick={onBack}>
+              {t.back[language]}
+            </Button>
+            <Button key="member-blogs" onClick={onBackToMemberBlogs} type="default">
+              {t.backToMemberBlogs[language]}
+            </Button>
 
-          // PREV (only render when prevId exists)
-          navIds.prevId ? (
-            <Tooltip key="prev" title={t.prevPost[language]}>
-              <Button
-                icon={
-                  pendingNavId &&
+            {/* PREV (only render when prevId exists) */}
+            {navIds.prevId && (
+              <Tooltip key="prev" title={t.prevPost[language]}>
+                <Button
+                  icon={
+                    pendingNavId &&
+                      pendingNavId === navIds.prevId &&
+                      !getCachedBlogDetail(navIds.prevId) ? (
+                      <LoadingOutlined />
+                    ) : (
+                      <LeftOutlined />
+                    )
+                  }
+                  loading={
                     pendingNavId === navIds.prevId &&
-                    !getCachedBlogDetail(navIds.prevId) ? (
-                    <LoadingOutlined />
-                  ) : (
-                    <LeftOutlined />
-                  )
-                }
-                loading={
-                  pendingNavId === navIds.prevId &&
-                  !getCachedBlogDetail(navIds.prevId)
-                }
-                onClick={() => fastGo(navIds.prevId)}
-                onMouseEnter={() => onHoverPrefetch(navIds.prevId)}
-                disabled={
-                  navLock ||
-                  (pendingNavId === navIds.prevId &&
-                    !getCachedBlogDetail(navIds.prevId))
-                }
-              />
-            </Tooltip>
-          ) : null,
+                    !getCachedBlogDetail(navIds.prevId)
+                  }
+                  onClick={() => fastGo(navIds.prevId)}
+                  onMouseEnter={() => onHoverPrefetch(navIds.prevId)}
+                  disabled={
+                    navLock ||
+                    (pendingNavId === navIds.prevId &&
+                      !getCachedBlogDetail(navIds.prevId))
+                  }
+                />
+              </Tooltip>
+            )}
 
-          // NEXT (render only when nextId exists; kèm spinner nhỏ nếu đang pending & chưa cache)
-          navIds.nextId ? (
-            <Tooltip key="next" title={t.nextPost[language]}>
-              <Button
-                type="primary"
-                icon={
-                  pendingNavId &&
+            {/* NEXT (render only when nextId exists; kèm spinner nhỏ nếu đang pending & chưa cache) */}
+            {navIds.nextId && (
+              <Tooltip key="next" title={t.nextPost[language]}>
+                <Button
+                  type="primary"
+                  icon={
+                    pendingNavId &&
+                      pendingNavId === navIds.nextId &&
+                      !getCachedBlogDetail(navIds.nextId) ? (
+                      <LoadingOutlined />
+                    ) : (
+                      <RightOutlined />
+                    )
+                  }
+                  loading={
                     pendingNavId === navIds.nextId &&
-                    !getCachedBlogDetail(navIds.nextId) ? (
-                    <LoadingOutlined />
-                  ) : (
-                    <RightOutlined />
-                  )
-                }
-                loading={
-                  pendingNavId === navIds.nextId &&
-                  !getCachedBlogDetail(navIds.nextId)
-                }
-                onClick={() => fastGo(navIds.nextId)}
-                onMouseEnter={() => onHoverPrefetch(navIds.nextId)}
-                disabled={navLock}
-              />
-            </Tooltip>
-          ) : null,
+                    !getCachedBlogDetail(navIds.nextId)
+                  }
+                  onClick={() => fastGo(navIds.nextId)}
+                  onMouseEnter={() => onHoverPrefetch(navIds.nextId)}
+                  disabled={navLock}
+                />
+              </Tooltip>
+            )}
 
-          <Select
-            key="lang"
-            value={language}
-            onChange={(value) => {
-              setLanguage(value);
-              if (propSetLanguage) propSetLanguage(value);
-            }}
-            style={{ width: 168 }}
-            loading={translating}
-            disabled={translating}
-            options={[
-              {
-                value: "ja",
-                label: (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <GlobalOutlined
-                      style={{ color: "#666", fontSize: "14px" }}
-                    />
-                    日本語
-                  </span>
-                ),
-              },
-              {
-                value: "en",
-                label: (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <GlobalOutlined
-                      style={{ color: "#666", fontSize: "14px" }}
-                    />
-                    English
-                  </span>
-                ),
-              },
-              {
-                value: "vi",
-                label: (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <GlobalOutlined
-                      style={{ color: "#666", fontSize: "14px" }}
-                    />
-                    Tiếng Việt
-                  </span>
-                ),
-              },
-            ]}
-          />,
-          language === "ja" ? (
-            <Tooltip
-              key="furigana-toggle"
-              title={showFurigana ? t.furiganaOn[language] : t.furiganaOff[language]}
-            >
-              <Button
-                type={showFurigana ? "primary" : "default"}
-                loading={furiganaLoading || kuroshiroInitializing}
-                onClick={() => setShowFurigana(!showFurigana)}
-                disabled={furiganaLoading || kuroshiroInitializing || !blog?.content}
-              >
-                {t.furigana[language]}
-              </Button>
-            </Tooltip>
-          ) : null,
-          setThemeMode ? (
-            <Button
-              key="theme"
-              type="text"
-              size="middle"
-              onClick={() =>
-                setThemeMode(themeMode === "dark" ? "light" : "dark")
-              }
-              icon={themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />}
-              aria-label="Toggle dark mode"
-              title={themeMode === "dark" ? "Light" : "Dark"}
+            <Select
+              key="lang"
+              value={language}
+              onChange={(value) => {
+                setLanguage(value);
+                if (propSetLanguage) propSetLanguage(value);
+              }}
+              style={{ width: 150, minWidth: 120 }}
+              loading={translating}
+              disabled={translating}
+              options={[
+                {
+                  value: "ja",
+                  label: (
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <GlobalOutlined
+                        style={{ color: "#666", fontSize: "14px" }}
+                      />
+                      日本語
+                    </span>
+                  ),
+                },
+                {
+                  value: "en",
+                  label: (
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <GlobalOutlined
+                        style={{ color: "#666", fontSize: "14px" }}
+                      />
+                      English
+                    </span>
+                  ),
+                },
+                {
+                  value: "vi",
+                  label: (
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <GlobalOutlined
+                        style={{ color: "#666", fontSize: "14px" }}
+                      />
+                      Tiếng Việt
+                    </span>
+                  ),
+                },
+              ]}
             />
-          ) : null,
+            {language === "ja" && (
+              <Tooltip
+                key="furigana-toggle"
+                title={showFurigana ? t.furiganaOn[language] : t.furiganaOff[language]}
+              >
+                <Button
+                  type={showFurigana ? "primary" : "default"}
+                  loading={furiganaLoading || kuroshiroInitializing}
+                  onClick={() => setShowFurigana(!showFurigana)}
+                  disabled={furiganaLoading || kuroshiroInitializing || !blog?.content}
+                >
+                  {t.furigana[language]}
+                </Button>
+              </Tooltip>
+            )}
+            {setThemeMode && (
+              <Button
+                key="theme"
+                type="text"
+                size="middle"
+                onClick={() =>
+                  setThemeMode(themeMode === "dark" ? "light" : "dark")
+                }
+                icon={themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />}
+                aria-label="Toggle dark mode"
+                title={themeMode === "dark" ? "Light" : "Dark"}
+              />
+            )}
 
-          <Segmented
-            key="seg-size"
-            options={[
-              { label: t.fontSizes.sm[language], value: "sm" },
-              { label: t.fontSizes.md[language], value: "md" },
-              { label: t.fontSizes.lg[language], value: "lg" },
-              { label: t.fontSizes.xl[language], value: "xl" },
-              { label: t.fontSizes.xxl[language], value: "xxl" },
-            ]}
-            value={fontSizeKey}
-            onChange={(v) => setFontSizeKey(v)}
-            style={{ marginLeft: 8 }}
-          />,
+            <Segmented
+              key="seg-size"
+              options={[
+                { label: t.fontSizes.sm[language], value: "sm" },
+                { label: t.fontSizes.md[language], value: "md" },
+                { label: t.fontSizes.lg[language], value: "lg" },
+                { label: t.fontSizes.xl[language], value: "xl" },
+                { label: t.fontSizes.xxl[language], value: "xxl" },
+              ]}
+              value={fontSizeKey}
+              onChange={(v) => setFontSizeKey(v)}
+            />
 
-          <Button key="share" icon={<ShareAltOutlined />} onClick={onShare}>
-            {t.share[language]}
-          </Button>,
-        ],
+            <Button key="share" icon={<ShareAltOutlined />} onClick={onShare}>
+              {t.share[language]}
+            </Button>
+          </div>
+        ),
       }}
       token={{ colorBgPageContainer: readingMode ? "#fafafa" : undefined }}
     >
@@ -1646,10 +1653,12 @@ export default function BlogDetail({
         .ant-page-header-heading-title,
         .ant-page-header .ant-page-header-heading-title {
           margin-right: 0 !important;
-          padding-right: 0 !important;
-          font-size: 18px !important;
+          padding-right: 8px !important;
+          font-size: 16px !important;
           font-weight: 600 !important;
           color: ${themeMode === "dark" ? "#d2a86a" : "#8b4513"} !important;
+          white-space: nowrap !important;
+          flex-shrink: 0 !important;
         }
         .ant-page-header-heading-extra,
         .ant-page-header .ant-page-header-heading-extra {
@@ -1658,11 +1667,12 @@ export default function BlogDetail({
           display: flex !important;
           align-items: center !important;
           justify-content: flex-end !important;
-          gap: 10px !important;
-          flex-wrap: nowrap !important;
+          gap: 6px !important;
+          flex-wrap: wrap !important;
+          min-width: 0 !important;
         }
         .ant-page-header-heading-extra > * {
-          flex-shrink: 0 !important;
+          flex-shrink: 1 !important;
         }
         /* Button styling for consistency */
         .ant-page-header-heading-extra .ant-btn {
