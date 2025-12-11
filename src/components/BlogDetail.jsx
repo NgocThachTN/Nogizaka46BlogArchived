@@ -64,7 +64,6 @@ import {
   translateJapaneseToEnglish,
   translateJapaneseToVietnamese,
   translateTitleToVietnamese,
-  translateTitleToEnglish,
 } from "../api/GeminiTranslate";
 import {
   initKuroshiro,
@@ -555,7 +554,7 @@ export default function BlogDetail({
         // Translate title
         let titleOut = "";
         if (language === "en") {
-          titleOut = await translateTitleToEnglish(blog.title || "");
+          titleOut = await translateJapaneseToEnglish(blog.title || "");
         } else {
           titleOut = await translateTitleToVietnamese(blog.title || "");
         }
