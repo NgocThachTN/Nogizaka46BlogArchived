@@ -15,7 +15,7 @@ const initializeApiInstances = () => {
 
   apiInstances = GEMINI_API_KEYS.map((key) => new GoogleGenerativeAI(key));
   models = apiInstances.map((genAI) =>
-    genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
   );
 
   console.log(
