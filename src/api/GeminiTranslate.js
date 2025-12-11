@@ -58,6 +58,105 @@ const cleanTextForTranslation = (text) => {
   return text.replace(/\s+/g, " ").trim();
 };
 
+// Common instruction keywords to filter out (used in both Vietnamese and English cleaning)
+const instructionKeywords = [
+  "IMPORTANT INSTRUCTIONS",
+  "TRANSLATION RULES",
+  "CRITICAL RULES",
+  "Translate ONLY",
+  "Do NOT include",
+  "Do NOT add",
+  "Do NOT violate",
+  "Return ONLY",
+  "Text to translate",
+  "Title to translate",
+  "CRITICAL:",
+  "You are a professional translator",
+  "ブログ記事",
+  "Dịch từ tiếng Nhật",
+  "Văn bản cần dịch",
+  'Dùng "mình" cho I/me',
+  'Use "mình" for',
+  "Dùng cách xưng hô phù hợp",
+  "Giữ giọng văn thân mật",
+  "Giữ nguyên các thẻ HTML",
+  "Giữ nguyên cấu trúc",
+  "Duy trì văn phong",
+  "Ưu tiên ngữ cảnh",
+  "TRANSLATION STYLE",
+  "FORMATTING:",
+  "Keep tone friendly",
+  "Preserve ALL HTML",
+  "Keep original structure",
+];
+
+const containsInstructionKeyword = (text) => {
+  return instructionKeywords.some((keyword) => text.includes(keyword));
+};
+
+// Clean English translation result - simpler version without Vietnamese-specific filtering
+const cleanEnglishTranslationResult = (text) => {
+  let cleaned = text
+    .replace(/```html/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  // Split into lines and filter instruction text
+  const lines = cleaned.split("\n");
+  const filteredLines = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Skip empty lines at the start
+    if (trimmed.length === 0 && filteredLines.length === 0) continue;
+
+    // Remove lines with instruction keywords
+    if (containsInstructionKeyword(trimmed)) {
+      continue;
+    }
+
+    // Keep the line (may contain HTML or English text)
+    filteredLines.push(line);
+  }
+
+  cleaned = filteredLines.join("\n").trim();
+
+  // Remove any Japanese text that might have leaked through
+  // Filter out lines that are mostly Japanese (>50%)
+  const finalLines = cleaned.split("\n").filter((line) => {
+    const trimmed = line.trim();
+    if (trimmed.length === 0) return true; // Keep empty lines for formatting
+
+    // Check if line has HTML tags - preserve it (but check content inside)
+    const textContent = trimmed.replace(/<[^>]+>/g, " ").trim();
+    if (textContent.length === 0) return true; // Keep HTML-only lines
+
+    const withoutSpaces = textContent.replace(/\s+/g, "");
+    if (withoutSpaces.length === 0) return true;
+
+    const japaneseChars = withoutSpaces.match(
+      /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g
+    );
+    const japaneseRatio = japaneseChars
+      ? japaneseChars.length / withoutSpaces.length
+      : 0;
+
+    // Filter out lines that are mostly Japanese (>50%)
+    if (japaneseRatio > 0.5) {
+      console.warn(
+        "Filtering out Japanese line from English translation (>50%):",
+        trimmed.substring(0, 50)
+      );
+      return false;
+    }
+
+    return true;
+  });
+
+  return finalLines.join("\n").trim();
+};
+
 const cleanTranslationResult = (text) => {
   // Clean up translation result while preserving Vietnamese content
   let cleaned = text
@@ -81,31 +180,7 @@ const cleanTranslationResult = (text) => {
       if (trimmed.length === 0) continue;
 
       // Remove lines with instruction keywords
-      if (
-        trimmed.includes("IMPORTANT INSTRUCTIONS") ||
-        trimmed.includes("TRANSLATION RULES") ||
-        trimmed.includes("CRITICAL RULES") ||
-        trimmed.includes("Translate ONLY") ||
-        trimmed.includes("Do NOT include") ||
-        trimmed.includes("Do NOT add") ||
-        trimmed.includes("Do NOT violate") ||
-        trimmed.includes("Return ONLY") ||
-        trimmed.includes("Text to translate") ||
-        trimmed.includes("Title to translate") ||
-        trimmed.includes("CRITICAL:") ||
-        trimmed.includes("You are a professional translator") ||
-        trimmed.includes("ブログ記事") ||
-        trimmed.includes("Dịch từ tiếng Nhật") ||
-        trimmed.includes("Văn bản cần dịch") ||
-        trimmed.includes('Dùng "mình" cho I/me') ||
-        trimmed.includes('Use "mình" for') ||
-        trimmed.includes("Dùng cách xưng hô phù hợp") ||
-        trimmed.includes("Giữ giọng văn thân mật") ||
-        trimmed.includes("Giữ nguyên các thẻ HTML") ||
-        trimmed.includes("Giữ nguyên cấu trúc") ||
-        trimmed.includes("Duy trì văn phong") ||
-        trimmed.includes("Ưu tiên ngữ cảnh")
-      ) {
+      if (containsInstructionKeyword(trimmed)) {
         continue;
       }
 
@@ -168,7 +243,7 @@ const cleanTranslationResult = (text) => {
   return vietnameseBlocks.join("\n\n").trim();
 };
 
-const cleanTitleTranslation = (text) => {
+const cleanTitleTranslation = (text, targetLang = "vietnamese") => {
   // Special cleaning for title translations
   let cleaned = text
     .replace(/```html/g, "")
@@ -176,35 +251,10 @@ const cleanTitleTranslation = (text) => {
     .replace(/\s+/g, " ")
     .trim();
 
-  // Remove instruction text
+  // Remove instruction text using shared function
   const lines = cleaned.split("\n").filter((line) => {
     const trimmed = line.trim();
-    return (
-      !trimmed.includes("IMPORTANT INSTRUCTIONS") &&
-      !trimmed.includes("TRANSLATION RULES") &&
-      !trimmed.includes("CRITICAL RULES") &&
-      !trimmed.includes("Translate ONLY") &&
-      !trimmed.includes("Do NOT include") &&
-      !trimmed.includes("Do NOT add") &&
-      !trimmed.includes("Do NOT violate") &&
-      !trimmed.includes("Return ONLY") &&
-      !trimmed.includes("Title to translate") &&
-      !trimmed.includes("Text to translate") &&
-      !trimmed.includes("CRITICAL:") &&
-      !trimmed.includes("You are a professional translator") &&
-      !trimmed.includes("ブログ記事") &&
-      !trimmed.includes("Dịch từ tiếng Nhật") &&
-      !trimmed.includes("Văn bản cần dịch") &&
-      !trimmed.includes('Dùng "mình" cho I/me') &&
-      !trimmed.includes('Use "mình" for') &&
-      !trimmed.includes("Dùng cách xưng hô phù hợp") &&
-      !trimmed.includes("Giữ giọng văn thân mật") &&
-      !trimmed.includes("Giữ nguyên các thẻ HTML") &&
-      !trimmed.includes("Giữ nguyên cấu trúc") &&
-      !trimmed.includes("Duy trì văn phong") &&
-      !trimmed.includes("Ưu tiên ngữ cảnh") &&
-      trimmed.length > 0
-    );
+    return !containsInstructionKeyword(trimmed) && trimmed.length > 0;
   });
 
   cleaned = lines.join("\n").trim();
@@ -218,11 +268,11 @@ const cleanTitleTranslation = (text) => {
   // Remove common decorative symbols (use alternation instead of character class)
   cleaned = cleaned.replace(/✨|💫|⭐|🎵|🎶|❤️|💕|💖|🌸|🌺|🌷|🎀/gu, "");
 
-  // If the text contains both Japanese and Vietnamese, try to extract only Vietnamese
-  // Look for patterns like "Japanese text Vietnamese text" and keep only Vietnamese
+  // If the text contains both Japanese and target language, try to extract only target language
+  // Look for patterns like "Japanese text Target text" and keep only target language
   const finalLines = cleaned.split("\n").filter((line) => line.trim());
   if (finalLines.length > 1) {
-    // If multiple lines, take the last non-empty line (likely Vietnamese)
+    // If multiple lines, take the last non-empty line (likely the translation)
     cleaned = finalLines[finalLines.length - 1].trim();
   }
 
@@ -353,16 +403,17 @@ const splitTextIntoChunks = (text, maxChunkSize = 4000) => {
 };
 
 export async function translateJapaneseToEnglish(text, onProgress) {
-  console.log("translateJapaneseToEnglish called");
+  console.log("translateJapaneseToEnglish called, text length:", text?.length);
   if (!text) return "";
 
   const chunks = splitTextIntoChunks(text);
+  console.log(`Splitting into ${chunks.length} chunk(s)`);
   let translatedText = "";
 
-  // Use current model (no rotation, assumes title already rotated if needed)
+  // Use current model (same key as title translation - no rotation here)
   const keyNumber = currentKeyIndex + 1;
   console.log(
-    `GeminiTranslate: Translating English body with API key #${keyNumber}`
+    `GeminiTranslate: Translating English body with API key #${keyNumber} (same as title)`
   );
 
   // Get current model (same key for all chunks)
@@ -371,12 +422,32 @@ export async function translateJapaneseToEnglish(text, onProgress) {
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     const isLastChunk = i === chunks.length - 1;
+    console.log(`Processing chunk ${i + 1}/${chunks.length}, length: ${chunk.length}`);
 
     try {
       const prompt = createTranslationPrompt(chunk, "Japanese", "English");
+      console.log("Sending request to Gemini API for English translation...");
       const result = await model.generateContent(prompt);
+      
+      // Check if response exists
+      if (!result || !result.response) {
+        console.error("No response from Gemini API");
+        throw new Error("No response from Gemini API");
+      }
+      
       const rawTranslation = result.response.text();
-      const translation = cleanTranslationResult(rawTranslation);
+      console.log("Raw translation received, length:", rawTranslation?.length);
+      console.log("Raw translation sample:", rawTranslation?.substring(0, 200));
+      
+      if (!rawTranslation) {
+        console.error("Empty translation from Gemini API");
+        throw new Error("Empty translation from Gemini API");
+      }
+      
+      // Use English-specific cleaning function
+      const translation = cleanEnglishTranslationResult(rawTranslation);
+      console.log("Cleaned translation length:", translation?.length);
+      console.log("Cleaned translation sample:", translation?.substring(0, 200));
 
       if (onProgress) {
         onProgress(translation, isLastChunk);
@@ -385,6 +456,7 @@ export async function translateJapaneseToEnglish(text, onProgress) {
       }
     } catch (error) {
       console.error("Translation error:", error);
+      console.error("Error stack:", error.stack);
       throw new Error("Failed to translate chunk: " + error.message);
     }
   }
@@ -539,5 +611,69 @@ Title to translate: ${title}`;
   } catch (error) {
     console.error("Title translation error:", error);
     throw new Error("Failed to translate title: " + error.message);
+  }
+}
+
+export async function translateTitleToEnglish(title) {
+  console.log("translateTitleToEnglish called, title:", title);
+  if (!title) return "";
+
+  try {
+    // Rotate to next key for this new English blog translation
+    rotateToNextKey();
+    const keyNumber = currentKeyIndex + 1;
+    console.log(
+      `GeminiTranslate: Starting new English blog translation with API key #${keyNumber} (title)`
+    );
+    const model = getCurrentModel();
+
+    const prompt = `You are a professional translator specializing in Japanese to English translation for idol blog titles.
+
+Your task: Translate this Japanese title to English. Return ONLY the English translation.
+
+TRANSLATION STYLE:
+- Keep tone friendly, feminine, and youthful
+- Use natural conversational English
+- Preserve nicknames and song titles (romanized or translated appropriately)
+
+CRITICAL - ABSOLUTELY FORBIDDEN:
+❌ Do NOT include ANY Japanese text in your output
+❌ Do NOT keep original Japanese alongside translation
+❌ Do NOT add icons, emojis, or symbols (🎵 ✨ 💫 ❤️ etc.)
+❌ Do NOT add extra text or explanations
+❌ Do NOT add quotation marks around the translation
+
+✅ Return ONLY the English translation (single line)
+✅ Every Japanese word MUST be translated to English
+✅ Output must be 100% English
+✅ Casual, warm tone
+
+Title to translate: ${title}`;
+
+    console.log("Sending title translation request to Gemini...");
+    const result = await model.generateContent(prompt);
+    
+    // Check if response exists
+    if (!result || !result.response) {
+      console.error("No response from Gemini API for title translation");
+      throw new Error("No response from Gemini API");
+    }
+    
+    const rawTranslation = result.response.text();
+    console.log("Raw title translation:", rawTranslation);
+    
+    if (!rawTranslation) {
+      console.error("Empty title translation from Gemini API");
+      throw new Error("Empty title translation from Gemini API");
+    }
+    
+    const translation = cleanTitleTranslation(rawTranslation, "english");
+    console.log("Cleaned title translation:", translation);
+
+    return translation;
+  } catch (error) {
+    console.error("English title translation error:", error);
+    console.error("Error stack:", error.stack);
+    throw new Error("Failed to translate title to English: " + error.message);
   }
 }
