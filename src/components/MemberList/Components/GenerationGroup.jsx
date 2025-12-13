@@ -70,6 +70,7 @@ const GenerationGroup = ({ gen, items, language, themeMode, onMemberClick }) => 
                     xl: 5,
                     xxl: 5,
                 }}
+                //dataSource={items.slice(0, 10)} // Giới hạn hiển thị 10 thành viên đầu tiên
                 dataSource={items}
                 renderItem={(m) => (
                     <MemberCard
