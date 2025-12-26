@@ -44,7 +44,7 @@ const getGen = (m) => {
         (m.code === "10001" ? "その他" : "その他")
     );
 };
-
+// Component MemberCard      
 const MemberCard = ({ member, language, themeMode, onClick }) => {
     // Ensure language is valid, fallback to "ja"
     const currentLanguage = ["ja", "en", "vi"].includes(language)
