@@ -40,15 +40,99 @@
   z-index: 1;
 }
 
-/* Paper texture effect */
-.paper-texture {
-  background-image: linear-gradient(
-      90deg,
-      transparent 98%,
-      rgba(139, 69, 19, 0.03) 100%
-    ),
-    linear-gradient(0deg, transparent 98%, rgba(139, 69, 19, 0.03) 100%);
-  background-size: 20px 20px;
+/* Diary paper texture - yellow pages with horizontal ruled lines */
+.paper-texture,
+.diary-paper {
+  background-color: #FFF9E6;
+  background-image: 
+    /* Horizontal ruled lines like a notebook */
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 31px,
+      rgba(139, 69, 19, 0.12) 31px,
+      rgba(139, 69, 19, 0.12) 32px
+    );
+  background-size: 100% 32px;
+  position: relative;
+}
+
+/* Left margin line for diary effect */
+.diary-paper::before {
+  content: "";
+  position: absolute;
+  left: 48px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(220, 80, 80, 0.25);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark mode diary paper */
+.dark .diary-paper {
+  background-color: #2a2520;
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 31px,
+      rgba(139, 115, 85, 0.18) 31px,
+      rgba(139, 115, 85, 0.18) 32px
+    );
+}
+
+.dark .diary-paper::before {
+  background: rgba(180, 100, 100, 0.2);
+}
+
+/* Polaroid image styling */
+.polaroid-image,
+.jp-prose img {
+  background: #ffffff;
+  padding: 12px 12px 40px 12px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: rotate(-1deg);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Strict margin reset for lined paper alignment */
+.jp-prose p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* CRITICAL: Force handwriting font for all jp-prose children
+   Some blog content from API has inline font-family styles that override our font.
+   This ensures Yomogi is always used for the handwriting diary effect. */
+.jp-prose,
+.jp-prose *,
+.jp-prose p,
+.jp-prose span,
+.jp-prose div,
+.jp-prose p[style],
+.jp-prose span[style],
+.jp-prose div[style],
+.jp-prose *[style*="font-family"],
+.jp-prose *[style*="font:"] {
+  font-family: 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', serif !important;
+}
+
+.jp-prose br {
+  display: block;
+  content: "";
+  margin: 0;
+}
+
+.polaroid-image:hover,
+.jp-prose img:hover {
+  transform: rotate(0deg) scale(1.02);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    0 12px 32px rgba(0, 0, 0, 0.15);
 }
 
 /* Blog content styles */
@@ -327,16 +411,17 @@ html,
     font-family: 'Noto Sans JP', 'Droid Sans Japanese', 'Meiryo', 'MS PGothic', 'Roboto', sans-serif !important;
   }
   
-  /* Japanese content with proper font stack for Android */
+  /* Japanese content - prioritize handwriting font Yomogi */
   [lang="ja"],
-  .jp-prose,
   .japanese-text {
-    font-family: 'Noto Serif JP', 'Noto Sans JP', 'Droid Sans Japanese', 'Meiryo', 'MS PGothic', 'Roboto', sans-serif !important;
+    font-family: 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', 'Noto Sans JP', sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     font-feature-settings: 'palt' 1;
   }
+  
+  /* jp-prose inherits font from inline style - don't override */
 }
 
 /* Fix for iOS Safari viewport height */

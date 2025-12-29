@@ -96,34 +96,40 @@ const formatEnglishName = (englishName) => {
   return englishName.charAt(0).toUpperCase() + englishName.slice(1).toLowerCase();
 };
 
-// Book-like serif fonts for reading content - Enhanced for Android
+// Diary-style handwriting fonts for journal-like reading experience
+// IMPORTANT: Yomogi must be first priority for Japanese handwriting style
+// Patrick Hand SC provides CJK support as fallback
 const bookFont = {
   ja: {
     fontFamily:
-      "'Noto Serif JP','Source Han Serif','Source Han Serif JP','NotoSerifCJK-Regular','游明朝','Yu Mincho','YuMincho','Hiragino Mincho ProN','HG明朝E','MS Mincho','Roboto Slab','Droid Serif','serif'",
+      "'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', 'Source Han Serif JP', '游明朝', 'Yu Mincho', serif",
     fontWeight: 400,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
     textRendering: "optimizeLegibility",
     fontDisplay: "swap",
+    fontFeatureSettings: "'palt' 1",
   },
   en: {
     fontFamily:
-      "'Georgia','Cambria','Times New Roman','Roboto Slab','Droid Serif','serif'",
-    fontWeight: 400,
+      "'Mali', 'Caveat', 'Yomogi', 'Georgia', serif",
+    fontWeight: 500,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
     fontDisplay: "swap",
   },
   vi: {
     fontFamily:
-      "'Times New Roman','Georgia','Cambria','Roboto Slab','Droid Serif','serif'",
-    fontWeight: 400,
+      "'Mali', 'Patrick Hand SC', 'Caveat', 'Times New Roman', 'Georgia', serif",
+    fontWeight: 500,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
     fontDisplay: "swap",
   },
 };
+
+// Diary paper line height in pixels - text will align to these lines
+const DIARY_LINE_HEIGHT = 32;
 
 // size preset — big for JP reading (increased ~20% to replace zoom:1.2)
 const SIZE_PRESETS = {
@@ -816,10 +822,10 @@ export default function BlogDetail({
         title: "乃木坂46ブログ",
         style: { paddingInline: 16, paddingBlock: 8 },
         extra: (
-          <div style={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: '6px', 
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '6px',
             alignItems: 'center',
             justifyContent: 'flex-end'
           }}>
@@ -1025,15 +1031,42 @@ export default function BlogDetail({
           ghost
         >
           <Card
+            className="diary-paper"
             style={{
               borderRadius: 16,
               background:
                 themeMode === "dark"
-                  ? "rgba(36, 33, 29, 0.85)"
-                  : "rgba(253, 246, 227, 0.8)",
+                  ? "linear-gradient(to bottom, #2a2520 0%, #24211d 100%)"
+                  : "linear-gradient(to bottom, #FFF9E6 0%, #FFF5D6 100%)",
+              boxShadow: themeMode === "dark"
+                ? "0 4px 24px rgba(0,0,0,0.4), inset 0 0 60px rgba(139, 115, 85, 0.05)"
+                : "0 4px 24px rgba(139, 69, 19, 0.15), inset 0 0 60px rgba(139, 69, 19, 0.03)",
+              border: themeMode === "dark"
+                ? "1px solid rgba(139, 115, 85, 0.2)"
+                : "1px solid rgba(139, 69, 19, 0.15)",
+              position: "relative",
+              overflow: "hidden",
               ...jpFont,
             }}
-            bodyStyle={{ padding: readingMode ? 48 : 38, position: "relative" }}
+            bodyStyle={{
+              // Padding-top must be a multiple of line-height for proper alignment
+              // Using em units to prevent sub-pixel rounding drift over long posts
+              // Formula: LineHeight (1 unit) + Offset (Half-leading) + Font Specific Baseline Correction
+              paddingTop: `${sz.lh + (sz.lh - 1) / 2 + (language === "ja" ? 0 : 0.3)}em`,
+              paddingRight: readingMode ? 56 : 42,
+              paddingBottom: readingMode ? 56 : 42,
+              paddingLeft: readingMode ? 56 : 42,
+              position: "relative",
+
+              // Use linear-gradient + background-size to create repeating lines
+              // This relies on the browser to repeat the 1-unit tile perfecty
+              backgroundImage: themeMode === "dark"
+                ? `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 115, 85, 0.2) calc(100% - 1px), rgba(139, 115, 85, 0.2) 100%)`
+                : `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 69, 19, 0.15) calc(100% - 1px), rgba(139, 69, 19, 0.15) 100%)`,
+
+              // Size is exactly equal to Line Height in ems
+              backgroundSize: `100% ${sz.lh}em`,
+            }}
           >
             {/* Overlay translating */}
             {translating && (
@@ -1124,109 +1157,44 @@ export default function BlogDetail({
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: window.innerWidth < 768 ? 8 : 12,
+                alignItems: "flex-end", // Align bottom of date with title roughly
+                justifyContent: "space-between", // Spread Date and Title
+                marginBottom: window.innerWidth < 768 ? 16 : 24,
                 width: "100%",
+                padding: "0 4px", // Slight padding
               }}
             >
-              {/* Author Info - Left Side */}
-              <Space
-                size={window.innerWidth < 768 ? 12 : 13}
-                align="center"
+              {/* Journal Date - Left Side */}
+              <div
                 style={{
-                  justifyContent:
-                    window.innerWidth < 768 ? "center" : "flex-start",
+                  color: themeMode === "dark" ? "#b8a586" : "#666",
+                  fontSize: window.innerWidth < 768 ? 16 : 18,
+                  fontFamily: bookFont[language].fontFamily,
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
-                <Avatar
-                  src={
-                    getImageUrl(memberInfo?.img) ||
-                    getImageUrl(blog?.memberImage) ||
-                    "https://via.placeholder.com/300x300?text=No+Image"
-                  }
-                  size={window.innerWidth < 768 ? 56 : 55}
-                  style={{
-                    border: "2px solid #fff",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  }}
-                />
-                <div
-                  style={{
-                    textAlign: window.innerWidth < 768 ? "center" : "left",
-                  }}
-                >
-                  <Text
-                    strong
-                    style={{ fontSize: window.innerWidth < 768 ? 15 : 18 }}
-                  >
-                    {(() => {
-                      if (language === "ja") {
-                        // For Japanese: prefer blog.author (from local) over memberInfo
-                        return blog.author || memberInfo?.name || "Unknown Author";
-                      } else {
-                        // For English/Vietnamese: convert Japanese names to English format
-                        const japaneseToEnglish = {
-                          "齋藤 飛鳥": "Asuka Saito",
-                          "生田 絵梨花": "Erika Ikuta",
-                          "西野 七瀬": "Nanase Nishino",
-                          "山下 美月": "Mizuki Yamashita",
-                          "大園 桃子": "Momoko Oozono",
-                          "橋本 奈々未": "Nanami Hashimoto"
-                        };
-
-                        // Check blog.author first (from local database)
-                        if (blog.author) {
-                          if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(blog.author)) {
-                            // Japanese name - convert to English and format
-                            const englishName = japaneseToEnglish[blog.author];
-                            return englishName ? formatEnglishName(englishName) : blog.author;
-                          }
-                          // Already English name - just format it
-                          return formatEnglishName(blog.author);
-                        }
-
-                        // Check memberInfo (from API or local)
-                        if (memberInfo?.name) {
-                          if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(memberInfo.name)) {
-                            // Japanese name - convert to English and format
-                            const englishName = japaneseToEnglish[memberInfo.name];
-                            return englishName ? formatEnglishName(englishName) : memberInfo.name;
-                          }
-                          // Already English name - just format it
-                          return formatEnglishName(memberInfo.name);
-                        }
-
-                        // Fallback
-                        return "Unknown Author";
-                      }
-                    })()}
-                  </Text>
-                  <div
-                    style={{
-                      color: "#666",
-                      marginTop: window.innerWidth < 768 ? 1 : 2,
-                      fontSize: window.innerWidth < 768 ? 13 : 16,
-                    }}
-                  >
-                    <CalendarOutlined style={{ marginRight: 7 }} />
-                    <Text>{blog.date}</Text>
-                  </div>
-                </div>
-              </Space>
+                <CalendarOutlined style={{ marginRight: 8 }} />
+                <span style={{ fontFamily: bookFont[language].fontFamily }}>{blog.date}</span>
+              </div>
 
               {/* Blog Title - Right Side */}
               <div
                 style={{
                   textAlign: "right",
-                  maxWidth: "50%",
-                  minWidth: 0,
+                  maxWidth: "70%",
                 }}
               >
-                <Space direction="vertical" size={2} style={jpFont}>
+                {/* REMOVED style={jpFont} to prevent font override */}
+                <Space direction="vertical" size={2}>
                   <Text
                     type="secondary"
-                    style={{ letterSpacing: 2, fontSize: 14 }}
+                    style={{
+                      letterSpacing: 2,
+                      fontSize: 13,
+                      textTransform: "uppercase",
+                      fontFamily: bookFont[language].fontFamily
+                    }}
                   >
                     {t.blogArticle[language]}
                   </Text>
@@ -1234,11 +1202,13 @@ export default function BlogDetail({
                     level={3}
                     style={{
                       margin: 0,
-                      lineHeight: 1.25,
-                      fontSize: window.innerWidth < 768 ? 16 : 16,
+                      lineHeight: 1.3,
+                      fontSize: window.innerWidth < 768 ? 18 : 22,
                       wordWrap: "break-word",
                       wordBreak: "break-word",
                       whiteSpace: "normal",
+                      fontFamily: bookFont[language].fontFamily,
+                      fontWeight: language === "ja" ? 400 : 700,
                     }}
                   >
                     {displayTitle}
@@ -1261,11 +1231,16 @@ export default function BlogDetail({
               className="jp-prose"
               style={{
                 fontSize: sz.px,
-                lineHeight: sz.lh,
+                lineHeight: `${Math.round(sz.px * sz.lh)}px`, // Force integer px line-height
                 letterSpacing: language === "ja" ? 0.5 : 0.3,
                 color: themeMode === "dark" ? "#f5ede0" : undefined,
-                wordBreak: "break-word",
-                overflowWrap: "break-word",
+
+                // CRITICAL FIX: Robust text wrapping for CJK + Emojis
+                overflowWrap: "anywhere",   // Prevents overflow by breaking long strings/urls anywhere if needed
+                wordBreak: "normal",        // Use normal CJK breaking rules
+                lineBreak: "strict",        // Strict Japanese kinsoku shori (prevent bad line breaks)
+                whiteSpace: "pre-wrap",     // Preserve whitespace/newlines from API content
+
                 textAlign: "left",
                 ...bookFont[language],
               }}
@@ -1451,7 +1426,7 @@ export default function BlogDetail({
             />
           </div>
         </ProCard>
-      </ProCard>
+      </ProCard >
 
       <FloatButton.BackTop
         icon={<ArrowUpOutlined />}
@@ -1499,10 +1474,12 @@ export default function BlogDetail({
         .jp-prose p[style*="font-size"],
         .jp-prose p[class*="p"] { 
           color: ${themeMode === "dark" ? "#f5ede0" : "#374151"} !important; 
-          margin: ${window.innerWidth < 768 ? "0.6em 0" : "0.75em 0"} !important; 
+          /* Use exact line-height in pixels to match ruled lines */
+          margin: 0 !important;
+          padding: 0 !important;
           text-align: left !important; 
           font-size: ${sz.px}px !important;
-          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+          line-height: ${Math.round(sz.px * sz.lh)}px !important;
           letter-spacing: ${language === "ja" ? "0.05em" : "0.02em"} !important;
           word-spacing: ${language === "ja" ? "0.1em" : "0.05em"};
           word-break: break-word !important;
@@ -1510,10 +1487,15 @@ export default function BlogDetail({
           font-stretch: normal !important;
           font-family: ${bookFont[language].fontFamily} !important;
         }
+        /* Extra spacing between paragraphs - use multiple of line height */
+        .jp-prose p + p,
+        .jp-prose br + p {
+          margin-top: ${Math.round(sz.px * sz.lh)}px !important;
+        }
         .jp-prose div[dir="auto"],
         .jp-prose div[style*="font-size"] { 
           font-size: ${sz.px}px !important;
-          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+          line-height: ${Math.round(sz.px * sz.lh)}px !important;
         }
         .jp-prose span,
         .jp-prose span.s1,
@@ -1522,7 +1504,7 @@ export default function BlogDetail({
         .jp-prose span[style*="font-size"],
         .jp-prose span[style*="UICTFontTextStyleBody"] {
           font-size: ${sz.px}px !important;
-          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+          line-height: ${Math.round(sz.px * sz.lh)}px !important;
           font-family: ${bookFont[language].fontFamily} !important;
           color: ${themeMode === "dark" ? "#f5ede0" : "#374151"} !important;
         }
@@ -1530,7 +1512,7 @@ export default function BlogDetail({
         .jp-prose *[style*="UICTFontTextStyleBody"] {
           font-family: ${bookFont[language].fontFamily} !important;
           font-size: ${sz.px}px !important;
-          line-height: ${window.innerWidth < 768 ? "1.8" : sz.lh} !important;
+          line-height: ${Math.round(sz.px * sz.lh)}px !important;
         }
         .jp-prose h1 { 
           font-weight: 600; 
@@ -1559,22 +1541,36 @@ export default function BlogDetail({
           border-bottom-style: solid;
         }
         .jp-prose img { 
-          border-radius: ${window.innerWidth < 768 ? "8px" : "12px"}; 
+          /* Polaroid style image */
           display: block; 
-          margin: ${window.innerWidth < 768 ? "16px" : "24px"} auto; 
-          max-width: 100%; 
+          margin: ${window.innerWidth < 768 ? "24px" : "32px"} auto; 
+          max-width: ${window.innerWidth < 768 ? "85%" : "75%"}; 
           height: auto;
-          box-shadow: ${window.innerWidth < 768
-          ? `${themeMode === "dark"
-            ? "0 3px 8px rgba(0,0,0,0.4)"
-            : "0 3px 8px rgba(0,0,0,0.12)"
-          }`
-          : `${themeMode === "dark"
-            ? "0 6px 16px rgba(0,0,0,0.45)"
-            : "0 6px 16px rgba(0,0,0,0.12)"
-          }`
+          /* White polaroid frame */
+          padding: ${window.innerWidth < 768 ? "8px 8px 24px 8px" : "12px 12px 40px 12px"};
+          background: ${themeMode === "dark" ? "#f5f0e6" : "#ffffff"};
+          border-radius: 2px;
+          /* Polaroid shadow and slight rotation */
+          box-shadow: ${themeMode === "dark"
+          ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
+          : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
         };
-          border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.1)"};
+          transform: rotate(-1deg);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          border: none !important;
+        }
+        .jp-prose img:nth-child(even) {
+          transform: rotate(1.5deg);
+        }
+        .jp-prose img:nth-child(3n) {
+          transform: rotate(-0.5deg);
+        }
+        .jp-prose img:hover {
+          transform: rotate(0deg) scale(1.02);
+          box-shadow: ${themeMode === "dark"
+          ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
+          : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
+        };
         }
         .jp-prose div, .jp-prose span {
           word-break: break-word !important;
@@ -1742,6 +1738,6 @@ export default function BlogDetail({
           width: 100% !important;
         }
       `}</style>
-    </PageContainer>
+    </PageContainer >
   );
 }
