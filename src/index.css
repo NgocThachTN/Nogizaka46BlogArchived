@@ -178,19 +178,22 @@
   text-decoration: underline;
 }
 
-/* Custom scrollbar - Hidden but scrollable */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
-  display: none;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f4f1e8;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: #8b4513;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0522d;
 }
 
 /* Utility classes for Tailwind */
@@ -399,7 +402,6 @@ html,
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden !important; /* Force hide horizontal scrollbar globally */
 }
 
 /* Android-specific Japanese font optimization */
