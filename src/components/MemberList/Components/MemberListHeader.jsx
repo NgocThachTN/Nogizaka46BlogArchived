@@ -26,6 +26,7 @@ const MemberListHeader = ({
     themeMode,
     setThemeMode,
     memberCount,
+    bookFont,
 }) => {
     // Ensure language is valid, fallback to "ja"
     const currentLanguage = ["ja", "en", "vi"].includes(language)
@@ -41,17 +42,32 @@ const MemberListHeader = ({
                     themeMode === "dark"
                         ? "rgba(36, 33, 29, 0.85)"
                         : "rgba(253, 246, 227, 0.8)",
+                border: themeMode === "dark"
+                    ? "1px solid rgba(139, 115, 85, 0.2)"
+                    : "1px solid rgba(139, 69, 19, 0.15)",
+                boxShadow: themeMode === "dark"
+                    ? "0 4px 12px rgba(0,0,0,0.3)"
+                    : "0 4px 12px rgba(139, 69, 19, 0.1)",
             }}
         >
             <Space
                 style={{ width: "100%", justifyContent: "space-between" }}
                 align="center"
             >
-                <Space direction="vertical" size={0}>
-                    <Title level={2} style={{ margin: 0, color: "#9333ea" }}>
+                <Space direction="vertical" size={2}>
+                    <Title level={2} style={{
+                        margin: 0,
+                        color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+                        fontFamily: bookFont?.[currentLanguage]?.fontFamily,
+                        fontWeight: 700
+                    }}>
                         {t.blogTitle[currentLanguage]}
                     </Title>
-                    <Text type="secondary" style={{ fontSize: 14 }}>
+                    <Text type="secondary" style={{
+                        fontSize: 14,
+                        fontFamily: bookFont?.[currentLanguage]?.fontFamily,
+                        color: themeMode === "dark" ? "#cfbfa6" : "#5d4e37",
+                    }}>
                         {t.generation[currentLanguage]} •{" "}
                         {t.totalBlogs[currentLanguage]}: {memberCount}
                     </Text>

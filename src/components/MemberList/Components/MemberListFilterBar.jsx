@@ -35,11 +35,16 @@ const MemberListFilterBar = ({
     shouldShowGraduatedToggle,
     currentMemberCount,
     graduatedMemberCount,
+    bookFont,
 }) => {
     // Ensure language is valid, fallback to "ja"
     const currentLanguage = ["ja", "en", "vi"].includes(language)
         ? language
         : "ja";
+
+    const fontStyle = {
+        fontFamily: bookFont?.[currentLanguage]?.fontFamily,
+    };
 
     return (
         <ProCard
@@ -50,6 +55,12 @@ const MemberListFilterBar = ({
                     themeMode === "dark"
                         ? "rgba(36, 33, 29, 0.85)"
                         : "rgba(253, 246, 227, 0.8)",
+                border: themeMode === "dark"
+                    ? "1px solid rgba(139, 115, 85, 0.2)"
+                    : "1px solid rgba(139, 69, 19, 0.15)",
+                boxShadow: themeMode === "dark"
+                    ? "0 4px 12px rgba(0,0,0,0.3)"
+                    : "0 4px 12px rgba(139, 69, 19, 0.1)",
             }}
         >
             <Space
@@ -66,7 +77,7 @@ const MemberListFilterBar = ({
                             options={[
                                 {
                                     label: (
-                                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                        <span style={{ display: "flex", alignItems: "center", gap: "4px", ...fontStyle }}>
                                             <StarOutlined />
                                             {t.currentMembers[currentLanguage]} ({currentMemberCount})
                                         </span>
@@ -75,7 +86,7 @@ const MemberListFilterBar = ({
                                 },
                                 {
                                     label: (
-                                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                        <span style={{ display: "flex", alignItems: "center", gap: "4px", ...fontStyle }}>
                                             {t.graduatedMembers[currentLanguage]} ({graduatedMemberCount})
                                         </span>
                                     ),
@@ -88,26 +99,30 @@ const MemberListFilterBar = ({
                     {/* Generation Filter */}
                     <Segmented
                         options={genList.map((g) => ({
-                            label:
-                                g === "ALL"
-                                    ? currentLanguage === "ja"
-                                        ? "すべて"
-                                        : currentLanguage === "en"
-                                            ? "All"
-                                            : "Tất cả"
-                                    : g
-                                        .replace(
-                                            "期生",
-                                            currentLanguage === "ja"
-                                                ? "期生"
-                                                : currentLanguage === "en"
-                                                    ? " Gen"
-                                                    : " Thế hệ"
-                                        )
-                                        .replace(
-                                            /^(\d+)\s*(Gen|Thế hệ)$/,
-                                            currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                                        ),
+                            label: (
+                                <span style={fontStyle}>
+                                    {g === "ALL"
+                                        ? currentLanguage === "ja"
+                                            ? "すべて"
+                                            : currentLanguage === "en"
+                                                ? "All"
+                                                : "Tất cả"
+                                        : g
+                                            .replace(
+                                                "期生",
+                                                currentLanguage === "ja"
+                                                    ? "期生"
+                                                    : currentLanguage === "en"
+                                                        ? " Gen"
+                                                        : " Thế hệ"
+                                            )
+                                            .replace(
+                                                /^(\d+)\s*(Gen|Thế hệ)$/,
+                                                currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
+                                            )
+                                    }
+                                </span>
+                            ),
                             value: g,
                         }))}
                         value={genFilter}
@@ -121,7 +136,7 @@ const MemberListFilterBar = ({
                     placeholder={t.searchPlaceholder[currentLanguage]}
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    style={{ maxWidth: 340 }}
+                    style={{ maxWidth: 340, ...fontStyle }}
                 />
             </Space>
         </ProCard>

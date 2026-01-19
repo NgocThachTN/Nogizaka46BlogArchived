@@ -631,8 +631,8 @@ export default function BlogDetailMobile({
                   }}
                 >
                   {pendingNavId &&
-                  pendingNavId === prevId &&
-                  !getCachedBlogDetail(prevId) ? (
+                    pendingNavId === prevId &&
+                    !getCachedBlogDetail(prevId) ? (
                     <LoadingOutlined style={{ fontSize: 10 }} />
                   ) : (
                     "‹"
@@ -658,8 +658,8 @@ export default function BlogDetailMobile({
                   }}
                 >
                   {pendingNavId &&
-                  pendingNavId === nextId &&
-                  !getCachedBlogDetail(nextId) ? (
+                    pendingNavId === nextId &&
+                    !getCachedBlogDetail(nextId) ? (
                     <LoadingOutlined style={{ fontSize: 10 }} />
                   ) : (
                     "›"
@@ -724,18 +724,18 @@ export default function BlogDetailMobile({
                         ? "#9c6b3f"
                         : "#9333ea"
                       : themeMode === "dark"
-                      ? "rgba(36,33,29,0.8)"
-                      : "rgba(255, 255, 255, 0.6)",
+                        ? "rgba(36,33,29,0.8)"
+                        : "rgba(255, 255, 255, 0.6)",
                     border: showFurigana
                       ? "none"
                       : themeMode === "dark"
-                      ? "1px solid rgba(207,191,166,0.2)"
-                      : "1px solid rgba(0,0,0,0.08)",
+                        ? "1px solid rgba(207,191,166,0.2)"
+                        : "1px solid rgba(0,0,0,0.08)",
                     color: showFurigana
                       ? "white"
                       : themeMode === "dark"
-                      ? "#d2a86a"
-                      : "#8b4513",
+                        ? "#d2a86a"
+                        : "#8b4513",
                     fontSize: 13,
                     fontWeight: 600,
                     fontFamily:
@@ -1289,8 +1289,8 @@ export default function BlogDetailMobile({
               {language === "vi"
                 ? "Không tìm thấy bài viết"
                 : language === "en"
-                ? "Blog post not found"
-                : "ブログが見つかりません"}
+                  ? "Blog post not found"
+                  : "ブログが見つかりません"}
             </Title>
           </Card>
         </ProCard>
@@ -1698,8 +1698,8 @@ export default function BlogDetailMobile({
                       {cachedLanguage === "vi"
                         ? "Đang xử lý..."
                         : cachedLanguage === "en"
-                        ? "Processing..."
-                        : "処理中..."}
+                          ? "Processing..."
+                          : "処理中..."}
                     </div>
                   </div>
                 </Space>
@@ -2007,16 +2007,14 @@ export default function BlogDetailMobile({
             margin: 14px auto;
             max-width: 100%;
             height: auto;
-            box-shadow: ${
-              themeMode === "dark"
-                ? "0 4px 12px rgba(0,0,0,0.45)"
-                : "0 4px 12px rgba(0,0,0,0.08)"
-            };
-            border: 1px solid ${
-              themeMode === "dark"
-                ? "rgba(207,191,166,0.2)"
-                : "rgba(0,0,0,0.06)"
-            };
+            box-shadow: ${themeMode === "dark"
+          ? "0 4px 12px rgba(0,0,0,0.45)"
+          : "0 4px 12px rgba(0,0,0,0.08)"
+        };
+            border: 1px solid ${themeMode === "dark"
+          ? "rgba(207,191,166,0.2)"
+          : "rgba(0,0,0,0.06)"
+        };
             display: block;
             /* Minimal CSS to prevent jank */
             pointer-events: none;
@@ -2027,11 +2025,10 @@ export default function BlogDetailMobile({
             transform: translateZ(0);
             /* No transitions or complex properties */
             opacity: 1;
-            background: ${
-              themeMode === "dark"
-                ? "rgba(255,255,255,0.04)"
-                : "rgba(0,0,0,0.05)"
-            };
+            background: ${themeMode === "dark"
+          ? "rgba(255,255,255,0.04)"
+          : "rgba(0,0,0,0.05)"
+        };
             /* iOS-specific optimizations */
             -webkit-backface-visibility: hidden;
             -webkit-transform: translateZ(0);
@@ -2051,9 +2048,8 @@ export default function BlogDetailMobile({
             line-height: 1.9 !important;
             font-size: ${fontSize}px !important;
             color: ${themeMode === "dark" ? "#f5ede0" : "#1f2937"} !important;
-            letter-spacing: ${
-              cachedLanguage === "ja" ? "0.05em" : "0.02em"
-            } !important;
+            letter-spacing: ${cachedLanguage === "ja" ? "0.05em" : "0.02em"
+        } !important;
             word-spacing: ${cachedLanguage === "ja" ? "0.1em" : "0.05em"};
             word-break: break-word !important;
             overflow-wrap: break-word !important;
@@ -2107,22 +2103,18 @@ export default function BlogDetailMobile({
             word-break: break-word !important;
           }
           .jp-prose blockquote {
-            border-left: 4px solid ${
-              themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
-            }; background: ${
-        themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
-      };
+            border-left: 4px solid ${themeMode === "dark" ? "#9c6b3f" : "#e9d5ff"
+        }; background: ${themeMode === "dark" ? "rgba(156,107,63,0.12)" : "#faf5ff"
+        };
             padding: 12px 16px; border-radius: 8px; margin: 1em 0;
-            font-size: 1.05em; color: ${
-              themeMode === "dark" ? "#cfbfa6" : "#4b5563"
-            };
+            font-size: 1.05em; color: ${themeMode === "dark" ? "#cfbfa6" : "#4b5563"
+        };
           }
           .jp-prose a { 
             color: ${themeMode === "dark" ? "#d2a86a" : "#9333ea"}; 
             text-decoration: none; 
-            border-bottom: 1px dotted ${
-              themeMode === "dark" ? "#d2a86a" : "#9333ea"
-            };
+            border-bottom: 1px dotted ${themeMode === "dark" ? "#d2a86a" : "#9333ea"
+        };
             word-break: break-all;
             overflow-wrap: break-word;
           }
@@ -2130,12 +2122,10 @@ export default function BlogDetailMobile({
             border-bottom-style: solid;
           }
           .jp-prose ul, .jp-prose ol { padding-left: 1.2em; margin: 0.8em 0; }
-          .jp-prose li { margin: 0.4em 0; color: ${
-            themeMode === "dark" ? "#eae2d3" : "#374151"
-          }; }
-          .jp-prose strong { color: ${
-            themeMode === "dark" ? "#f7e6c8" : "#111827"
-          }; font-weight: 600; }
+          .jp-prose li { margin: 0.4em 0; color: ${themeMode === "dark" ? "#eae2d3" : "#374151"
+        }; }
+          .jp-prose strong { color: ${themeMode === "dark" ? "#f7e6c8" : "#111827"
+        }; font-weight: 600; }
           .jp-prose * {
             max-width: 100%;
             word-wrap: break-word !important;

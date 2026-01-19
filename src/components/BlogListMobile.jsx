@@ -188,11 +188,11 @@ export default function BlogListMobile({
     const forceScrollTop = () => {
       // Window
       window.scrollTo(0, 0);
-      
+
       // Document
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-      
+
       // Root element
       const root = document.getElementById('root');
       if (root) root.scrollTop = 0;
@@ -200,7 +200,7 @@ export default function BlogListMobile({
       // Ant Design Pro containers
       const pageContainers = document.querySelectorAll('.ant-pro-page-container');
       pageContainers.forEach(el => el.scrollTop = 0);
-      
+
       const childrenContainers = document.querySelectorAll('.ant-pro-page-container-children-container');
       childrenContainers.forEach(el => el.scrollTop = 0);
 
@@ -211,7 +211,7 @@ export default function BlogListMobile({
 
     // 3. Execute immediately and repeatedly
     forceScrollTop();
-    
+
     // Run on next frame
     requestAnimationFrame(forceScrollTop);
 

@@ -154,6 +154,8 @@ function App() {
                 ]}
               />,
             ]}
+            disableContentMargin
+            contentStyle={{ margin: 0, padding: 0 }}
             style={{
               minHeight: "100vh",
             }}

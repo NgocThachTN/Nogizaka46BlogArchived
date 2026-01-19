@@ -178,22 +178,19 @@
   text-decoration: underline;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Hidden but scrollable */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 0px;
+  background: transparent;
+  display: none;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f4f1e8;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #8b4513;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a0522d;
+  background: transparent;
 }
 
 /* Utility classes for Tailwind */
@@ -402,6 +399,7 @@ html,
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden !important; /* Force hide horizontal scrollbar globally */
 }
 
 /* Android-specific Japanese font optimization */
@@ -627,4 +625,85 @@ html,
 .dark .ant-pagination-prev:hover,
 .dark .ant-pagination-next:hover {
   background: rgba(207, 191, 166, 0.12) !important;
+}
+/* Member List Scrapbook Styles */
+
+/* Random rotation for member cards to look like pasted photos */
+.member-card-wrapper:nth-child(odd) .member-card {
+  transform: rotate(-1deg);
+}
+
+.member-card-wrapper:nth-child(even) .member-card {
+  transform: rotate(1deg);
+}
+
+.member-card-wrapper:nth-child(3n) .member-card {
+  transform: rotate(-1.5deg);
+}
+
+.member-card-wrapper:nth-child(5n) .member-card {
+  transform: rotate(1.5deg);
+}
+
+.member-card:hover {
+  transform: scale(1.05) rotate(0deg) !important;
+  z-index: 10;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2) !important;
+}
+
+/* Notebook styling for MemberList */
+.notebook-container {
+  min-height: 100vh;
+  position: relative;
+  padding: 24px;
+}
+
+/* Spiral binding effect */
+.notebook-binding {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background-image: radial-gradient(circle at 0% 50%, #333 10%, transparent 11%), radial-gradient(circle at 10% 50%, #333 10%, transparent 11%);
+  background-size: 10px 40px;
+  background-repeat: repeat-y;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Sticky Note Style for Header/Filters */
+.sticky-note {
+  position: relative;
+  border-radius: 2px !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+  transform: rotate(-0.5deg);
+  transition: transform 0.3s ease;
+}
+
+.sticky-note:hover {
+  transform: rotate(0deg) scale(1.01);
+}
+
+.sticky-note::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 25px;
+  background-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transform: translateX(-50%) rotate(-1deg);
+  z-index: 1;
+}
+
+/* Dark mode adjustments for MemberList specific items */
+.dark .sticky-note {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+}
+
+.dark .sticky-note::after {
+  background-color: rgba(255, 255, 255, 0.1);
 }

@@ -12,7 +12,43 @@ import MemberListMobile from "./MemberListMobile";
 import { loadAllGraduatedMembers, shouldUseLocalDB } from "../utils/graduatedMembersLoader";
 import MemberListHeader from "./MemberList/Components/MemberListHeader";
 import MemberListFilterBar from "./MemberList/Components/MemberListFilterBar";
+
 import GenerationGroup from "./MemberList/Components/GenerationGroup";
+
+// Diary-style handwriting fonts for journal-like reading experience
+const bookFont = {
+  ja: {
+    fontFamily:
+      "'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', 'Source Han Serif JP', '游明朝', 'Yu Mincho', serif",
+    fontWeight: 400,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
+    textRendering: "optimizeLegibility",
+    fontDisplay: "swap",
+    fontFeatureSettings: "'palt' 1",
+  },
+  en: {
+    fontFamily:
+      "'Mali', 'Caveat', 'Yomogi', 'Georgia', serif",
+    fontWeight: 500,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
+    fontDisplay: "swap",
+  },
+  vi: {
+    fontFamily:
+      "'Mali', 'Patrick Hand SC', 'Caveat', 'Times New Roman', 'Georgia', serif",
+    fontWeight: 500,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
+    fontDisplay: "swap",
+  },
+};
+
+const jpFont = {
+  fontFamily:
+    "'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial",
+};
 
 // Translation keys
 const t = {
@@ -192,77 +228,96 @@ const MemberList = ({
   }
 
   return (
-    <PageContainer
-      style={{ background: "transparent", paddingTop: 0, marginTop: 0 }}
-      token={{
-        paddingInlinePageContainerContent: 0,
-        paddingBlockPageContainerContent: 0,
+    <div
+      style={{
+        width: "100%",
+        minHeight: "100vh",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {/* Header với title và language selector */}
-        <MemberListHeader
-          language={language}
-          setLanguage={setLanguage}
-          themeMode={themeMode}
-          setThemeMode={setThemeMode}
-          memberCount={members.length}
-        />
+      <div
+        className="diary-paper notebook-container"
+        style={{
+          minHeight: "100vh",
+          padding: isMobile ? "16px" : "40px",
+          paddingLeft: isMobile ? "16px" : "60px", // Space for binding
+        }}
+      >
+        {/* Visual binding effect */}
+        {!isMobile && <div className="notebook-binding" style={{ left: 0 }}></div>}
 
-        {/* Bộ lọc */}
-        <MemberListFilterBar
-          language={language}
-          themeMode={themeMode}
-          genList={genList}
-          genFilter={genFilter}
-          setGenFilter={setGenFilter}
-          keyword={keyword}
-          setKeyword={setKeyword}
-          showGraduated={showGraduated}
-          setShowGraduated={setShowGraduated}
-          shouldShowGraduatedToggle={shouldUseLocalDB() && graduatedMembers.length > 0}
-          currentMemberCount={members.length}
-          graduatedMemberCount={graduatedMembers.length}
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: "32px", maxWidth: 1200, margin: "0 auto" }}>
 
-        {loading ? (
-          <div
-            style={{
-              minHeight: "50vh",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Spin size="large" />
+          {/* Header Area - Sticky Note Style */}
+          <div className="sticky-note" style={{ transform: "rotate(-1deg)", zIndex: 10 }}>
+            <MemberListHeader
+              language={language}
+              setLanguage={setLanguage}
+              themeMode={themeMode}
+              setThemeMode={setThemeMode}
+              memberCount={members.length}
+              bookFont={bookFont}
+            />
           </div>
-        ) : grouped.length === 0 ? (
-          <ProCard
-            bordered
-            style={{
-              borderRadius: 14,
-              background:
-                themeMode === "dark"
-                  ? "rgba(36, 33, 29, 0.85)"
-                  : "rgba(253, 246, 227, 0.8)",
-            }}
-          >
-            <Empty description={t.noMembers[currentLanguage]} />
-          </ProCard>
-        ) : (
-          grouped.map(({ gen, items }) => (
-            <GenerationGroup
-              key={gen}
-              gen={gen}
-              items={items}
+
+          {/* Filter Area - Sticky Note Style */}
+          <div className="sticky-note" style={{ transform: "rotate(1deg)", zIndex: 9, marginTop: "-10px" }}>
+            <MemberListFilterBar
               language={language}
               themeMode={themeMode}
-              onMemberClick={(memberCode) => navigate(`/blogs/${memberCode}`)}
+              genList={genList}
+              genFilter={genFilter}
+              setGenFilter={setGenFilter}
+              keyword={keyword}
+              setKeyword={setKeyword}
+              showGraduated={showGraduated}
+              setShowGraduated={setShowGraduated}
+              shouldShowGraduatedToggle={shouldUseLocalDB() && graduatedMembers.length > 0}
+              currentMemberCount={members.length}
+              graduatedMemberCount={graduatedMembers.length}
+              bookFont={bookFont}
             />
-          ))
-        )}
+          </div>
+
+          {loading ? (
+            <div
+              style={{
+                minHeight: "50vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Spin size="large" />
+            </div>
+          ) : grouped.length === 0 ? (
+            <ProCard
+              bordered
+              style={{
+                borderRadius: 14,
+                background:
+                  themeMode === "dark"
+                    ? "rgba(36, 33, 29, 0.85)"
+                    : "rgba(253, 246, 227, 0.8)",
+              }}
+            >
+              <Empty description={t.noMembers[currentLanguage]} />
+            </ProCard>
+          ) : (
+            grouped.map(({ gen, items }) => (
+              <GenerationGroup
+                key={gen}
+                gen={gen}
+                items={items}
+                language={language}
+                themeMode={themeMode}
+                onMemberClick={(memberCode) => navigate(`/blogs/${memberCode}`)}
+                bookFont={bookFont}
+              />
+            ))
+          )}
+        </div>
       </div>
-    </PageContainer>
+    </div>
   );
 };
 

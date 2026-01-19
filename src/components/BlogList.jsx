@@ -75,6 +75,8 @@ export default function BlogList({
   const navigate = useNavigate();
   const { memberCode } = useParams();
   const screens = useBreakpoint();
+  // Derive isMobile from breakpoint
+  const isMobile = screens.xs;
 
   // PAGE_SIZE: 9 bài mỗi trang (3 bài mỗi hàng x 3 hàng)
   const PAGE_SIZE = 9;
@@ -330,161 +332,176 @@ export default function BlogList({
   }
 
   return (
-    <PageContainer
-      header={false}
-      token={{
-        paddingBlockPageContainerContent: 0,
-        paddingInlinePageContainerContent: screens.xs ? 12 : 24,
+    <div
+      style={{
+        width: "100%",
+        minHeight: "100vh",
       }}
     >
-      <ProCard ghost gutter={[16, 16]} wrap>
-        {/* Main Content */}
-        <ProCard
-          colSpan={{ xs: 24, md: 16, xl: 17 }}
-          ghost
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* COMPACT HERO (nhẹ trên mobile) */}
-            <BlogListHeader
-              memberInfo={memberInfo}
-              language={language}
-              setLanguage={setLanguage}
-              themeMode={themeMode}
-              setThemeMode={setThemeMode}
-              screens={screens}
-            />
+      <div
+        className="diary-paper notebook-container"
+        style={{
+          minHeight: "100vh",
+          padding: isMobile ? "16px" : "40px",
+          paddingLeft: isMobile ? "16px" : "60px", // Space for binding
+        }}
+      >
+        {/* Visual binding effect */}
+        {!isMobile && <div className="notebook-binding" style={{ left: 0 }}></div>}
 
-            {/* FILTER ROW */}
-            <BlogListFilterBar
-              language={language}
-              themeMode={themeMode}
-              screens={screens}
-              q={q}
-              setQ={setQ}
-              filteredCount={filtered.length}
-              isPending={isPending}
-            />
+        <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+          <ProCard ghost gutter={[24, 24]} wrap>
+            {/* Main Content */}
+            <ProCard
+              colSpan={{ xs: 24, md: 16, xl: 17 }}
+              ghost
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+                {/* COMPACT HERO - Sticky Note */}
+                <div className="sticky-note" style={{ transform: "rotate(-1deg)", zIndex: 10 }}>
+                  <BlogListHeader
+                    memberInfo={memberInfo}
+                    language={language}
+                    setLanguage={setLanguage}
+                    themeMode={themeMode}
+                    setThemeMode={setThemeMode}
+                    screens={screens}
+                  />
+                </div>
 
-            {/* LIST */}
-            {current.length === 0 ? (
-              <ProCard
-                bordered
-                style={{
-                  borderRadius: 14,
-                  minHeight: 220,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background:
-                    themeMode === "dark"
-                      ? "rgba(36, 33, 29, 0.85)"
-                      : "rgba(253, 246, 227, 0.8)",
-                }}
-              >
-                <Empty
-                  description={
-                    q ? t.noBlogs[currentLanguage] : t.noBlogs[currentLanguage]
-                  }
-                />
-              </ProCard>
-            ) : (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "16px",
-                width: "100%"
-              }}>
-                {current.map((blog, idx) => (
-                  <BlogCard
-                    key={blog.id}
-                    blog={blog}
-                    index={idx}
+                {/* FILTER ROW - Sticky Note */}
+                <div className="sticky-note" style={{ transform: "rotate(1deg)", zIndex: 9, marginTop: "-16px" }}>
+                  <BlogListFilterBar
                     language={language}
                     themeMode={themeMode}
                     screens={screens}
-                    onOpen={onOpen}
+                    q={q}
+                    setQ={setQ}
+                    filteredCount={filtered.length}
+                    isPending={isPending}
                   />
-                ))}
+                </div>
+
+                {/* LIST */}
+                {current.length === 0 ? (
+                  <ProCard
+                    bordered
+                    style={{
+                      borderRadius: 14,
+                      minHeight: 220,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background:
+                        themeMode === "dark"
+                          ? "rgba(36, 33, 29, 0.85)"
+                          : "rgba(253, 246, 227, 0.8)",
+                    }}
+                  >
+                    <Empty
+                      description={
+                        q ? t.noBlogs[currentLanguage] : t.noBlogs[currentLanguage]
+                      }
+                    />
+                  </ProCard>
+                ) : (
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: screens.xs ? "repeat(1, 1fr)" : "repeat(3, 1fr)",
+                    gap: "24px",
+                    width: "100%"
+                  }}>
+                    {current.map((blog, idx) => (
+                      <div key={blog.id} className="blog-card-wrapper" style={{ height: "100%" }}>
+                        <BlogCard
+                          blog={blog}
+                          index={idx}
+                          language={language}
+                          themeMode={themeMode}
+                          screens={screens}
+                          onOpen={onOpen}
+                          className="blog-card"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* PAGINATION */}
+                {filtered.length > 0 && (
+                  <div className="sticky-note" style={{ display: "flex", justifyContent: "center", transform: "rotate(-0.5deg)", padding: "12px", background: themeMode === "dark" ? "rgba(36, 33, 29, 0.9)" : "rgba(253, 246, 227, 0.9)", borderRadius: "8px" }}>
+                    <Pagination
+                      current={page}
+                      total={filtered.length}
+                      pageSize={PAGE_SIZE}
+                      onChange={(p) => {
+                        _cache.scrollY.set(memberCode, 0); // sang page mới thì về top
+                        setPage(p);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      showSizeChanger={false}
+                      size={screens.xs ? "small" : "default"}
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            </ProCard>
 
-            {/* PAGINATION */}
-            {filtered.length > 0 && (
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <Pagination
-                  current={page}
-                  total={filtered.length}
-                  pageSize={PAGE_SIZE}
-                  onChange={(p) => {
-                    _cache.scrollY.set(memberCode, 0); // sang page mới thì về top
-                    setPage(p);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  showSizeChanger={false}
-                  size={screens.xs ? "small" : "default"}
-                />
+            {/* Sidebar */}
+            <ProCard
+              colSpan={{ xs: 24, md: 8, xl: 7 }}
+              ghost
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px", paddingTop: 40 }}>
+                {/* Sidebar Notepad Container */}
+                <div className="sidebar-notepad" style={{ transform: "rotate(1deg)" }}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Title level={5} style={{ margin: 0, textAlign: "center", fontFamily: "inherit", opacity: 0.7 }}>
+                      {t.loading[currentLanguage] === "Reading..." ? "CALENDAR" : "CALENDAR"}
+                    </Title>
+                  </div>
+                  <BlogCalendar
+                    blogs={blogs}
+                    memberInfo={memberInfo}
+                    onBlogClick={onOpen}
+                    isMobile={screens.xs}
+                    language={language}
+                    themeMode={themeMode}
+                  />
+                </div>
+
+                <div className="sidebar-notepad" style={{ transform: "rotate(-0.5deg)" }}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Title level={5} style={{ margin: 0, textAlign: "center", fontFamily: "inherit", opacity: 0.7 }}>
+                      RECENT ENTRIES
+                    </Title>
+                  </div>
+                  <RecentBlogs
+                    blogs={blogs}
+                    onBlogClick={onOpen}
+                    isMobile={screens.xs}
+                    language={language}
+                    themeMode={themeMode}
+                    maxItems={5}
+                  />
+                </div>
               </div>
-            )}
-          </div>
-        </ProCard>
+            </ProCard>
+          </ProCard>
+        </div>
+      </div>
 
-        {/* Sidebar */}
-        <ProCard
-          colSpan={{ xs: 24, md: 8, xl: 7 }}
-          ghost
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Blog Calendar */}
-            <BlogCalendar
-              blogs={blogs}
-              memberInfo={memberInfo}
-              onBlogClick={onOpen}
-              isMobile={screens.xs}
-              language={language}
-              themeMode={themeMode}
-            />
-
-            {/* Recent Blogs */}
-            <RecentBlogs
-              blogs={blogs}
-              onBlogClick={onOpen}
-              isMobile={screens.xs}
-              language={language}
-              themeMode={themeMode}
-              maxItems={5}
-            />
-          </div>
-        </ProCard>
-      </ProCard>
-
-      {/* Hover effect và responsive layout */}
+      {/* Hover effect và responsive layout - INLINE STYLES MOVED TO CSS OR KEPT HERE FOR NOW */}
       <style>{`
-        @media (hover:hover) {
-          .blog-card:hover img { transform: scale(1.03); }
-        }
-        
         .blog-card img {
-          border-radius: 12px;
+          border-radius: 4px; /* More photo-like */
         }
         
         /* Đảm bảo card layout không bị tràn */
         .blog-card .ant-pro-card-body {
           overflow: hidden;
         }
-        
-        /* Responsive text cho mobile */
-        @media (max-width: 576px) {
-          .blog-card .ant-typography {
-            font-size: 14px !important;
-          }
-          
-          .blog-card .ant-btn {
-            font-size: 10px !important;
-            padding: 2px 4px !important;
-            height: 20px !important;
-          }
-        }
       `}</style>
-    </PageContainer>
+    </div>
   );
 }
