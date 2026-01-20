@@ -835,6 +835,7 @@ export default function BlogDetailMobile({
           backgroundRepeat: "repeat, no-repeat",
           backgroundAttachment: "local",
           WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "none", // Prevent rubber-banding black bar
         }}
       >
 
