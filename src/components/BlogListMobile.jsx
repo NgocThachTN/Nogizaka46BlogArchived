@@ -518,6 +518,7 @@ export default function BlogListMobile({
         WebkitOverflowScrolling: "touch",
         scrollbarWidth: "none", // Firefox
         msOverflowStyle: "none", // IE and Edge
+        overscrollBehavior: "none", // Prevent rubber-banding black bar
       }}
     >
       <style>{`

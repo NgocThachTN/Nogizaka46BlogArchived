@@ -498,6 +498,7 @@ export default function MemberListMobile({
         WebkitOverflowScrolling: "touch",
         scrollbarWidth: "none",
         msOverflowStyle: "none",
+        overscrollBehavior: "none", // Prevent rubber-banding black bar
       }}
     >
       <style>{`
