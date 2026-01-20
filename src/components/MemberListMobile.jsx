@@ -1,11 +1,5 @@
-// MemberListMobile.jsx — Ant Design Pro, mobile-first, super polished
-// Highlights:
-// - Sticky hero with segmented Gen chips + search
-// - rAF debounced search + instant filter feedback
-// - Beautiful member cards with lazy images, intrinsic placeholder, and tags
-// - Collapse by generation with custom headers
-// - Safe JSONP parse + error states + skeletons
-// - Smooth 60fps scrolling: content-visibility for images, layout containment
+// MemberListMobile.jsx — Notebook Diary Edition
+// Notebook style member list with "sticker/photo" cards
 
 import React, {
   useState,
@@ -46,6 +40,7 @@ import {
   GlobalOutlined,
   BulbOutlined,
   MoonOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import {
   loadAllGraduatedMembers,
@@ -266,13 +261,14 @@ export default function MemberListMobile({
     const kw = keyword.trim().toLowerCase();
     // Show only graduated members when showGraduated is true, otherwise show only current members
     const allMembers = showGraduated ? graduatedMembers : members;
-    return allMembers.filter((m) => {
+    const totalMembers = allMembers.filter((m) => {
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
       const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""
         }`.toLowerCase();
       return hay.includes(kw);
     });
+    return totalMembers;
   }, [members, graduatedMembers, genFilter, keyword, showGraduated]);
 
   /** Grouped */
@@ -306,658 +302,450 @@ export default function MemberListMobile({
   /** Member card */
   // Tạo card đặc biệt cho gen 6 blog
   const Gen6BlogCard = () => (
-    <Card
-      hoverable
+    <div
       onClick={() => navigate(`/blogs/40008`)}
       style={{
-        borderRadius: 12,
-        overflow: "hidden",
-        background:
-          "linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)",
-        boxShadow: "0 1px 6px rgba(147, 51, 234, 0.15)",
-        marginBottom: 8,
-        contain: "layout paint style",
-        width: "100%",
+        display: "flex",
+        background: "white",
+        borderRadius: 2,
+        boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+        padding: "6px",
+        marginBottom: 12,
+        alignItems: "center",
+        border: "1px solid #e0e0e0",
+        transform: "rotate(-1deg)",
+        transition: "transform 0.1s ease",
+        cursor: "pointer",
         maxWidth: "100%",
-        border: "2px solid rgba(147, 51, 234, 0.2)",
       }}
-      bodyStyle={{ padding: 0 }}
     >
-      <div style={{ display: "flex", height: 96 }}>
-        {/* Image */}
-        <div
-          style={{
-            width: 96,
-            height: 96,
-            background: "linear-gradient(135deg, #9333ea 0%, #7c28ea 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              textAlign: "center",
-              color: "white",
-              fontSize: "32px",
-              fontWeight: "bold",
-              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-            }}
-          >
-            📝
-          </div>
-        </div>
-        {/* Content */}
-        <div
-          style={{
-            flex: 1,
-            padding: "12px 16px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            minWidth: 0,
-          }}
-        >
-          <Text
-            strong
-            style={{
-              ...jpFont,
-              fontSize: 14,
-              color: "#9333ea",
-              marginBottom: 4,
-              display: "block",
-            }}
-          >
-            {currentLanguage === "ja"
-              ? "6期生ブログ"
-              : currentLanguage === "en"
-                ? "6th Gen Blog"
-                : "Blog Thế hệ 6"}
-          </Text>
-          <Text
-            type="secondary"
-            style={{
-              fontSize: 11,
-              display: "block",
-              marginBottom: 6,
-            }}
-          >
-            {currentLanguage === "ja"
-              ? "6期生リレー公式ブログ"
-              : currentLanguage === "en"
-                ? "6th Gen Relay Official Blog"
-                : "Blog chính thức 6期生"}
-          </Text>
-          <Space size={4} wrap>
-            <Tag
-              style={{
-                background: "rgba(147, 51, 234, 0.1)",
-                border: "1px solid rgba(147, 51, 234, 0.3)",
-                borderRadius: 8,
-                fontSize: 10,
-                padding: "1px 6px",
-              }}
-            >
-              {currentLanguage === "ja"
-                ? "6期生"
-                : currentLanguage === "en"
-                  ? "6th Gen"
-                  : "Thế hệ 6"}
-            </Tag>
-            <Tag
-              style={{
-                background: "rgba(147, 51, 234, 0.05)",
-                border: "1px solid rgba(147, 51, 234, 0.2)",
-                borderRadius: 8,
-                fontSize: 10,
-                padding: "1px 6px",
-              }}
-            >
-              📝{" "}
-              {currentLanguage === "ja"
-                ? "ブログ"
-                : currentLanguage === "en"
-                  ? "Blog"
-                  : "Blog"}
-            </Tag>
-          </Space>
-        </div>
+      {/* Image Placeholder */}
+      <div
+        style={{
+          width: 70,
+          height: 85,
+          background: "linear-gradient(135deg, #9333ea 0%, #7c28ea 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          border: "1px solid #f0f0f0",
+        }}
+      >
+        <div style={{ fontSize: "28px" }}>📝</div>
       </div>
-    </Card>
+
+      {/* Content */}
+      <div style={{ flex: 1, paddingLeft: 12, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <Text
+          strong
+          style={{
+            ...jpFont,
+            fontSize: 16,
+            color: "#9333ea",
+            marginBottom: 4,
+            display: "block",
+            fontFamily: "'Yomogi', cursive, sans-serif",
+          }}
+        >
+          {currentLanguage === "ja"
+            ? "6期生ブログ"
+            : currentLanguage === "en"
+              ? "6th Gen Blog"
+              : "Blog Thế hệ 6"}
+        </Text>
+        <Tag
+          style={{
+            borderRadius: 4,
+            fontSize: 10,
+            alignSelf: "flex-start",
+            border: "none",
+            background: "rgba(147, 51, 234, 0.1)",
+            color: "#9333ea",
+            fontFamily: "'Mali', cursive, sans-serif"
+          }}
+        >
+          OFFICIAL
+        </Tag>
+      </div>
+    </div>
   );
 
   const MemberCard = ({ m }) => {
     const age = getAge(m.birthday);
     return (
-      <Card
-        hoverable
+      <div
         onClick={() => navigate(`/blogs/${m.code}`)}
         style={{
-          borderRadius: 12,
-          overflow: "hidden",
-          background: "rgba(253, 246, 227, 0.8)",
-          boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-          marginBottom: 8,
-          contain: "layout paint style",
-          width: "100%",
+          background: "white",
+          padding: "8px 8px 12px 8px", // Bottom padding for "Polaroid" caption area
+          borderRadius: 2,
+          boxShadow: themeMode === "dark"
+            ? "0 2px 8px rgba(0,0,0,0.4)"
+            : "0 2px 6px rgba(0,0,0,0.1)",
+          marginBottom: 16,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          transform: `rotate(${Math.random() * 2 - 1}deg)`, // Slight random rotation
+          border: themeMode === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
           maxWidth: "100%",
+          backgroundColor: themeMode === "dark" ? "#2a2520" : "#fff",
         }}
-        bodyStyle={{ padding: 0 }}
       >
-        <div style={{ display: "flex", height: 96 }}>
-          {/* Image */}
-          <div
+        {/* Photo */}
+        <div
+          style={{
+            width: 80,
+            height: 96,
+            position: "relative",
+            background: "#f0f0f0",
+            flexShrink: 0,
+            border: "1px solid rgba(0,0,0,0.05)",
+          }}
+        >
+          <img
+            src={m.img}
+            alt={m.name}
             style={{
-              width: 96,
-              height: 96,
-              position: "relative",
-              background: "#f7f7f9",
-              flexShrink: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
-          >
-            <img
-              src={m.img}
-              alt={m.name}
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src =
+                "https://via.placeholder.com/320x320?text=No+Image";
+            }}
+          />
+        </div>
+
+        {/* Info - Handwritten Style */}
+        <div
+          style={{
+            flex: 1,
+            paddingLeft: 16,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            height: "100%",
+            minWidth: 0,
+          }}
+        >
+          <div>
+            <Text
+              strong
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                contentVisibility: "auto",
-                containIntrinsicSize: "120px 120px",
-              }}
-              loading="lazy"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://via.placeholder.com/320x320?text=No+Image";
-              }}
-            />
-            <Tag
-              color="purple"
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 6,
-                fontSize: 9,
-                padding: "1px 4px",
-                borderRadius: 6,
-                lineHeight: 1.2,
+                ...jpFont,
+                fontSize: 18,
+                lineHeight: 1.3,
+                display: "block",
+                color: themeMode === "dark" ? "#f5ede0" : "#2c2c2c",
+                fontFamily: `${language === "en" || language === "vi" ? "'Mali', cursive" : "'Yomogi', cursive"}, sans-serif`,
               }}
             >
-              {getGen(m).length > 3 ? getGen(m).slice(0, 3) : getGen(m)}
-            </Tag>
-          </div>
-
-          {/* Text */}
-          <div
-            style={{
-              flex: 1,
-              padding: 12,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              minWidth: 0,
-            }}
-          >
-            <div>
+              {m.name}
+            </Text>
+            {m.english_name && (
               <Text
-                strong
+                type="secondary"
                 style={{
-                  ...jpFont,
-                  fontSize: 15,
-                  lineHeight: 1.3,
+                  fontSize: 12,
                   display: "block",
-                  marginBottom: 2,
-                  color: "#111827",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  color: themeMode === "dark" ? "#cfbfa6" : "#8b5a2b",
+                  fontFamily: "'Mali', cursive, sans-serif",
                 }}
               >
-                {m.name}
+                {m.english_name}
               </Text>
-              {m.english_name ? (
-                <Text
-                  type="secondary"
-                  style={{
-                    fontSize: 11,
-                    display: "block",
-                    fontStyle: "italic",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {m.english_name}
-                </Text>
-              ) : null}
-            </div>
+            )}
+          </div>
 
-            <Space size={[2, 2]} wrap>
-              {m.graduation === "YES" && (
-                <Tag
-                  color="default"
-                  style={{
-                    fontSize: 9,
-                    padding: "1px 4px",
-                    borderRadius: 6,
-                    background: "rgba(0,0,0,0.05)",
-                    border: "1px solid rgba(0,0,0,0.1)",
-                    lineHeight: 1.2,
-                  }}
-                >
+          <div style={{ marginTop: 8 }}>
+            <Space size={[4, 4]} wrap>
+              {m.graduation === "YES" ? (
+                <span style={{ fontSize: 11, color: "#888", border: "1px solid #ccc", padding: "0 4px", borderRadius: 4 }}>
                   {t.graduated[currentLanguage]}
-                </Tag>
-              )}
-              {m.birthday && (
-                <Tag
-                  style={{
-                    background: "rgba(99,102,241,0.06)",
-                    border: "1px solid rgba(99,102,241,0.25)",
-                    borderRadius: 6,
-                    fontSize: 9,
-                    padding: "1px 4px",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  🎂 {m.birthday.split("/")[0]}
-                  {age != null ? `(${age})` : ""}
-                </Tag>
-              )}
-              {m.blood && (
-                <Tag
-                  style={{
-                    background: "rgba(16,185,129,0.06)",
-                    border: "1px solid rgba(16,185,129,0.2)",
-                    borderRadius: 6,
-                    fontSize: 9,
-                    padding: "1px 4px",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  🩸 {m.blood}
-                </Tag>
+                </span>
+              ) : (
+                <span style={{ fontSize: 11, color: "#8b5a2b", background: "rgba(139, 90, 43, 0.1)", padding: "0 4px", borderRadius: 4 }}>
+                  {getGen(m)}
+                </span>
               )}
             </Space>
           </div>
         </div>
-      </Card>
+      </div>
     );
   };
 
   return (
-    <PageContainer
-      header={false}
-      token={{
-        paddingInlinePageContainerContent: 0,
-        paddingBlockPageContainerContent: 0,
-        paddingInlinePageContainer: 0,
-      }}
+    <div
+      className="diary-paper notebook-container"
       style={{
-        background:
-          themeMode === "dark" ? "#141311" : "rgba(253, 246, 227, 0.8)",
+        width: "100%",
+        minHeight: "100vh",
+        height: "100dvh",
         padding: 0,
         margin: 0,
-        minHeight: "100dvh",
-        width: "100vw",
-        maxWidth: "100%",
-        overflow: "hidden",
+        position: "relative",
+        overflowX: "hidden",
+        backgroundColor: themeMode === "dark" ? "#1c1a17" : "#fdf6e3",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* Hero - scrolls with content */}
+      {/* Visual binding effect - thinner for mobile */}
+      <div
+        className="notebook-binding"
+        style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: -10, // Hide part of it off-screen for mobile
+          width: 30,
+          backgroundSize: "8px 30px",
+          zIndex: 50,
+        }}
+      ></div>
+
+      {/* Header - Sticky Note Style */}
       <div
         style={{
           background:
             themeMode === "dark"
-              ? "rgba(28,26,23,0.95)"
-              : "rgba(253, 246, 227, 0.8)",
+              ? "rgba(36, 33, 29, 0.95)"
+              : "rgba(255, 255, 255, 0.95)",
           borderBottom:
             themeMode === "dark"
-              ? "1px solid rgba(207,191,166,0.2)"
-              : "1px solid #f2f2f5",
-          width: "100%",
+              ? "1px dashed rgba(207,191,166,0.3)"
+              : "1px dashed rgba(139, 69, 19, 0.3)",
+          zIndex: 100,
+          padding: "12px 16px 12px 32px", // Left padding for binding
+          flexShrink: 0,
+          boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
         }}
       >
-        <ProCard
-          ghost
-          bodyStyle={{ padding: "12px 16px" }}
-          style={{
-            ...jpFont,
-            width: "100%",
-            maxWidth: "100%",
-          }}
+        <Space
+          style={{ width: "100%", justifyContent: "space-between" }}
+          align="center"
         >
-          <Space
-            style={{ width: "100%", justifyContent: "space-between" }}
-            align="center"
-          >
-            <Space direction="vertical" size={0}>
-              <Text
-                type="secondary"
-                style={{
-                  letterSpacing: 2,
-                  fontSize: 12,
-                  color: themeMode === "dark" ? "#cfbfa6" : undefined,
-                }}
-              >
-                {t.blogTitle[currentLanguage]}
-              </Text>
-              <Title
-                level={4}
-                style={{
-                  margin: 0,
-                  lineHeight: 1.2,
-                  fontSize: 18,
-                  color: themeMode === "dark" ? "#f5ede0" : undefined,
-                }}
-              >
-                {t.totalBlogs[currentLanguage]}: {members.length}
-              </Title>
-            </Space>
-            <Space>
-              {setLanguage && (
-                <Select
-                  value={language}
-                  onChange={setLanguage}
-                  size="small"
-                  style={{ width: 120 }}
-                  options={[
-                    {
-                      value: "ja",
-                      label: (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <GlobalOutlined
-                            style={{ color: "#666", fontSize: "12px" }}
-                          />
-                          日
-                        </span>
-                      ),
-                    },
-                    {
-                      value: "en",
-                      label: (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <GlobalOutlined
-                            style={{ color: "#666", fontSize: "12px" }}
-                          />
-                          EN
-                        </span>
-                      ),
-                    },
-                    {
-                      value: "vi",
-                      label: (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <GlobalOutlined
-                            style={{ color: "#666", fontSize: "12px" }}
-                          />
-                          VI
-                        </span>
-                      ),
-                    },
-                  ]}
-                />
-              )}
-              {setThemeMode && (
-                <Button
-                  type="text"
-                  onClick={() =>
-                    setThemeMode(themeMode === "dark" ? "light" : "dark")
-                  }
-                  style={{ borderRadius: 10, flexShrink: 0 }}
-                  icon={
-                    themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
-                  }
-                  aria-label="Toggle dark mode"
-                />
-              )}
-              <Button
-                type="text"
-                icon={<FilterOutlined />}
-                onClick={() => setFilterDrawerVisible(true)}
-                style={{ borderRadius: 10, flexShrink: 0 }}
-              />
-            </Space>
+          <Space direction="vertical" size={0}>
+            <Text
+              type="secondary"
+              style={{
+                letterSpacing: 2,
+                fontSize: 10,
+                color: themeMode === "dark" ? "#cfbfa6" : "#8b5a2b",
+                textTransform: "uppercase",
+                fontFamily: "'Mali', cursive, sans-serif"
+              }}
+            >
+              {t.blogTitle[currentLanguage]}
+            </Text>
+            <Title
+              level={4}
+              style={{
+                margin: 0,
+                lineHeight: 1.2,
+                fontSize: 20,
+                color: themeMode === "dark" ? "#f5ede0" : "#5c4033",
+                fontFamily: "'Yomogi', cursive, sans-serif"
+              }}
+            >
+              {showGraduated ? t.graduatedMembers[currentLanguage] : t.members[currentLanguage]}
+            </Title>
           </Space>
-
-          {/* Gen chips + Search */}
-          <div style={{ marginTop: 12 }}>
-            {/* Toggle Current/Graduated Members - Prominent Tab */}
-            {shouldUseLocalDB() && graduatedMembers.length > 0 && (
-              <Segmented
-                value={showGraduated ? "graduated" : "current"}
-                onChange={(val) => setShowGraduated(val === "graduated")}
-                size="middle"
-                block
-                style={{
-                  marginBottom: 12,
-                  background:
-                    themeMode === "dark"
-                      ? "rgba(36,33,29,0.85)"
-                      : "rgba(253, 246, 227, 0.9)",
-                }}
+          <Space>
+            {setLanguage && (
+              <Select
+                value={language}
+                onChange={setLanguage}
+                size="small"
+                variant="borderless"
+                dropdownMatchSelectWidth={false}
+                style={{ width: 60, fontFamily: "'Mali', cursive", color: "#8b5a2b" }}
                 options={[
-                  {
-                    label: (
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <StarOutlined />
-                        {t.currentMembers[currentLanguage]} ({members.length})
-                      </span>
-                    ),
-                    value: "current",
-                  },
-                  {
-                    label: (
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {t.graduatedMembers[currentLanguage]} (
-                        {graduatedMembers.length})
-                      </span>
-                    ),
-                    value: "graduated",
-                  },
+                  { value: "ja", label: "JP" },
+                  { value: "en", label: "EN" },
+                  { value: "vi", label: "VI" },
                 ]}
               />
             )}
+            {setThemeMode && (
+              <Button
+                type="text"
+                onClick={() =>
+                  setThemeMode(themeMode === "dark" ? "light" : "dark")
+                }
+                style={{ borderRadius: 10, flexShrink: 0, color: "#8b5a2b" }}
+                icon={
+                  themeMode === "dark" ? <BulbOutlined /> : <MoonOutlined />
+                }
+              />
+            )}
+            <Button
+              type="text"
+              icon={<FilterOutlined />}
+              onClick={() => setFilterDrawerVisible(true)}
+              style={{ borderRadius: 10, flexShrink: 0, color: "#8b5a2b" }}
+            />
+          </Space>
+        </Space>
 
-            <Segmented
-              value={genFilter}
-              onChange={setGenFilter}
-              options={genList.map((g) => ({
-                label:
-                  g === "ALL"
-                    ? currentLanguage === "ja"
-                      ? "すべて"
-                      : currentLanguage === "en"
-                        ? "All"
-                        : "Tất cả"
-                    : g
-                      .replace(
-                        "期生",
-                        currentLanguage === "ja"
-                          ? "期生"
-                          : currentLanguage === "en"
-                            ? " Gen"
-                            : " Thế hệ"
-                      )
-                      .replace(
-                        /^(\d+)\s*(Gen|Thế hệ)$/,
-                        currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                      ),
-                value: g,
-              }))}
-              size="small"
-              block
-              style={{ marginBottom: 8 }}
-            />
-            <Input
-              allowClear
-              prefix={<SearchOutlined />}
-              placeholder={t.searchPlaceholder[currentLanguage]}
-              onChange={onSearchChange}
-              size="middle"
-              style={{
-                borderRadius: 12,
-                background:
-                  themeMode === "dark"
-                    ? "rgba(36,33,29,0.85)"
-                    : "rgba(253, 246, 227, 0.9)",
-                border:
-                  themeMode === "dark"
-                    ? "1px solid rgba(207,191,166,0.25)"
-                    : "1px solid rgba(139, 69, 19, 0.2)",
-                width: "100%",
-              }}
-            />
+        {/* Gen chips + Search */}
+        <div style={{ marginTop: 12 }}>
+          <Segmented
+            value={showGraduated ? "graduated" : "current"}
+            onChange={(val) => setShowGraduated(val === "graduated")}
+            size="middle"
+            block
+            style={{
+              marginBottom: 12,
+              background:
+                themeMode === "dark"
+                  ? "rgba(255,255,255,0.05)"
+                  : "rgba(139, 69, 19, 0.08)",
+              color: themeMode === "dark" ? "#d2a86a" : "#8b4513",
+            }}
+            options={[
+              {
+                label: (
+                  <span style={{ fontSize: 13, fontFamily: "'Mali', cursive" }}>
+                    {t.currentMembers[currentLanguage]}
+                  </span>
+                ),
+                value: "current",
+              },
+              {
+                label: (
+                  <span style={{ fontSize: 13, fontFamily: "'Mali', cursive" }}>
+                    OG ({graduatedMembers.length})
+                  </span>
+                ),
+                value: "graduated",
+              },
+            ]}
+          />
+
+          {/* Horizontal Scrollable Gen Filter */}
+          <div style={{
+            overflowX: "auto",
+            whiteSpace: "nowrap",
+            paddingBottom: 8,
+            marginBottom: 4,
+            scrollbarWidth: "none",
+            msOverflowStyle: "none"
+          }}>
+            <Space size={8}>
+              {genList.map(g => {
+                const label = g === "ALL"
+                  ? currentLanguage === "ja" ? "すべて" : "All"
+                  : g.replace("期生", currentLanguage === "en" ? " Gen" : "");
+
+                const isActive = genFilter === g;
+
+                return (
+                  <div
+                    key={g}
+                    onClick={() => setGenFilter(g)}
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: 20,
+                      background: isActive
+                        ? (themeMode === "dark" ? "#d2a86a" : "#8b5a2b")
+                        : (themeMode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(139,69,19,0.05)"),
+                      color: isActive
+                        ? (themeMode === "dark" ? "#1c1a17" : "#fff")
+                        : (themeMode === "dark" ? "#d2a86a" : "#8b5a2b"),
+                      fontSize: 13,
+                      fontFamily: "'Mali', cursive",
+                      cursor: "pointer",
+                      border: isActive ? "none" : `1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.3)" : "rgba(139,69,19,0.2)"}`,
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    {label}
+                  </div>
+                );
+              })}
+            </Space>
           </div>
-        </ProCard>
+
+          <Input
+            allowClear
+            prefix={<SearchOutlined style={{ color: "#8b5a2b" }} />}
+            placeholder={t.searchPlaceholder[currentLanguage]}
+            onChange={onSearchChange}
+            size="middle"
+            style={{
+              borderRadius: 20,
+              background:
+                themeMode === "dark"
+                  ? "rgba(0,0,0,0.2)"
+                  : "rgba(255,255,255,0.6)",
+              border:
+                themeMode === "dark"
+                  ? "1px solid rgba(207,191,166,0.25)"
+                  : "1px solid rgba(139, 69, 19, 0.2)",
+              width: "100%",
+              fontFamily: "'Mali', cursive"
+            }}
+          />
+        </div>
       </div>
 
-      {/* Content */}
+      {/* Content - Scrollable List */}
       <div
         style={{
-          padding: "12px 16px 80px",
-          contain: "layout paint style",
-          width: "100%",
-          maxWidth: "100%",
-          minHeight: "calc(100dvh - 120px)",
+          flex: 1,
+          overflowY: "auto",
+          padding: "16px 16px 80px 32px", // Left padding for binding
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {loading ? (
-          <ProCard
-            ghost
-            style={{
-              background:
-                themeMode === "dark" ? "rgba(36,33,29,0.85)" : undefined,
-            }}
-          >
-            <ProSkeleton type="list" />
-          </ProCard>
+          <div style={{ textAlign: "center", padding: 40 }}>
+            <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} />
+          </div>
         ) : grouped.length === 0 ? (
-          <Card
-            style={{
-              borderRadius: 16,
-              textAlign: "center",
-              background:
-                themeMode === "dark" ? "rgba(36,33,29,0.85)" : undefined,
-            }}
-          >
-            <Empty description={t.noMembers[currentLanguage]} />
-          </Card>
+          <div style={{ textAlign: "center", padding: 40, color: "#8b5a2b" }}>
+            <Empty description={false} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <div style={{ marginTop: 16 }}>{t.noMembers[currentLanguage]}</div>
+          </div>
         ) : (
           <Collapse
             ghost
             size="middle"
+            defaultActiveKey={grouped.map(g => g.gen)}
             style={{ background: "transparent" }}
+            expandIcon={({ isActive }) => <RightOutlined rotate={isActive ? 90 : 0} style={{ color: "#8b5a2b" }} />}
             items={grouped.map(({ gen, items }) => {
-              const isCollapsed = collapsedGens.has(gen);
+              const displayGen = gen === "その他"
+                ? t.other[currentLanguage]
+                : gen.replace("期生", currentLanguage === "en" ? " Gen" : "期生").replace(/^(\d+)\s*(Gen|Thế hệ)$/, currentLanguage === "en" ? "Gen $1" : "Thế hệ $1");
+
               return {
                 key: gen,
                 label: (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                      padding: "2px 0",
-                    }}
-                    onClick={() => toggleGenCollapse(gen)}
-                  >
-                    <Space>
-                      <StarOutlined
-                        style={{
-                          color: themeMode === "dark" ? "#d2a86a" : "#7c3aed",
-                          fontSize: 14,
-                        }}
-                      />
-                      <span
-                        style={{
-                          ...jpFont,
-                          fontWeight: 700,
-                          fontSize: 14,
-                          color: themeMode === "dark" ? "#f5ede0" : "#18181b",
-                        }}
-                      >
-                        {gen === "その他"
-                          ? t.other[currentLanguage]
-                          : gen
-                            .replace(
-                              "期生",
-                              currentLanguage === "ja"
-                                ? "期生"
-                                : currentLanguage === "en"
-                                  ? " Gen"
-                                  : " Thế hệ"
-                            )
-                            .replace(
-                              /^(\d+)\s*(Gen|Thế hệ)$/,
-                              currentLanguage === "en"
-                                ? "Gen $1"
-                                : "Thế hệ $1"
-                            )}
-                      </span>
-                    </Space>
-                    <Space>
-                      <Tag
-                        style={{
-                          background: "#f5f3ff",
-                          border: "1px solid #e9d5ff",
-                          color: "#6d28d9",
-                          borderRadius: 8,
-                          fontWeight: 600,
-                          fontSize: 10,
-                          padding: "1px 6px",
-                        }}
-                      >
-                        {items.length}
-                      </Tag>
-                      {isCollapsed ? (
-                        <RightOutlined
-                          style={{ color: "#7c3aed", fontSize: 12 }}
-                        />
-                      ) : (
-                        <DownOutlined
-                          style={{ color: "#7c3aed", fontSize: 12 }}
-                        />
-                      )}
-                    </Space>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{
+                      fontFamily: "'Yomogi', cursive",
+                      fontSize: 18,
+                      fontWeight: "bold",
+                      color: themeMode === "dark" ? "#f5ede0" : "#5c4033",
+                      borderBottom: "2px solid rgba(139,69,19,0.3)"
+                    }}>
+                      {displayGen}
+                    </span>
+                    <Badge
+                      count={items.length}
+                      style={{ backgroundColor: "#8b5a2b", color: "#fff" }}
+                    />
                   </div>
                 ),
                 children: (
                   <div style={{ padding: "4px 0" }}>
-                    {/* Thêm card gen 6 blog nếu đây là gen 6 */}
                     {gen === "6期生" && <Gen6BlogCard />}
                     {items.map((m) => (
                       <MemberCard key={m.code} m={m} />
@@ -965,232 +753,41 @@ export default function MemberListMobile({
                   </div>
                 ),
                 style: {
-                  marginBottom: 8,
-                  borderRadius: 12,
-                  border:
-                    themeMode === "dark"
-                      ? "1px solid rgba(207,191,166,0.2)"
-                      : "1px solid #f1f1f5",
-                  background:
-                    themeMode === "dark"
-                      ? "rgba(36,33,29,0.85)"
-                      : "rgba(253, 246, 227, 0.8)",
-                  boxShadow:
-                    themeMode === "dark"
-                      ? "0 1px 4px rgba(0,0,0,0.35)"
-                      : "0 1px 4px rgba(0,0,0,0.04)",
-                },
-                forceRender: false,
-                showArrow: false,
-                collapsible: "icon",
+                  borderBottom: "none",
+                  marginBottom: 16
+                }
               };
             })}
-            expandIcon={() => null}
-            activeKey={grouped
-              .map(({ gen }) => (collapsedGens.has(gen) ? null : gen))
-              .filter(Boolean)}
-            onChange={(keys) => {
-              const newCollapsed = new Set();
-              grouped.forEach(({ gen }) => {
-                if (!keys.includes(gen)) newCollapsed.add(gen);
-              });
-              setCollapsedGens(newCollapsed);
-            }}
           />
         )}
       </div>
 
-      {/* Filter Drawer (bottom) */}
+      {/* Filter Drawer */}
       <Drawer
-        title="フィルター"
+        title="Filter"
         placement="bottom"
         height={320}
         open={filterDrawerVisible}
         onClose={() => setFilterDrawerVisible(false)}
         styles={{ body: { paddingTop: 8 } }}
       >
-        <Space direction="vertical" style={{ width: "100%" }} size="large">
-          <div>
-            <Text strong style={{ display: "block", marginBottom: 10 }}>
-              {t.generation[currentLanguage]}
-            </Text>
-            <Segmented
-              block
-              options={genList.map((g) => ({
-                label:
-                  g === "ALL"
-                    ? currentLanguage === "ja"
-                      ? "すべて"
-                      : currentLanguage === "en"
-                        ? "All"
-                        : "Tất cả"
-                    : g
-                      .replace(
-                        "期生",
-                        currentLanguage === "ja"
-                          ? "期生"
-                          : currentLanguage === "en"
-                            ? " Gen"
-                            : " Thế hệ"
-                      )
-                      .replace(
-                        /^(\d+)\s*(Gen|Thế hệ)$/,
-                        currentLanguage === "en" ? "Gen $1" : "Thế hệ $1"
-                      ),
-                value: g,
-              }))}
-              value={genFilter}
-              onChange={setGenFilter}
-              size="large"
-            />
-          </div>
-        </Space>
+        {/* Simplified drawer content - can be removed if chips are enough, 
+             or kept for advanced filters later */}
+        <div style={{ padding: 16, textAlign: "center", color: "#888" }}>
+          Additional filters coming soon...
+        </div>
       </Drawer>
 
-      {/* Styles */}
+      {/* Global & Scrollbar Styles */}
       <style>{`
-        /* Full-bleed mobile overrides */
-        html, body, #root { 
-          height: 100%; 
-          min-height: 100vh;
-          min-height: 100dvh;
-            background: ${themeMode === "dark" ? "#141311" : "#fdf6e3"};
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          max-width: 100vw;
-          overflow-x: hidden;
-        }
-        body { 
-          margin: 0; 
-          padding: 0;
-          overscroll-behavior: none;
-        }
-        #root {
-          display: flex;
-          flex-direction: column;
-        }
-        .ant-pro-page-container { 
-          padding: 0 !important;
-          margin: 0 !important;
-          width: 100% !important;
-          max-width: 100vw !important;
-          min-height: 100vh !important;
-          min-height: 100dvh !important;
-          display: flex !important;
-          flex-direction: column !important;
-        }
-        .ant-pro-page-container-children-container {
-          flex: 1 !important;
-          margin: 0 !important; 
-          padding: 0 !important;
-          width: 100% !important;
-          max-width: 100vw !important;
-        }
-
-        /* Card styles */
-        .ant-card { 
-          transition: transform .2s ease, box-shadow .2s ease; 
-          width: 100% !important;
-          max-width: 100% !important;
-        }
-        .ant-card:hover { 
-          transform: translateY(-1px); 
-          box-shadow: 0 4px 12px rgba(0,0,0,.06); 
-        }
-
-        /* Collapse styles */
-        .ant-collapse { 
-          border: none !important; 
-          background: transparent !important; 
-          width: 100% !important;
-        }
-        .ant-collapse-item { 
-          border: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "#f1f1f5"
-        } !important; 
-          border-radius: 12px !important; 
-          margin-bottom: 8px !important; 
-          background: ${themeMode === "dark"
-          ? "rgba(36,33,29,0.85)"
-          : "rgba(253, 246, 227, 0.8)"
-        } !important; 
-          box-shadow: ${themeMode === "dark"
-          ? "0 1px 4px rgba(0,0,0,0.35)"
-          : "0 1px 4px rgba(0,0,0,0.04)"
-        } !important; 
-          overflow: hidden !important; 
-          width: 100% !important;
-        }
-        .ant-collapse-item-active { 
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; 
-        }
-        .ant-collapse-header { 
-          padding: 12px 16px !important; 
-          background: ${themeMode === "dark"
-          ? "linear-gradient(135deg, rgba(28,26,23,0.95), rgba(36,33,29,0.95))"
-          : "linear-gradient(135deg, rgba(253, 246, 227, 0.9), rgba(244, 241, 232, 0.9))"
-        } !important; 
-          border: none !important; 
-          border-radius: 12px !important; 
-          cursor: pointer !important; 
-          transition: all 0.3s ease !important; 
-        }
-        .ant-collapse-header:hover { 
-          background: linear-gradient(135deg, #f8f9ff, #f0f2ff) !important; 
-        }
-        .ant-collapse-content { 
-          border: none !important; 
-          background: ${themeMode === "dark"
-          ? "rgba(36,33,29,0.85)"
-          : "rgba(253, 246, 227, 0.8)"
-        } !important; 
-          border-radius: 0 0 12px 12px !important; 
-        }
-        .ant-collapse-content-box { 
-          padding: 4px 16px 16px !important; 
-        }
-        .ant-collapse-arrow { 
-          display: none !important; 
-        }
-
-        /* Mobile image perf */
-        img[loading="lazy"] { 
-          content-visibility: auto; 
-          contain-intrinsic-size: 120px 120px; 
-        }
-
-        /* Hide scrollbars */
-        *::-webkit-scrollbar {
-          display: none;
-        }
-        * {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-
-        /* Touch optimization */
-        * {
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Remove ALL global transitions to prevent lag */
-        * {
-          transition: none !important;
-        }
-        
-        /* Only apply transitions to specific hover effects */
-        .ant-card {
-          transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-        }
-        
-        .ant-btn {
-          transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-        }
-        
-        img {
-          transition: filter 0.3s ease !important;
-        }
+          /* Hide scrollbar for clean reading */
+          .notebook-container::-webkit-scrollbar {
+            display: none;
+          }
+           .ant-collapse-header {
+             padding-left: 0 !important;
+           }
       `}</style>
-    </PageContainer>
+    </div>
   );
 }
