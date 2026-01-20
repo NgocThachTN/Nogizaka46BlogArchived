@@ -184,6 +184,7 @@ export default function MemberListMobile({
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [collapsedGens, setCollapsedGens] = useState(new Set());
   const [showGraduated, setShowGraduated] = useState(false);
+  const scrollWrapRef = useRef(null);
 
   /** Search */
   const setKeywordDebounced = useRafDebounce((v) => setKeyword(v), 140);
@@ -481,7 +482,8 @@ export default function MemberListMobile({
 
   return (
     <div
-      className="diary-paper notebook-container"
+      ref={scrollWrapRef}
+      className="diary-paper notebook-container no-scrollbar"
       style={{
         width: "100%",
         minHeight: "100vh",
@@ -489,17 +491,26 @@ export default function MemberListMobile({
         padding: 0,
         margin: 0,
         position: "relative",
+        overflowY: "auto",
         overflowX: "hidden",
         backgroundColor: themeMode === "dark" ? "#1c1a17" : "#fdf6e3",
-        display: "flex",
-        flexDirection: "column",
+        display: "block",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       }}
     >
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
       {/* Visual binding effect - thinner for mobile */}
       <div
         className="notebook-binding"
         style={{
-          position: "absolute",
+          position: "fixed", // Fixed so it stays on screen
           top: 0,
           bottom: 0,
           left: -10, // Hide part of it off-screen for mobile
@@ -521,7 +532,8 @@ export default function MemberListMobile({
               ? "1px dashed rgba(207,191,166,0.3)"
               : "1px dashed rgba(139, 69, 19, 0.3)",
           zIndex: 100,
-          padding: "12px 16px 12px 32px", // Left padding for binding
+          position: "relative", // Ensure z-index works to sit above red margin line
+          padding: "12px 16px 12px 12px", // Adjusted left padding for consistency
           flexShrink: 0,
           boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
         }}
@@ -697,21 +709,10 @@ export default function MemberListMobile({
 
       {/* Content - Scrollable List */}
       <div
-        className="no-scrollbar"
         style={{
-          flex: 1,
-          overflowY: "auto",
           padding: "16px 16px 80px 32px", // Left padding for binding
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none", // Firefox
-          msOverflowStyle: "none", // IE and Edge
         }}
       >
-        <style>{`
-          .no-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
         {loading ? (
           <div style={{ textAlign: "center", padding: 40 }}>
             <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} />

@@ -502,7 +502,8 @@ export default function BlogListMobile({
 
   return (
     <div
-      className="diary-paper notebook-container"
+      ref={scrollWrapRef}
+      className="diary-paper notebook-container no-scrollbar"
       style={{
         width: "100%",
         minHeight: "100vh",
@@ -510,17 +511,26 @@ export default function BlogListMobile({
         padding: 0,
         margin: 0,
         position: "relative",
+        overflowY: "auto",
         overflowX: "hidden",
         backgroundColor: themeMode === "dark" ? "#1c1a17" : "#fdf6e3",
-        display: "flex",
-        flexDirection: "column",
+        display: "block",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none", // Firefox
+        msOverflowStyle: "none", // IE and Edge
       }}
     >
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
       {/* Visual binding effect - thinner for mobile */}
       <div
         className="notebook-binding"
         style={{
-          position: "absolute",
+          position: "fixed", // Fixed to viewport
           top: 0,
           bottom: 0,
           left: -10,
@@ -542,6 +552,7 @@ export default function BlogListMobile({
               ? "1px dashed rgba(207,191,166,0.3)"
               : "1px dashed rgba(139, 69, 19, 0.3)",
           zIndex: 100,
+          position: "relative", // Ensure z-index works to sit above red margin line
           padding: "12px 16px 12px 12px", // Adjusted left padding
           flexShrink: 0,
           boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
@@ -622,26 +633,15 @@ export default function BlogListMobile({
 
       {/* Content List */}
       <div
-        ref={scrollWrapRef}
         className="no-scrollbar"
         style={{
-          flex: 1,
-          overflowY: "auto",
           padding: "20px 20px 80px 40px", // Left padding for binding + tabs
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none", // Firefox
-          msOverflowStyle: "none", // IE and Edge
           background:
             themeMode === "dark"
               ? "linear-gradient(to bottom, #2a2520 0%, #24211d 100%)"
               : "linear-gradient(to bottom, #FFF9E6 0%, #FFF5D6 100%)",
         }}
       >
-        <style>{`
-          .no-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
         {/* Paper Texture Overlay */}
         <div
           style={{
