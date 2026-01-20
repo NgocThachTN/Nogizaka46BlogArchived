@@ -619,6 +619,7 @@ export default function BlogDetailMobile({
         WebkitOverflowScrolling: "touch",
         WebkitTransform: "translateZ(0)",
         transform: "translateZ(0)",
+        overscrollBehavior: "none", // Prevent bounce/rubber-banding to hide black background
       }}
     >
       {/* Visual binding effect - thinner for mobile */}

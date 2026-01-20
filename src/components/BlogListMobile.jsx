@@ -182,13 +182,7 @@ export default function BlogListMobile({
         const isFreshB = cachedB && now - cachedB.ts < STALE_MS;
         const isFreshM = cachedM && now - cachedM.ts < STALE_MS;
 
-        // Immediately set cached content if available
-        if (cachedB?.list?.length) {
-          startTransition(() => {
-            setBlogs(cachedB.list);
-            setFiltered(cachedB.list);
-          });
-        }
+
         if (cachedM?.info) {
           setMemberInfo(cachedM.info);
         }
