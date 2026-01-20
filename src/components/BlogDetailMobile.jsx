@@ -622,6 +622,13 @@ export default function BlogDetailMobile({
         overscrollBehavior: "none", // Prevent bounce/rubber-banding to hide black background
       }}
     >
+      <style>{`
+        /* Hide the red margin line for mobile full-width view */
+        .diary-paper.notebook-container::before {
+          display: none !important;
+        }
+      `}</style>
+
       {/* Visual binding effect - thinner for mobile */}
       <div
         className="notebook-binding"
@@ -817,7 +824,7 @@ export default function BlogDetailMobile({
           flex: 1,
           overflowY: "auto",
           overflowX: "hidden",
-          padding: "20px 16px 80px 56px", // Left padding for binding (48px line + 8px gap)
+          padding: "16px 12px 80px 12px", // Minimal padding (12px) for full width reading
           position: "relative",
           backgroundColor: themeMode === "dark" ? "#2a2520" : "#FFF9E6",
           backgroundImage:
@@ -833,60 +840,72 @@ export default function BlogDetailMobile({
 
         <div style={{ position: "relative", zIndex: 1 }}>
           {/* Header Info (Title, Date, Member) */}
-          <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: `2px dashed ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(139,69,19,0.15)"}` }}>
-            {memberInfo ? (
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-                <Avatar
-                  src={getImageUrl(memberInfo.img) || null}
-                  size={44}
-                  style={{
-                    border: "3px solid #fff",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                    flexShrink: 0
-                  }}
-                />
-                <div style={{ marginLeft: 12 }}>
-                  <Text strong style={{ display: "block", fontSize: 17, color: themeMode === "dark" ? "#f5ede0" : "#5c4033", ...jpFont }}>
-                    {memberInfo.name}
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: 13, color: themeMode === "dark" ? "#cfbfa6" : "#8b5a2b", ...jpFont }}>
-                    {memberInfo.english_name || formatEnglishName(memberInfo.name)}
-                  </Text>
+          {/* Header Info (Title, Date, Member) */}
+          <div style={{
+            marginBottom: 24,
+            paddingBottom: 16,
+            borderBottom: `2px dashed ${themeMode === "dark" ? "rgba(207,191,166,0.2)" : "rgba(139,69,19,0.15)"}`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 16
+          }}>
+            {/* Left: Avatar & Name */}
+            <div style={{ flexShrink: 0 }}>
+              {memberInfo ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <Avatar
+                    src={getImageUrl(memberInfo.img) || null}
+                    size={56}
+                    style={{
+                      border: "3px solid #fff",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                      marginBottom: 8
+                    }}
+                  />
+                  <div style={{ textAlign: "center" }}>
+                    <Text strong style={{ display: "block", fontSize: 13, lineHeight: 1.2, color: themeMode === "dark" ? "#f5ede0" : "#5c4033", ...jpFont, maxWidth: 80 }}>
+                      {memberInfo.name}
+                    </Text>
+                  </div>
                 </div>
-              </div>
-            ) : blog?.author ? (
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-                <Avatar
-                  src={getImageUrl(blog?.memberImage) || null}
-                  size={44}
-                  style={{
-                    border: "3px solid #fff",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                    flexShrink: 0
-                  }}
-                />
-                <div style={{ marginLeft: 12 }}>
-                  <Text strong style={{ display: "block", fontSize: 17, color: themeMode === "dark" ? "#f5ede0" : "#5c4033", ...jpFont }}>
-                    {blog.author}
-                  </Text>
+              ) : blog?.author ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <Avatar
+                    src={getImageUrl(blog?.memberImage) || null}
+                    size={56}
+                    style={{
+                      border: "3px solid #fff",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                      marginBottom: 8
+                    }}
+                  />
+                  <div style={{ textAlign: "center" }}>
+                    <Text strong style={{ display: "block", fontSize: 13, lineHeight: 1.2, color: themeMode === "dark" ? "#f5ede0" : "#5c4033", ...jpFont, maxWidth: 80 }}>
+                      {blog.author}
+                    </Text>
+                  </div>
                 </div>
+              ) : null}
+            </div>
+
+            {/* Right: Title & Date */}
+            <div style={{ flex: 1, textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+              <Title level={3} style={{
+                margin: "12px 0 8px 0", // Added top margin to push title down
+                fontSize: 20, // Slightly smaller to fit side-by-side
+                color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
+                fontFamily: bookFont[language].fontFamily,
+                fontWeight: language === "ja" ? 600 : 700,
+                lineHeight: 1.3
+              }}>
+                {displayTitle || blog?.title || (loading ? "" : "No Title")}
+              </Title>
+
+              <div style={{ display: "flex", alignItems: "center", color: themeMode === "dark" ? "#8b7e66" : "#8b5a2b", fontSize: 13 }}>
+                <CalendarOutlined style={{ marginRight: 6 }} />
+                <span style={{ fontFamily: bookFont[language].fontFamily }}>{blog?.date}</span>
               </div>
-            ) : null}
-
-            <Title level={3} style={{
-              margin: "4px 0 8px 0",
-              fontSize: 22,
-              color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
-              fontFamily: bookFont[language].fontFamily,
-              fontWeight: language === "ja" ? 600 : 700,
-              lineHeight: 1.4
-            }}>
-              {displayTitle || blog?.title || (loading ? "" : "No Title")}
-            </Title>
-
-            <div style={{ display: "flex", alignItems: "center", color: themeMode === "dark" ? "#8b7e66" : "#8b5a2b", fontSize: 14 }}>
-              <CalendarOutlined style={{ marginRight: 6 }} />
-              <span style={{ fontFamily: bookFont[language].fontFamily }}>{blog?.date}</span>
             </div>
           </div>
 
