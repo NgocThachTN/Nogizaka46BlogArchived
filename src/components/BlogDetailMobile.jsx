@@ -656,7 +656,7 @@ export default function BlogDetailMobile({
             : "0 2px 10px rgba(139, 69, 19, 0.05)",
         }}
       >
-        <div style={{ padding: "8px 12px", paddingLeft: 28 }}> {/* Extra left padding for binding */}
+        <div style={{ padding: "8px 12px", paddingLeft: 12 }}> {/* Adjusted left padding */}
           <Space
             align="center"
             style={{ width: "100%", justifyContent: "space-between", gap: 8 }}
