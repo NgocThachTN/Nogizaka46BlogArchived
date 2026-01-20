@@ -7,6 +7,8 @@ import {
     MoonOutlined,
     LoadingOutlined,
     RightOutlined,
+    FullscreenOutlined,
+    FullscreenExitOutlined,
 } from "@ant-design/icons";
 import { getCachedBlogDetail } from "../../services/blogService";
 import { t } from "./constants";
@@ -33,6 +35,8 @@ export default function BlogDetailHeader({
     setFontSizeKey,
     translating,
     onHoverPrefetch,
+    readingMode,
+    setReadingMode,
 }) {
     return (
         <div
@@ -209,6 +213,16 @@ export default function BlogDetailHeader({
                 value={fontSizeKey}
                 onChange={(v) => setFontSizeKey(v)}
             />
+
+            {setReadingMode && (
+                <Tooltip key="reading-mode" title={readingMode ? "Standard View" : "Wide View"}>
+                    <Button
+                        icon={readingMode ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+                        onClick={() => setReadingMode(!readingMode)}
+                        type={readingMode ? "primary" : "default"}
+                    />
+                </Tooltip>
+            )}
 
             <Button key="share" icon={<ShareAltOutlined />} onClick={onShare}>
                 {t.share[language]}

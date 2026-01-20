@@ -59,7 +59,7 @@ export default function BlogDetail({
   const [loading, setLoading] = useState(true);
 
   const [language, setLanguage] = useState(propLanguage || "ja");
-  const [readingMode, _SET_READING_MODE] = useState(true);
+  const [readingMode, _SET_READING_MODE] = useState(false);
   const [fontSizeKey, setFontSizeKey] = useState(
     () => localStorage.getItem(LS_KEY_SIZE) || "sm"
   );
@@ -551,146 +551,179 @@ export default function BlogDetail({
   // Desktop loading
   if (loading) {
     return (
-      <PageContainer header={{ title: t.loading[language] }}>
-        <Card style={{ border: "none" }}>
-          <Spin size="large" />
-        </Card>
-      </PageContainer>
+      <div
+        className="diary-paper notebook-container"
+        style={{
+          minHeight: "100vh",
+          padding: "40px",
+          paddingLeft: "60px",
+        }}
+      >
+        <div className="notebook-binding" style={{ left: 0 }}></div>
+        <div
+          style={{
+            minHeight: "60vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Spin size="large" tip={t.loading[language]} />
+        </div>
+      </div>
     );
   }
 
   // Not found
   if (!blog) {
     return (
-      <PageContainer header={{ title: t.notFound[language] }}>
-        <Card style={{ textAlign: "center" }}>
+      <div
+        className="diary-paper notebook-container"
+        style={{
+          minHeight: "100vh",
+          padding: "40px",
+          paddingLeft: "60px",
+        }}
+      >
+        <div className="notebook-binding" style={{ left: 0 }}></div>
+        <div style={{ textAlign: "center", padding: "100px 0" }}>
           <Title level={4}>{t.notFound[language]}</Title>
           <Button type="primary" onClick={onBack} icon={<LeftOutlined />}>
             {t.back[language]}
           </Button>
-        </Card>
-      </PageContainer>
+        </div>
+      </div>
     );
   }
 
   return (
-    <PageContainer
-      contentWidth="Fluid"
-      header={{
-        title: "乃木坂46ブログ",
-        style: { paddingInline: 16, paddingBlock: 8 },
-        extra: (
-          <BlogDetailHeader
-            language={language}
-            setLanguage={setLanguage}
-            propSetLanguage={propSetLanguage}
-            navIds={navIds}
-            fastGo={fastGo}
-            pendingNavId={pendingNavId}
-            navLock={navLock}
-            onBack={onBack}
-            onBackToMemberBlogs={onBackToMemberBlogs}
-            onShare={onShare}
-            showFurigana={showFurigana}
-            setShowFurigana={setShowFurigana}
-            furiganaLoading={furiganaLoading}
-            kuroshiroInitializing={kuroshiroInitializing}
-            blog={blog}
-            themeMode={themeMode}
-            setThemeMode={setThemeMode}
-            fontSizeKey={fontSizeKey}
-            setFontSizeKey={setFontSizeKey}
-            translating={translating}
-            onHoverPrefetch={onHoverPrefetch}
-          />
-        ),
+    <div
+      className="diary-paper notebook-container"
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        padding: "40px",
+        paddingLeft: "60px", // Space for binding
       }}
-      token={{ colorBgPageContainer: readingMode ? "#fafafa" : undefined }}
     >
-      <ProCard ghost gutter={[16, 16]} wrap>
-        {/* Left Sidebar - Member Profile */}
-        {memberInfo && (
-          <ProCard
-            colSpan={{ xs: 24, sm: 24, md: 5, lg: 4, xl: 4 }}
-            ghost
-            style={{
-              position: "sticky",
-              top: 16,
-              alignSelf: "flex-start",
-            }}
-          >
-            <MemberProfile
-              memberInfo={memberInfo}
-              themeMode={themeMode}
+      {/* Visual binding effect */}
+      <div className="notebook-binding" style={{ left: 0 }}></div>
+
+      <div style={{ maxWidth: readingMode ? 1600 : 1400, margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px", transition: "max-width 0.3s ease" }}>
+        {/* Header - Sticky Note Style */}
+        <div className="sticky-note" style={{ transform: "rotate(-0.5deg)", zIndex: 10 }}>
+          <div style={{
+            background: themeMode === "dark" ? "rgba(36, 33, 29, 0.95)" : "rgba(255, 255, 255, 0.9)",
+            borderRadius: "2px",
+            padding: "16px 24px"
+          }}>
+            <BlogDetailHeader
               language={language}
+              setLanguage={setLanguage}
+              propSetLanguage={propSetLanguage}
+              navIds={navIds}
+              fastGo={fastGo}
+              pendingNavId={pendingNavId}
+              navLock={navLock}
+              onBack={onBack}
+              onBackToMemberBlogs={onBackToMemberBlogs}
+              onShare={onShare}
+              showFurigana={showFurigana}
+              setShowFurigana={setShowFurigana}
+              furiganaLoading={furiganaLoading}
+              kuroshiroInitializing={kuroshiroInitializing}
+              blog={blog}
+              themeMode={themeMode}
+              setThemeMode={setThemeMode}
+              fontSizeKey={fontSizeKey}
+              setFontSizeKey={setFontSizeKey}
+              translating={translating}
+              onHoverPrefetch={onHoverPrefetch}
+              // Pass reading mode toggle to header if needed, or keeping it separate
+              readingMode={readingMode}
+              setReadingMode={_SET_READING_MODE}
             />
-          </ProCard>
-        )}
+          </div>
+        </div>
 
-        {/* Main content */}
-        <ProCard
-          colSpan={{
-            xs: 24,
-            sm: 24,
-            md: memberInfo ? 14 : 18,
-            lg: memberInfo ? 15 : 18,
-            xl: memberInfo ? 16 : 18,
-          }}
-          ghost
-        >
-          <BlogDetailContent
-            blog={blog}
-            displayTitle={displayTitle}
-            displayContent={displayContent}
-            language={language}
-            themeMode={themeMode}
-            fontSizeKey={fontSizeKey}
-            sz={sz}
-            readingMode={readingMode}
-            contentRef={contentRef}
-            translating={translating}
-            translationProgress={translationProgress}
-          />
-        </ProCard>
+        <div style={{ display: "flex", gap: "24px", alignItems: "flex-start", justifyContent: "center" }}>
+          {/* Left Sidebar - Member Profile (Pinned Photo Style) */}
+          {memberInfo && !readingMode && (
+            <div
+              style={{
+                width: 300,
+                flexShrink: 0,
+                transform: "rotate(-1.5deg)",
+                zIndex: 5,
+                position: "sticky",
+                top: 20
+              }}
+            >
+              <MemberProfile
+                memberInfo={memberInfo}
+                themeMode={themeMode}
+                language={language}
+              />
+            </div>
+          )}
 
-        {/* Right Sidebar */}
-        <ProCard
-          colSpan={{
-            xs: 24,
-            sm: 24,
-            md: memberInfo ? 5 : 6,
-            lg: memberInfo ? 5 : 6,
-            xl: memberInfo ? 4 : 6,
-          }}
-          ghost
-          direction="column"
-          gutter={[0, 16]}
-          style={{
-            position: "sticky",
-            top: 16,
-            alignSelf: "flex-start",
-          }}
-        >
-          <BlogDetailSidebar
-            toc={toc}
-            readMinutes={readMinutes}
-            memberBlogs={memberBlogs}
-            memberInfo={memberInfo}
-            onBlogClick={(blogId) => navigate(`/blog/${blogId}`)}
-            language={language}
-            themeMode={themeMode}
-            isMobile={isMobile}
-          />
-        </ProCard>
-      </ProCard>
+          {/* Main Content - Paper content */}
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            maxWidth: readingMode ? "100%" : undefined,
+            transition: "all 0.3s ease"
+          }}>
+            <BlogDetailContent
+              blog={blog}
+              displayTitle={displayTitle}
+              displayContent={displayContent}
+              language={language}
+              themeMode={themeMode}
+              fontSizeKey={fontSizeKey}
+              sz={sz}
+              readingMode={readingMode}
+              contentRef={contentRef}
+              translating={translating}
+              translationProgress={translationProgress}
+            />
+          </div>
+
+          {/* Right Sidebar - Stacked Notes */}
+          {!readingMode && (
+            <div
+              style={{
+                width: 320,
+                flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: "24px",
+                position: "sticky",
+                top: 20
+              }}
+            >
+              <BlogDetailSidebar
+                toc={toc}
+                readMinutes={readMinutes}
+                memberBlogs={memberBlogs}
+                memberInfo={memberInfo}
+                onBlogClick={(blogId) => navigate(`/blog/${blogId}`)}
+                language={language}
+                themeMode={themeMode}
+                isMobile={isMobile}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       <FloatButton.BackTop
         icon={<ArrowUpOutlined />}
         style={{
-          width: window.innerWidth < 768 ? 44 : 60,
-          height: window.innerWidth < 768 ? 44 : 60,
-          right: window.innerWidth < 768 ? 16 : 24,
-          bottom: window.innerWidth < 768 ? 16 : 24,
+          width: 60,
+          height: 60,
+          right: 24,
+          bottom: 24,
         }}
       />
 
@@ -701,6 +734,6 @@ export default function BlogDetail({
         language={language}
         sz={sz}
       />
-    </PageContainer>
+    </div>
   );
 }

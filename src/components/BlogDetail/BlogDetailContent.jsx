@@ -1,6 +1,6 @@
-import { Card, Typography, Space, Divider, Button } from "antd";
+import { Typography, Space, Divider, Button } from "antd";
 import { CalendarOutlined, LinkOutlined } from "@ant-design/icons";
-import { jpFont, bookFont, t } from "./constants";
+import { bookFont, t } from "./constants";
 import TranslationOverlay from "./TranslationOverlay";
 
 const { Title, Text } = Typography;
@@ -18,46 +18,38 @@ export default function BlogDetailContent({
     translating,
     translationProgress,
 }) {
+    const isDark = themeMode === "dark";
+
     return (
-        <Card
-            className="diary-paper"
+        <div
+            className="diary-sheet"
             style={{
-                borderRadius: 16,
-                background:
-                    themeMode === "dark"
-                        ? "linear-gradient(to bottom, #2a2520 0%, #24211d 100%)"
-                        : "linear-gradient(to bottom, #FFF9E6 0%, #FFF5D6 100%)",
-                boxShadow:
-                    themeMode === "dark"
-                        ? "0 4px 24px rgba(0,0,0,0.4), inset 0 0 60px rgba(139, 115, 85, 0.05)"
-                        : "0 4px 24px rgba(139, 69, 19, 0.15), inset 0 0 60px rgba(139, 69, 19, 0.03)",
-                border:
-                    themeMode === "dark"
-                        ? "1px solid rgba(139, 115, 85, 0.2)"
-                        : "1px solid rgba(139, 69, 19, 0.15)",
+                borderRadius: 2,
+                background: isDark
+                    ? "linear-gradient(to bottom, #2a2520 0%, #24211d 100%)"
+                    : "linear-gradient(to bottom, #FFF9E6 0%, #FFF5D6 100%)",
+                boxShadow: isDark
+                    ? "0 4px 24px rgba(0,0,0,0.4), inset 0 0 60px rgba(139, 115, 85, 0.05)"
+                    : "0 4px 24px rgba(139, 69, 19, 0.15), inset 0 0 60px rgba(139, 69, 19, 0.03)",
+                border: isDark
+                    ? "1px solid rgba(139, 115, 85, 0.2)"
+                    : "1px solid rgba(139, 69, 19, 0.15)",
                 position: "relative",
                 overflow: "hidden",
-                ...jpFont,
-            }}
-            bodyStyle={{
-                // Padding-top must be a multiple of line-height for proper alignment
-                // Using em units to prevent sub-pixel rounding drift over long posts
-                // Formula: LineHeight (1 unit) + Offset (Half-leading) + Font Specific Baseline Correction
-                paddingTop: `${sz.lh + (sz.lh - 1) / 2 + (language === "ja" ? 0 : 0.3)}em`,
-                paddingRight: readingMode ? 56 : 42,
-                paddingBottom: readingMode ? 56 : 42,
-                paddingLeft: readingMode ? 56 : 42,
-                position: "relative",
+                minHeight: 600,
+                transition: "all 0.3s ease",
 
-                // Use linear-gradient + background-size to create repeating lines
-                // This relies on the browser to repeat the 1-unit tile perfecty
-                backgroundImage:
-                    themeMode === "dark"
-                        ? `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 115, 85, 0.2) calc(100% - 1px), rgba(139, 115, 85, 0.2) 100%)`
-                        : `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 69, 19, 0.15) calc(100% - 1px), rgba(139, 69, 19, 0.15) 100%)`,
-
-                // Size is exactly equal to Line Height in ems
+                // Paper texture lines
+                backgroundImage: isDark
+                    ? `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 115, 85, 0.2) calc(100% - 1px), rgba(139, 115, 85, 0.2) 100%)`
+                    : `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 69, 19, 0.15) calc(100% - 1px), rgba(139, 69, 19, 0.15) 100%)`,
                 backgroundSize: `100% ${sz.lh}em`,
+
+                // Padding ensures text sits on lines
+                paddingTop: `${sz.lh + (sz.lh - 1) / 2 + (language === "ja" ? 0 : 0.3)}em`,
+                paddingRight: readingMode ? "8%" : 42,
+                paddingBottom: readingMode ? 60 : 42,
+                paddingLeft: readingMode ? "8%" : 42,
             }}
         >
             {/* Overlay translating */}
@@ -70,17 +62,17 @@ export default function BlogDetailContent({
             <div
                 style={{
                     display: "flex",
-                    alignItems: "flex-end", // Align bottom of date with title roughly
-                    justifyContent: "space-between", // Spread Date and Title
+                    alignItems: "flex-end",
+                    justifyContent: "space-between",
                     marginBottom: window.innerWidth < 768 ? 16 : 24,
                     width: "100%",
-                    padding: "0 4px", // Slight padding
+                    padding: "0 4px",
                 }}
             >
-                {/* Journal Date - Left Side */}
+                {/* Journal Date */}
                 <div
                     style={{
-                        color: themeMode === "dark" ? "#b8a586" : "#666",
+                        color: isDark ? "#b8a586" : "#666",
                         fontSize: window.innerWidth < 768 ? 16 : 18,
                         fontFamily: bookFont[language].fontFamily,
                         display: "flex",
@@ -93,14 +85,8 @@ export default function BlogDetailContent({
                     </span>
                 </div>
 
-                {/* Blog Title - Right Side */}
-                <div
-                    style={{
-                        textAlign: "right",
-                        maxWidth: "70%",
-                    }}
-                >
-                    {/* REMOVED style={jpFont} to prevent font override */}
+                {/* Blog Title */}
+                <div style={{ textAlign: "right", maxWidth: "70%" }}>
                     <Space direction="vertical" size={2}>
                         <Text
                             type="secondary"
@@ -135,44 +121,47 @@ export default function BlogDetailContent({
             <Divider
                 style={{
                     margin: "19px 0 29px",
-                    borderColor:
-                        themeMode === "dark" ? "rgba(207,191,166,0.2)" : undefined,
+                    borderColor: isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.15)",
                 }}
             />
 
-            {/* Content */}
+            {/* Content Body */}
             <div
                 ref={contentRef}
                 className="jp-prose"
                 style={{
                     fontSize: sz.px,
-                    lineHeight: `${Math.round(sz.px * sz.lh)}px`, // Force integer px line-height
+                    lineHeight: `${Math.round(sz.px * sz.lh)}px`,
                     letterSpacing: language === "ja" ? 0.5 : 0.3,
-                    color: themeMode === "dark" ? "#f5ede0" : undefined,
+                    color: isDark ? "#f5ede0" : "#2c2c2c",
+                    fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
 
-                    // CRITICAL FIX: Robust text wrapping for CJK + Emojis
-                    overflowWrap: "anywhere", // Prevents overflow by breaking long strings/urls anywhere if needed
-                    wordBreak: "normal", // Use normal CJK breaking rules
-                    lineBreak: "strict", // Strict Japanese kinsoku shori (prevent bad line breaks)
-                    whiteSpace: "pre-wrap", // Preserve whitespace/newlines from API content
+                    overflowWrap: "anywhere",
+                    wordBreak: "normal",
+                    lineBreak: "strict",
+                    whiteSpace: "pre-wrap",
 
                     textAlign: "left",
-                    ...bookFont[language],
                 }}
                 dangerouslySetInnerHTML={{ __html: displayContent }}
             />
 
-            {/* Bottom nav (tối giản) */}
-            <div style={{ marginTop: 28 }}>
+            {/* Footer */}
+            <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
                 {blog.originalUrl && (
                     <Button
+                        type="text"
                         icon={<LinkOutlined />}
                         onClick={() => window.open(blog.originalUrl, "_blank")}
+                        style={{
+                            color: isDark ? "#999" : "#666",
+                            fontSize: 12
+                        }}
                     >
                         {t.openSource[language]}
                     </Button>
                 )}
             </div>
-        </Card>
+        </div>
     );
 }

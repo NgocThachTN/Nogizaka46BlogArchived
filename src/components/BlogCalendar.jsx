@@ -175,19 +175,24 @@ export default function BlogCalendar({
 
     if (dayBlogs.length === 0) return null;
 
+    const isDark = themeMode === "dark";
+
     return (
-      <div style={{ position: "relative", height: "100%" }}>
-        {/* Blog indicator line */}
+      <div className="blog-date-marker" style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        paddingBottom: 2
+      }}>
         <div
           style={{
-            position: "absolute",
-            bottom: 2,
-            left: 4,
-            right: 4,
+            width: "60%",
             height: 3,
-            background: "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)",
-            borderRadius: "2px",
-            boxShadow: "0 1px 3px rgba(109, 40, 217, 0.3)",
+            borderRadius: 2,
+            background: isDark ? "#d2a86a" : "#8b4513",
+            opacity: 0.8
           }}
         />
       </div>
@@ -232,73 +237,84 @@ export default function BlogCalendar({
   // Show loading state if no blogs yet
   if (!blogs || blogs.length === 0) {
     return (
-      <ProCard
-        title={
-          <Space>
-            <CalendarOutlined />
-            <span>ブログカレンダー</span>
-            {memberInfo && (
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                {memberInfo.name}
-              </Text>
-            )}
-          </Space>
-        }
+      <div
         style={{
-          borderRadius: 16,
+          borderRadius: 2,
           background:
             themeMode === "dark"
-              ? "rgba(36, 33, 29, 0.85)"
-              : "rgba(253, 246, 227, 0.8)",
+              ? "rgba(36, 33, 29, 0.95)"
+              : "rgba(255, 255, 255, 0.9)",
+          border:
+            themeMode === "dark"
+              ? "1px solid rgba(207,191,166,0.2)"
+              : "1px solid rgba(0,0,0,0.05)",
+          boxShadow:
+            themeMode === "dark"
+              ? "0 4px 12px rgba(0,0,0,0.3)"
+              : "0 2px 8px rgba(0,0,0,0.05)",
+          padding: isMobile ? 12 : 16
         }}
-        bodyStyle={{ padding: isMobile ? 12 : 16 }}
       >
         <div style={{ textAlign: "center", padding: "20px 0" }}>
           <Text type="secondary">{t.loading[language]}</Text>
         </div>
-      </ProCard>
+      </div>
     );
   }
 
+  const isDark = themeMode === "dark";
+
   return (
-    <ProCard
-      title={
-        <Space size={4}>
-          <CalendarOutlined style={{ fontSize: 16 }} />
-          <span style={{ fontSize: 17 }}>{t.calendar[language]}</span>
-          {memberInfo && (
-            <Text type="secondary" style={{ fontSize: 14 }}>
-              {memberInfo.name}
-            </Text>
-          )}
-        </Space>
-      }
+    <div
       style={{
-        borderRadius: 12,
-        background:
-          themeMode === "dark"
-            ? "rgba(36, 33, 29, 0.85)"
-            : "rgba(253, 246, 227, 0.8)",
-        border:
-          themeMode === "dark"
-            ? "1px solid rgba(207,191,166,0.25)"
-            : "1px solid rgba(139, 69, 19, 0.2)",
-        boxShadow:
-          themeMode === "dark"
-            ? "0 2px 8px rgba(0,0,0,0.35)"
-            : "0 2px 8px rgba(139, 69, 19, 0.1)",
+        borderRadius: 2,
+        background: isDark
+          ? "rgba(36, 33, 29, 0.95)"
+          : "rgba(255, 255, 255, 0.9)",
+        border: isDark
+          ? "1px solid rgba(207,191,166,0.2)"
+          : "1px solid rgba(0,0,0,0.05)",
+        boxShadow: isDark
+          ? "0 4px 12px rgba(0,0,0,0.3)"
+          : "0 2px 8px rgba(0,0,0,0.05)",
+        padding: isMobile ? 12 : 20,
+        position: "relative"
       }}
-      bodyStyle={{ padding: isMobile ? 12 : 17 }}
-      extra={
+    >
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 16,
+        borderBottom: `1px dashed ${isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.1)"}`,
+        paddingBottom: 12
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <CalendarOutlined style={{ fontSize: 16, color: isDark ? "#d2a86a" : "#8b4513" }} />
+          <span style={{
+            fontSize: 16,
+            fontWeight: 600,
+            fontFamily: isDark ? "serif" : "'Yomogi', cursive",
+            color: isDark ? "#d2a86a" : "#8b4513"
+          }}>
+            {t.calendar[language]}
+          </span>
+        </div>
+
         <Button
           size="small"
-          style={{ fontSize: 14 }}
+          type="text"
+          style={{
+            fontSize: 12,
+            fontFamily: "'Playfair Display', serif",
+            color: isDark ? "#cfbfa6" : "#8b4513"
+          }}
           onClick={() => setViewMode(viewMode === "month" ? "year" : "month")}
         >
           {viewMode === "month" ? t.yearView[language] : t.monthView[language]}
         </Button>
-      }
-    >
+      </div>
+
       <div style={{ marginBottom: 10 }}>
         <Calendar
           key={language} // Force re-render when language changes
@@ -322,7 +338,8 @@ export default function BlogCalendar({
             >
               <Button
                 size="small"
-                style={{ fontSize: 11, padding: "2px 8px" }}
+                type="text"
+                style={{ fontSize: 14, color: isDark ? "#d2a86a" : "#8b4513" }}
                 onClick={() =>
                   onChange(
                     value.subtract(1, viewMode === "month" ? "month" : "year")
@@ -331,14 +348,19 @@ export default function BlogCalendar({
               >
                 ←
               </Button>
-              <Text strong style={{ fontSize: isMobile ? 12 : 14 }}>
+              <Text strong style={{
+                fontSize: isMobile ? 14 : 16,
+                fontFamily: "'Playfair Display', serif",
+                color: isDark ? "#f5ede0" : "#2d1b0e"
+              }}>
                 {viewMode === "month"
                   ? formatDate(value, language, "yearMonth")
                   : formatDate(value, language, "year")}
               </Text>
               <Button
                 size="small"
-                style={{ fontSize: 11, padding: "2px 8px" }}
+                type="text"
+                style={{ fontSize: 14, color: isDark ? "#d2a86a" : "#8b4513" }}
                 onClick={() =>
                   onChange(
                     value.add(1, viewMode === "month" ? "month" : "year")
@@ -354,362 +376,181 @@ export default function BlogCalendar({
 
       {/* Selected date blogs */}
       {selectedDateBlogs.length > 0 && (
-        <Card
-          size="small"
-          title={
-            <Space>
+        <div style={{
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: `1px dashed ${isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.1)"}`
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: isDark ? "#cfbfa6" : "#666" }}>
               <ReadOutlined />
-              <span>
-                {formatDate(selectedDate, language)} {t.postsOn[language]}
-              </span>
-              <Badge
-                count={selectedDateBlogs.length}
-                style={{
-                  backgroundColor: themeMode === "dark" ? "#d2a86a" : "#8b4513",
-                  color: themeMode === "dark" ? "#141311" : "#fff",
-                  boxShadow: themeMode === "dark"
-                    ? "0 2px 8px rgba(0,0,0,0.35)"
-                    : "0 2px 8px rgba(139, 69, 19, 0.2)",
-                  fontWeight: 600,
-                  borderRadius: "12px",
-                }}
-              />
-            </Space>
-          }
-          style={{
-            borderRadius: 12,
-            marginTop: 12,
-            background:
-              themeMode === "dark"
-                ? "rgba(36, 33, 29, 0.9)"
-                : "rgba(253, 246, 227, 0.9)",
-          }}
-          bodyStyle={{ padding: isMobile ? 8 : 12 }}
-        >
+              <span>{formatDate(selectedDate, language)}</span>
+            </div>
+            <Badge
+              count={selectedDateBlogs.length}
+              style={{
+                backgroundColor: isDark ? "#d2a86a" : "#8b4513",
+                color: isDark ? "#141311" : "#fff",
+                boxShadow: "none",
+                fontWeight: 600,
+              }}
+            />
+          </div>
+
           <Space direction="vertical" style={{ width: "100%" }} size={8}>
             {selectedDateBlogs.map((blog) => (
-              <Card
+              <div
                 key={blog.id}
-                size="small"
-                hoverable
                 onClick={() => onBlogClick(blog.id)}
                 style={{
-                  borderRadius: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px",
+                  borderRadius: 4,
                   cursor: "pointer",
-                  border:
-                    themeMode === "dark"
-                      ? "1px solid rgba(207,191,166,0.25)"
-                      : "1px solid rgba(139, 69, 19, 0.2)",
-                  background:
-                    themeMode === "dark"
-                      ? "rgba(36, 33, 29, 0.95)"
-                      : "rgba(253, 246, 227, 0.95)",
+                  transition: "background 0.2s",
+                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"
                 }}
-                bodyStyle={{ padding: isMobile ? 8 : 12 }}
+                onMouseEnter={(e) => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(139, 69, 19, 0.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)"}
               >
                 <div
-                  style={{ display: "flex", gap: 8, alignItems: "flex-start" }}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    flexShrink: 0,
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`
+                  }}
                 >
-                  {/* Thumbnail */}
-                  <div
+                  <img
+                    src={
+                      blog.thumbnail
+                        ? getImageUrl(blog.thumbnail, { w: 96 })
+                        : "https://via.placeholder.com/96x96/f0f0f0/666666?text=No+Image"
+                    }
+                    alt={blog.title}
                     style={{
-                      width: isMobile ? 40 : 48,
-                      height: isMobile ? 40 : 48,
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      background: themeMode === "dark" ? "#1e1c19" : "#f5f6fa",
-                      flexShrink: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
                     }}
-                  >
-                    <img
-                      src={
-                        blog.thumbnail
-                          ? getImageUrl(blog.thumbnail, { w: 96 })
-                          : "https://via.placeholder.com/96x96/f0f0f0/666666?text=No+Image"
-                      }
-                      alt={blog.title}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <Tooltip title={blog.title}>
-                      <Text
-                        strong
-                        style={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                          fontSize: isMobile ? 12 : 16,
-                          lineHeight: 1.4,
-                          marginBottom: 4,
-                        }}
-                      >
-                        {blog.title}
-                      </Text>
-                    </Tooltip>
-                    <div
-                      style={{
-                        color: "#666",
-                        fontSize: isMobile ? 10 : 13,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <CalendarOutlined />
-                      <span>{blog.date}</span>
-                    </div>
+                  />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: isDark ? "#f5ede0" : "#2d1b0e",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    fontFamily: "'Playfair Display', serif"
+                  }}>
+                    {blog.title}
                   </div>
                 </div>
-              </Card>
+              </div>
             ))}
           </Space>
-        </Card>
+        </div>
       )}
 
       {/* No blogs for selected date */}
       {selectedDateBlogs.length === 0 && (
-        <Card
-          size="small"
-          style={{
-            borderRadius: 12,
-            marginTop: 12,
-            textAlign: "center",
-            background:
-              themeMode === "dark"
-                ? "rgba(36, 33, 29, 0.9)"
-                : "rgba(253, 246, 227, 0.9)",
-          }}
-          bodyStyle={{ padding: isMobile ? 16 : 24 }}
-        >
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>
-                {formatDate(selectedDate, language)} {t.noPosts[language]}
-              </Text>
-            }
-          />
-        </Card>
+        <div style={{
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: `1px dashed ${isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.1)"}`,
+          textAlign: "center",
+          color: isDark ? "#666" : "#999",
+          fontSize: 13,
+          padding: "10px 0"
+        }}>
+          {t.noPosts[language]}
+        </div>
       )}
 
       {/* Enhanced Calendar Styles */}
       <style>{`
         .blog-calendar {
-          background: ${themeMode === "dark"
-          ? "#141311"
-          : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
-        };
-          border-radius: 10px;
-          padding: 8px;
-          box-shadow: ${themeMode === "dark"
-          ? "0 3px 16px rgba(0,0,0,0.35)"
-          : "0 3px 16px rgba(109, 40, 217, 0.08)"
-        };
-        }
-        
-        /* Badge styling for calendar */
-        .ant-card-head .ant-badge {
-          background: transparent !important;
-        }
-        
-        .ant-card-head .ant-badge-count {
-          background-color: ${themeMode === "dark" ? "#f5ede0" : "#f5ede0"} !important;
-          color: ${themeMode === "dark" ? "#8b4513" : "#8b4513"} !important;
-          box-shadow: ${themeMode === "dark"
-          ? "0 2px 8px rgba(0,0,0,0.35)"
-          : "0 2px 8px rgba(139, 69, 19, 0.2)"
-        } !important;
-          font-weight: 600 !important;
-          border-radius: 12px !important;
-          border: none !important;
-        }
-        
-        .ant-card-head .ant-badge .ant-scroll-number {
           background: transparent !important;
         }
         
         .blog-calendar .ant-picker-calendar-header {
-          padding: ${isMobile ? "6px 0" : "8px 0"};
-          border-bottom: 1px solid ${themeMode === "dark" ? "rgba(207,191,166,0.15)" : "#f0f0f0"
-        };
+          padding: 0;
+          border-bottom: none;
           margin-bottom: 8px;
         }
         
         .blog-calendar .ant-picker-calendar-date {
-          position: relative;
-          height: ${isMobile ? "28px" : "32px"};
-          padding: ${isMobile ? "2px" : "3px"};
-          border-radius: 5px;
-          transition: all 0.3s ease;
-          margin: 1px;
+          height: ${isMobile ? "28px" : "30px"};
+          margin: 0;
+          border-radius: 4px;
         }
-        
+
         .blog-calendar .ant-picker-calendar-date-content {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          border-radius: 5px;
+           height: 100%;
         }
-        
-        .blog-calendar .ant-picker-calendar-date-today {
-          background: ${themeMode === "dark"
-          ? "rgba(207,191,166,0.08)"
-          : "linear-gradient(135deg, rgba(109, 40, 217, 0.1) 0%, rgba(109, 40, 217, 0.05) 100%)"
-        } !important;
-          border: 2px solid ${themeMode === "dark"
-          ? "rgba(207,191,166,0.3)"
-          : "rgba(109, 40, 217, 0.3)"
-        } !important;
-          box-shadow: ${themeMode === "dark"
-          ? "0 2px 8px rgba(0,0,0,0.35)"
-          : "0 2px 8px rgba(109, 40, 217, 0.2)"
-        };
-        }
-        
+
+        /* Hide today circle default style to use our custom one but keep text visible */
+         .blog-calendar .ant-picker-calendar-date-today {
+           background: transparent !important;
+           border: none !important;
+           box-shadow: none !important;
+         }
+         
+         .blog-calendar .ant-picker-calendar-date-content {
+           height: 100%;
+           position: absolute;
+           top: 0;
+           left: 0;
+           width: 100%;
+           pointer-events: none;
+         }
+
         .blog-calendar .ant-picker-calendar-date:hover {
-          background: ${themeMode === "dark"
-          ? "rgba(207,191,166,0.12)"
-          : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
-        } !important;
-          transform: translateY(-1px);
-          box-shadow: ${themeMode === "dark"
-          ? "0 4px 12px rgba(0,0,0,0.35)"
-          : "0 4px 12px rgba(109, 40, 217, 0.15)"
-        };
+          background: ${isDark ? "rgba(255,255,255,0.1)" : "rgba(139, 69, 19, 0.1)"} !important;
         }
         
         .blog-calendar .ant-picker-calendar-date-selected {
-          background: ${themeMode === "dark"
-          ? "#9c6b3f"
-          : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
-        } !important;
-          border: 2px solid ${themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
-        } !important;
-          box-shadow: ${themeMode === "dark"
-          ? "0 4px 16px rgba(0,0,0,0.35)"
-          : "0 4px 16px rgba(109, 40, 217, 0.3)"
-        };
+           background: transparent !important;
+           box-shadow: none !important;
+           border: none !important;
         }
         
-        .blog-calendar .ant-picker-calendar-date-selected .ant-picker-calendar-date-value {
-          color: ${themeMode === "dark" ? "#141311" : "#fff"} !important;
-          font-weight: 700;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        /* Circle around selected date */
+        .blog-calendar .ant-picker-calendar-date-selected::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border: 2px solid ${isDark ? "#d2a86a" : "#8b4513"};
+            border-radius: 50%;
+            pointer-events: none;
         }
-        
+
         .blog-calendar .ant-picker-calendar-date-value {
-          font-size: ${isMobile ? "10px" : "11px"};
-          line-height: 1.1;
-          font-weight: 500;
-          color: ${themeMode === "dark" ? "#f5ede0" : "inherit"};
+           color: ${themeMode === "dark" ? "#cfbfa6" : "#5d4e37"};
+           font-family: 'Playfair Display', serif;
+           font-weight: 500;
         }
         
         .blog-calendar .ant-picker-calendar-date-today .ant-picker-calendar-date-value {
-          color: ${themeMode === "dark" ? "#d2a86a" : "#6d28d9"} !important;
-          font-weight: 700;
+           font-weight: 700;
+           text-decoration: underline;
+           text-underline-offset: 4px;
+           text-decoration-color: ${isDark ? "#d2a86a" : "#8b4513"};
         }
-        
+
         .blog-calendar .ant-picker-calendar-month-panel {
-          padding: ${isMobile ? "12px" : "16px"};
-          background: ${themeMode === "dark"
-          ? "#141311"
-          : "linear-gradient(135deg, #faf7ff 0%, #ffffff 100%)"
-        };
-          border-radius: 12px;
+           background: transparent !important;
         }
-        
-        .blog-calendar .ant-picker-calendar-month-panel-cell {
-          height: ${isMobile ? "70px" : "90px"};
-          padding: ${isMobile ? "8px" : "12px"};
-          border-radius: 12px;
-          transition: all 0.3s ease;
-          margin: 4px;
-        }
-        
-        .blog-calendar .ant-picker-calendar-month-panel-cell:hover {
-          background: ${themeMode === "dark"
-          ? "rgba(207,191,166,0.12)"
-          : "linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(109, 40, 217, 0.03) 100%)"
-        } !important;
-          transform: translateY(-2px);
-          box-shadow: ${themeMode === "dark"
-          ? "0 6px 20px rgba(0,0,0,0.35)"
-          : "0 6px 20px rgba(109, 40, 217, 0.15)"
-        };
-        }
-        
-        .blog-calendar .ant-picker-calendar-month-panel-cell-selected {
-          background: ${themeMode === "dark"
-          ? "#9c6b3f"
-          : "linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)"
-        } !important;
-          border: 2px solid ${themeMode === "dark" ? "#9c6b3f" : "#6d28d9"
-        } !important;
-          box-shadow: ${themeMode === "dark"
-          ? "0 6px 24px rgba(0,0,0,0.35)"
-          : "0 6px 24px rgba(109, 40, 217, 0.3)"
-        };
-        }
-        
-        .blog-calendar .ant-picker-calendar-month-panel-cell-selected .ant-picker-calendar-month-panel-cell-content {
-          color: ${themeMode === "dark" ? "#141311" : "#fff"} !important;
-          font-weight: 700;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-        
-        .blog-calendar .ant-picker-calendar-month-panel-cell-content {
-          font-size: ${isMobile ? "13px" : "15px"};
-          font-weight: 500;
-          color: ${themeMode === "dark" ? "#f5ede0" : "inherit"};
-        }
-        
-        .blog-calendar .ant-picker-calendar-date-today::before {
-          content: '';
-          position: absolute;
-          top: 3px;
-          left: 3px;
-          right: 3px;
-          bottom: 3px;
-          border: 2px solid ${themeMode === "dark" ? "#d2a86a" : "#6d28d9"};
-          border-radius: 6px;
-          pointer-events: none;
-          animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-          0% { opacity: 0.6; }
-          50% { opacity: 1; }
-          100% { opacity: 0.6; }
-        }
-        
-        .blog-calendar .ant-picker-calendar-date-today .ant-picker-calendar-date-value {
-          animation: bounce 1s ease-in-out infinite;
-        }
-        
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-2px); }
-        }
-        
-        .blog-calendar .ant-picker-calendar-date-cell {
-          border-radius: 8px;
-          margin: 1px;
-        }
-        
-        .blog-calendar .ant-picker-calendar-date-cell:hover {
-          background: rgba(109, 40, 217, 0.05);
-        }
-        
       `}</style>
-    </ProCard>
+    </div>
   );
 }

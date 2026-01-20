@@ -156,217 +156,152 @@ const formatEnglishName = (englishName) => {
 
 const MemberProfile = ({ memberInfo, className, themeMode = "light", language = "ja" }) => {
   if (!memberInfo) return null;
+
+  const isDark = themeMode === "dark";
+  const bg = isDark ? "#24211d" : "#ffffff";
+  const color = isDark ? "#f5ede0" : "#2d1b0e";
+  const secondaryColor = isDark ? "#d2a86a" : "#8b4513";
+  const borderColor = isDark ? "rgba(207,191,166,0.2)" : "rgba(0,0,0,0.05)";
+
   return (
-    <div className={className}>
-      <Card
+    <div className={className} style={{ position: 'relative' }}>
+      {/* Tape effect */}
+      <div style={{
+        position: 'absolute',
+        top: -12,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 100,
+        height: 30,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        zIndex: 10,
+        transform: 'translateX(-50%) rotate(2deg)',
+        backdropFilter: 'blur(2px)',
+        border: '1px solid rgba(255,255,255,0.2)'
+      }} />
+
+      <div
         style={{
-          borderRadius: 16,
-          overflow: "hidden",
-          background:
-            themeMode === "dark"
-              ? "rgba(36, 33, 29, 0.85)"
-              : "rgba(253, 246, 227, 0.8)",
-          border:
-            themeMode === "dark"
-              ? "1px solid rgba(207,191,166,0.2)"
-              : "1px solid rgba(139, 69, 19, 0.1)",
-          boxShadow:
-            themeMode === "dark"
-              ? "0 4px 16px rgba(0,0,0,0.3)"
-              : "0 4px 16px rgba(0,0,0,0.08)",
+          background: bg,
+          padding: "16px",
+          paddingBottom: "24px",
+          boxShadow: isDark
+            ? "0 4px 20px rgba(0,0,0,0.4)"
+            : "0 4px 16px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.05)",
+          borderRadius: 4,
+          border: `1px solid ${borderColor}`,
           ...jpFont,
         }}
-        bodyStyle={{ padding: 0 }}
       >
         {/* Avatar + Name */}
-        <div
-          style={{
-            padding: "24px 17px 17px",
-            textAlign: "center",
-            background:
-              themeMode === "dark"
-                ? "linear-gradient(135deg, rgba(28,26,23,0.95) 0%, rgba(36,33,29,0.95) 100%)"
-                : "linear-gradient(135deg, rgba(253, 246, 227, 0.9) 0%, rgba(244, 241, 232, 0.9) 100%)",
-          }}
-        >
-          <Avatar
-            size={132}
-            src={memberInfo.img}
-            style={{
-              border:
-                themeMode === "dark"
-                  ? "4px solid rgba(207,191,166,0.3)"
-                  : "4px solid #fff",
-              boxShadow:
-                themeMode === "dark"
-                  ? "0 4px 16px rgba(0,0,0,0.4)"
-                  : "0 4px 16px rgba(0,0,0,0.08)",
-            }}
-          />
-          <div style={{ marginTop: 12 }}>
-            <Title
-              level={5}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{
+            padding: 8,
+            background: isDark ? "rgba(255,255,255,0.05)" : "#f8f8f8",
+            border: `1px solid ${borderColor}`,
+            display: "inline-block",
+            borderRadius: 4,
+            marginBottom: 12
+          }}>
+            <Avatar
+              size={140}
+              src={memberInfo.img}
+              shape="square"
               style={{
-                marginBottom: 4,
-                fontSize: 19,
-                color: themeMode === "dark" ? "#f5ede0" : undefined,
+                borderRadius: 2,
+                display: "block",
+              }}
+            />
+          </div>
+
+          <div>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: 600,
+                color: color,
+                fontFamily: isDark ? "serif" : "'Yomogi', cursive",
+                lineHeight: 1.3
               }}
             >
               {memberInfo.name}
-            </Title>
-            <Text
-              type="secondary"
+            </div>
+            <div
               style={{
-                fontSize: 14,
-                display: "block",
-                color: themeMode === "dark" ? "#cfbfa6" : undefined,
+                fontSize: 13,
+                marginTop: 4,
+                color: isDark ? "#999" : "#888",
+                letterSpacing: 1
               }}
             >
               {memberInfo.kana}
-            </Text>
-            <Text
-              type="secondary"
+            </div>
+            <div
               style={{
-                fontSize: 16,
-                display: "block",
+                fontSize: 14,
                 marginTop: 2,
-                color: themeMode === "dark" ? "#cfbfa6" : undefined,
+                color: secondaryColor,
                 textTransform: "capitalize",
+                fontFamily: "'Playfair Display', serif"
               }}
             >
               {formatEnglishName(memberInfo.english_name)}
-            </Text>
+            </div>
           </div>
+
           <Space style={{ marginTop: 12 }} wrap>
-            {/* {memberInfo.pick && (
-              <Tag
-                icon={<CrownOutlined />}
-                color="gold"
-                style={{ borderRadius: 16, padding: "2px 12px" }}
-              >
-                {memberInfo.pick}
-              </Tag>
-            )} */}
-            {/* {memberInfo.god && (
-              <Tag
-                icon={<FireOutlined />}
-                color="purple"
-                style={{ borderRadius: 16, padding: "2px 12px" }}
-              >
-                {memberInfo.god}
-              </Tag>
-            )} */}
+            {/* Tags removed for cleaner look, can be re-enabled if needed */}
           </Space>
         </div>
 
-        {/* Info list */}
-        <Descriptions
-          column={1}
-          bordered
-          size="small"
-          style={{
-            borderRadius: 0,
-            background:
-              themeMode === "dark"
-                ? "rgba(28,26,23,0.5)"
-                : "rgba(253,246,227,0.5)",
-          }}
-          labelStyle={{
-            width: 110,
-            fontSize: 14,
-            color: themeMode === "dark" ? "#cfbfa6" : "#555",
-            background:
-              themeMode === "dark"
-                ? "rgba(36,33,29,0.6)"
-                : "rgba(253,246,227,0.5)",
-          }}
-          contentStyle={{
-            textAlign: "right",
-            fontSize: 14,
-            color: themeMode === "dark" ? "#f5ede0" : undefined,
-            background:
-              themeMode === "dark"
-                ? "rgba(28,26,23,0.4)"
-                : "rgba(244,241,232,0.3)",
-          }}
-        >
-          <Descriptions.Item label={profileLabels.birthday[language]}>
-            <CalendarOutlined
-              style={{
-                marginRight: 6,
-                fontSize: 13,
-                color: themeMode === "dark" ? "#d2a86a" : undefined,
-              }}
-            />
-            {translateBirthday(memberInfo.birthday, language)}
-          </Descriptions.Item>
-          <Descriptions.Item label={profileLabels.bloodType[language]}>
-            <HeartOutlined
-              style={{
-                marginRight: 6,
-                fontSize: 13,
-                color: themeMode === "dark" ? "#d2a86a" : undefined,
-              }}
-            />
-            {translateBloodType(memberInfo.blood, language)}
-          </Descriptions.Item>
-          <Descriptions.Item label={profileLabels.constellation[language]}>
-            <StarOutlined
-              style={{
-                marginRight: 6,
-                fontSize: 13,
-                color: themeMode === "dark" ? "#d2a86a" : undefined,
-              }}
-            />
-            {translateConstellation(memberInfo.constellation, language)}
-          </Descriptions.Item>
-          <Descriptions.Item label={profileLabels.generation[language]}>
-            <TeamOutlined
-              style={{
-                marginRight: 6,
-                fontSize: 13,
-                color: themeMode === "dark" ? "#d2a86a" : undefined,
-              }}
-            />
-            <span style={{ fontSize: 14, display: "inline-block", verticalAlign: "middle" }}>
-              {translateGeneration(memberInfo.cate || memberInfo.groupcode, language)}
-            </span>
-          </Descriptions.Item>
-        </Descriptions>
+        {/* Info list - Simplified for card look */}
+        <div style={{
+          borderTop: `1px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#eee"}`,
+          paddingTop: 16
+        }}>
+          {[
+            { label: profileLabels.birthday[language], value: translateBirthday(memberInfo.birthday, language), icon: <CalendarOutlined /> },
+            { label: profileLabels.bloodType[language], value: translateBloodType(memberInfo.blood, language), icon: <HeartOutlined /> },
+            { label: profileLabels.constellation[language], value: translateConstellation(memberInfo.constellation, language), icon: <StarOutlined /> },
+            { label: profileLabels.generation[language], value: translateGeneration(memberInfo.cate || memberInfo.groupcode, language), icon: <TeamOutlined /> }
+          ].map((item, idx) => (
+            <div key={idx} style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 8,
+              fontSize: 13,
+              color: isDark ? "#ccc" : "#555"
+            }}>
+              <span style={{ color: isDark ? "#888" : "#999", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ color: secondaryColor }}>{item.icon}</span>
+                {item.label}
+              </span>
+              <span style={{ fontWeight: 500, color: color }}>{item.value}</span>
+            </div>
+          ))}
+        </div>
 
         {/* Official link */}
-        <div
-          style={{
-            padding: 14,
-            textAlign: "center",
-            background:
-              themeMode === "dark"
-                ? "rgba(28,26,23,0.5)"
-                : "rgba(253,246,227,0.3)",
-          }}
-        >
+        <div style={{ marginTop: 20, textAlign: "center" }}>
           <Button
-            type="link"
-            size="middle"
-            icon={
-              <GlobalOutlined
-                style={{
-                  color: themeMode === "dark" ? "#d2a86a" : undefined,
-                  fontSize: 14,
-                }}
-              />
-            }
+            type="primary"
+            ghost
+            size="small"
+            icon={<GlobalOutlined />}
             href={memberInfo.link}
             target="_blank"
             style={{
-              color: themeMode === "dark" ? "#d2a86a" : undefined,
-              fontSize: 14,
+              width: "100%",
+              borderColor: secondaryColor,
+              color: secondaryColor,
+              fontFamily: "'Playfair Display', serif"
             }}
           >
             {profileLabels.officialProfile[language]}
           </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
