@@ -548,7 +548,7 @@ export default function BlogListMobile({
               ? "1px dashed rgba(207,191,166,0.3)"
               : "1px dashed rgba(139, 69, 19, 0.3)",
           zIndex: 100,
-          padding: "12px 16px 12px 32px", // Left padding for binding
+          padding: "12px 16px 12px 12px", // Adjusted left padding
           flexShrink: 0,
           boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
         }}
@@ -629,17 +629,25 @@ export default function BlogListMobile({
       {/* Content List */}
       <div
         ref={scrollWrapRef}
+        className="no-scrollbar"
         style={{
           flex: 1,
           overflowY: "auto",
           padding: "20px 20px 80px 40px", // Left padding for binding + tabs
           WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE and Edge
           background:
             themeMode === "dark"
               ? "linear-gradient(to bottom, #2a2520 0%, #24211d 100%)"
               : "linear-gradient(to bottom, #FFF9E6 0%, #FFF5D6 100%)",
         }}
       >
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
         {/* Paper Texture Overlay */}
         <div
           style={{

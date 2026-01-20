@@ -697,13 +697,21 @@ export default function MemberListMobile({
 
       {/* Content - Scrollable List */}
       <div
+        className="no-scrollbar"
         style={{
           flex: 1,
           overflowY: "auto",
           padding: "16px 16px 80px 32px", // Left padding for binding
           WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE and Edge
         }}
       >
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
         {loading ? (
           <div style={{ textAlign: "center", padding: 40 }}>
             <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} />
