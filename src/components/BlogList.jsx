@@ -168,12 +168,9 @@ export default function BlogList({
                       )
                       : partialBlogs
                   );
-                });
-
-                // Hide loading spinner after first batch
-                if (partialBlogs.length > 0) {
+                  // Hide loading spinner atomically with data update
                   setLoading(false);
-                }
+                });
               }
 
               if (isComplete) {
@@ -199,6 +196,7 @@ export default function BlogList({
                   )
                   : blogsData
               );
+              setLoading(false);
             }
           });
           setMemberInfo(member);
@@ -291,23 +289,6 @@ export default function BlogList({
 
   // ====== RENDER ======
 
-  if (loading && !blogs.length) {
-    return (
-      <PageContainer header={false}>
-        <div
-          style={{
-            minHeight: "60vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Spin size="large" tip={t.loading[currentLanguage]} />
-        </div>
-      </PageContainer>
-    );
-  }
-
   if (error) {
     return (
       <PageContainer header={false}>
@@ -383,7 +364,23 @@ export default function BlogList({
                 </div>
 
                 {/* LIST */}
-                {current.length === 0 ? (
+                {(loading || isPending) && !blogs.length ? (
+                  <div
+                    style={{
+                      minHeight: 320,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 12,
+                    }}
+                  >
+                    <Spin size="large" />
+                    <span style={{ opacity: 0.5, fontSize: 14 }}>
+                      {t.loading[currentLanguage]}
+                    </span>
+                  </div>
+                ) : current.length === 0 ? (
                   <ProCard
                     bordered
                     style={{

@@ -111,7 +111,7 @@ export default function BlogListMobile({
   const scrollWrapRef = useRef(null);
 
   // Chuyển state nặng sang background để không block thread
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   // Cache cleanup để tránh memory leak
   useEffect(() => {
@@ -249,12 +249,8 @@ export default function BlogListMobile({
                   startTransition(() => {
                     setBlogs(partialBlogs);
                     setFiltered(partialBlogs);
-                  });
-
-                  // Hide loading after first batch
-                  if (partialBlogs.length > 0) {
                     setLoading(false);
-                  }
+                  });
                 }
 
                 if (isComplete) {
@@ -663,7 +659,7 @@ export default function BlogListMobile({
         />
 
         <div style={{ position: "relative", zIndex: 1 }}>
-          {loading ? (
+          {(loading || isPending) ? (
             <div style={{ textAlign: "center", padding: 40 }}>
               <Spin size="large" style={{ color: "#8b4513" }} />
             </div>

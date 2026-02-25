@@ -564,11 +564,14 @@ export default function BlogDetail({
           style={{
             minHeight: "60vh",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            gap: 12,
           }}
         >
-          <Spin size="large" tip={t.loading[language]} />
+          <Spin size="large" />
+          <span style={{ opacity: 0.5, fontSize: 14 }}>{t.loading[language]}</span>
         </div>
       </div>
     );
