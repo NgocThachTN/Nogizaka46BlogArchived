@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Typography, Space, Divider, Button } from "antd";
+import { Typography, Space, Button } from "antd";
 import { CalendarOutlined, LinkOutlined } from "@ant-design/icons";
 import { bookFont, t } from "./constants";
 import TranslationOverlay from "./TranslationOverlay";
@@ -63,6 +63,9 @@ export default function BlogDetailContent({
                 overflow: "hidden",
                 minHeight: 600,
                 transition: "all 0.3s ease",
+                // Tạo stacking context riêng → tránh bị repaint khi overlay mở
+                isolation: "isolate",
+                willChange: "auto",
 
                 // Paper texture lines
                 backgroundImage: isDark
@@ -92,6 +95,7 @@ export default function BlogDetailContent({
                     marginBottom: window.innerWidth < 768 ? 16 : 24,
                     width: "100%",
                     padding: "0 4px",
+                    animation: "ink-appear 0.5s ease 0.35s both",
                 }}
             >
                 {/* Journal Date */}
@@ -143,18 +147,21 @@ export default function BlogDetailContent({
                 </div>
             </div>
 
-            <Divider
-                style={{
-                    margin: "19px 0 29px",
-                    borderColor: isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.15)",
-                }}
-            />
+            {/* Animated ink divider */}
+            <div style={{
+                margin: "19px 0 29px",
+                height: 1,
+                background: isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.15)",
+                transformOrigin: "left center",
+                animation: "line-draw 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s both",
+            }} />
 
             {/* Content Body */}
             <div
                 ref={contentRef}
                 className="jp-prose"
                 style={{
+                    animation: "content-reveal 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both",
                     fontSize: sz.px,
                     lineHeight: `${Math.round(sz.px * sz.lh)}px`,
                     letterSpacing: language === "ja" ? 0.5 : 0.3,

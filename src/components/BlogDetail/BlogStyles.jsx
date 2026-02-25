@@ -302,6 +302,42 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           width: 100% !important;
         }
       `}</style>
+
+            {/* ── Diary open animations ── */}
+            <style>{`
+        @keyframes diary-open {
+          0%   { opacity: 0; transform: perspective(1400px) rotateX(5deg) translateY(36px); }
+          100% { opacity: 1; transform: perspective(1400px) rotateX(0deg) translateY(0); }
+        }
+        @keyframes sticky-drop {
+          0%   { opacity: 0; transform: rotate(-0.5deg) translateY(-28px) scale(0.96); }
+          65%  { transform: rotate(-0.5deg) translateY(5px) scale(1.005); opacity: 1; }
+          85%  { transform: rotate(-0.5deg) translateY(-2px); }
+          100% { opacity: 1; transform: rotate(-0.5deg) translateY(0) scale(1); }
+        }
+        @keyframes pin-swing {
+          0%   { opacity: 0; transform: rotate(-1.5deg) translateY(-36px) scale(0.92); }
+          55%  { transform: rotate(-1.5deg) translateY(8px) scale(1.01); opacity: 1; }
+          75%  { transform: rotate(-1.5deg) translateY(-3px); }
+          100% { opacity: 1; transform: rotate(-1.5deg) translateY(0) scale(1); }
+        }
+        @keyframes notes-slide-in {
+          0%   { opacity: 0; transform: translateX(30px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes ink-appear {
+          0%   { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes line-draw {
+          0%   { transform: scaleX(0); opacity: 0.3; }
+          100% { transform: scaleX(1); opacity: 1; }
+        }
+        @keyframes content-reveal {
+          0%   { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
         </>
     );
 }

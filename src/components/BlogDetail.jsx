@@ -609,9 +609,9 @@ export default function BlogDetail({
       {/* Visual binding effect */}
       <div className="notebook-binding" style={{ left: 0 }}></div>
 
-      <div style={{ maxWidth: readingMode ? 1600 : 1400, margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px", transition: "max-width 0.3s ease" }}>
+      <div key={blog?.id} style={{ maxWidth: readingMode ? 1600 : 1400, margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px", transition: "max-width 0.3s ease" }}>
         {/* Header - Sticky Note Style */}
-        <div className="sticky-note" style={{ transform: "rotate(-0.5deg)", zIndex: 10 }}>
+        <div className="sticky-note" style={{ transform: "rotate(-0.5deg)", zIndex: 10, animation: "sticky-drop 0.55s cubic-bezier(0.34,1.3,0.64,1) both" }}>
           <div style={{
             background: themeMode === "dark" ? "rgba(36, 33, 29, 0.95)" : "rgba(255, 255, 255, 0.9)",
             borderRadius: "2px",
@@ -656,7 +656,8 @@ export default function BlogDetail({
                 transform: "rotate(-1.5deg)",
                 zIndex: 5,
                 position: "sticky",
-                top: 20
+                top: 20,
+                animation: "pin-swing 0.65s cubic-bezier(0.34,1.2,0.64,1) 0.1s both",
               }}
             >
               <MemberProfile
@@ -672,7 +673,8 @@ export default function BlogDetail({
             flex: 1,
             minWidth: 0,
             maxWidth: readingMode ? "100%" : undefined,
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
+            animation: "diary-open 0.65s cubic-bezier(0.22,1,0.36,1) 0.08s both",
           }}>
             <BlogDetailContent
               blog={blog}
@@ -699,7 +701,8 @@ export default function BlogDetail({
                 flexDirection: "column",
                 gap: "24px",
                 position: "sticky",
-                top: 20
+                top: 20,
+                animation: "notes-slide-in 0.55s cubic-bezier(0.22,1,0.36,1) 0.2s both",
               }}
             >
               <BlogDetailSidebar

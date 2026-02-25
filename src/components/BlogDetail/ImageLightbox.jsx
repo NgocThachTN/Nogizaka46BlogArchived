@@ -44,11 +44,19 @@ export default function ImageLightbox({ open, imageUrl, allImages = [], themeMod
 
     useEffect(() => {
         if (open) {
+            // Tính scrollbar width trước khi ẩn, bù lại bằng padding-right
+            // tránh nội dung bị giật ngang khi scrollbar biến mất
+            const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
             document.body.style.overflow = "hidden";
+            document.body.style.paddingRight = `${scrollbarW}px`;
         } else {
             document.body.style.overflow = "";
+            document.body.style.paddingRight = "";
         }
-        return () => { document.body.style.overflow = ""; };
+        return () => {
+            document.body.style.overflow = "";
+            document.body.style.paddingRight = "";
+        };
     }, [open]);
 
     const handleDownload = async () => {
@@ -117,14 +125,14 @@ export default function ImageLightbox({ open, imageUrl, allImages = [], themeMod
                 position: "fixed",
                 inset: 0,
                 zIndex: 1050,
-                background: isDark ? "rgba(14, 11, 9, 0.88)" : "rgba(30, 20, 10, 0.72)",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
+                background: isDark ? "rgba(10, 8, 6, 0.85)" : "rgba(20, 14, 8, 0.78)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 padding: "16px",
-                animation: "lb-fade-in 0.18s ease",
+                animation: "lb-fade-in 0.45s ease both",
+                willChange: "opacity",
+                transform: "translateZ(0)",
             }}
         >
             <div
@@ -138,7 +146,7 @@ export default function ImageLightbox({ open, imageUrl, allImages = [], themeMod
                     padding: "28px 28px 22px",
                     maxWidth: "min(92vw, 760px)",
                     width: "100%",
-                    animation: "lb-scale-in 0.2s cubic-bezier(0.34, 1.3, 0.64, 1)",
+                    animation: "lb-scale-in 0.5s cubic-bezier(0.34, 1.15, 0.64, 1) 0.06s both",
                 }}
             >
                 {/* Tape decorations */}
@@ -235,7 +243,7 @@ export default function ImageLightbox({ open, imageUrl, allImages = [], themeMod
         <>
             <style>{`
                 @keyframes lb-fade-in { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes lb-scale-in { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
+                @keyframes lb-scale-in { from { opacity: 0; transform: scale(0.84) translateY(22px); } to { opacity: 1; transform: scale(1) translateY(0); } }
             `}</style>
             {backdrop}
         </>,
