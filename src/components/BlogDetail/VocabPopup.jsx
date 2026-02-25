@@ -13,6 +13,7 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import { lookupWord, saveWord, getSavedVocab, extractKanji, lookupKanji } from "../../utils/jishoService";
+import { translateVocabToVi } from "../../api/GoogleTranslate";
 
 // Màu badge JLPT
 const JLPT_META = {
@@ -52,7 +53,8 @@ const popupKeyframes = `
 }`;
 
 // ── Tab: 単語 ──────────────────────────────────────────────────────────────
-function TabWord({ entry, word, saved, onSave, isDark, accent, text, sub }) {
+function TabWord({ entry, word, saved, onSave, isDark, accent, text, sub,
+                   lang, onLangChange, viDefs, loadingVi }) {
   const jlptMeta = entry?.jlpt ? JLPT_META[entry.jlpt] : null;
 
   if (!entry) return (
@@ -104,11 +106,27 @@ function TabWord({ entry, word, saved, onSave, isDark, accent, text, sub }) {
         </div>
       )}
 
-      <div style={{ height: 1, background: isDark ? "rgba(210,168,106,0.15)" : "rgba(139,69,19,0.12)", marginBottom: 10 }} />
+      {/* Definitions header with EN | VI toggle */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <div style={{ height: 1, background: isDark ? "rgba(210,168,106,0.15)" : "rgba(139,69,19,0.12)", flex: 1, marginRight: 10 }} />
+        <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
+          {["en", "vi"].map((l) => (
+            <button key={l} onClick={() => onLangChange(l)} style={{
+              padding: "2px 9px", borderRadius: 4, fontSize: 11, fontWeight: 700,
+              fontFamily: "'Mali',sans-serif", cursor: "pointer",
+              border: `1px solid ${lang === l ? accent : (isDark ? "rgba(210,168,106,0.2)" : "rgba(139,69,19,0.18)")}`,
+              background: lang === l ? (isDark ? "rgba(210,168,106,0.18)" : "rgba(139,69,19,0.1)") : "transparent",
+              color: lang === l ? accent : sub,
+              transition: "all 0.15s",
+            }}>{l.toUpperCase()}</button>
+          ))}
+        </div>
+      </div>
 
       {/* Definitions */}
-      <div style={{ marginBottom: 12 }}>
-        {entry.definitions.slice(0, 3).map((def, i) => (
+      <div style={{ marginBottom: 12, minHeight: 48 }}>
+        {/* EN definitions */}
+        {lang === "en" && entry.definitions.slice(0, 3).map((def, i) => (
           <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < entry.definitions.length - 1 ? 6 : 0 }}>
             <span style={{
               minWidth: 18, height: 18, borderRadius: "50%",
@@ -127,6 +145,31 @@ function TabWord({ entry, word, saved, onSave, isDark, accent, text, sub }) {
             </div>
           </div>
         ))}
+
+        {/* VI definitions */}
+        {lang === "vi" && (
+          loadingVi ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", color: sub }}>
+              <LoadingOutlined style={{ color: accent, fontSize: 14 }} />
+              <span style={{ fontSize: 13 }}>Đang dịch...</span>
+            </div>
+          ) : viDefs.length > 0 ? (
+            viDefs.map((def, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < viDefs.length - 1 ? 6 : 0 }}>
+                <span style={{
+                  minWidth: 18, height: 18, borderRadius: "50%",
+                  background: isDark ? "rgba(210,168,106,0.2)" : "rgba(139,69,19,0.12)",
+                  color: accent, fontSize: 10, fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, marginTop: 2,
+                }}>{i + 1}</span>
+                <span style={{ color: text, fontSize: 14, lineHeight: 1.4 }}>{def}</span>
+              </div>
+            ))
+          ) : (
+            <div style={{ color: sub, fontSize: 13, padding: "6px 0" }}>Không có bản dịch</div>
+          )
+        )}
       </div>
 
       {/* Buttons */}
@@ -231,6 +274,9 @@ export default function VocabPopup({ word, anchorRect, themeMode, onClose, onSav
   const [pos, setPos] = useState({ top: -9999, left: -9999 });
   const [kanjiEntries, setKanjiEntries] = useState([]);
   const [activeTab, setActiveTab] = useState("word");
+  const [lang, setLang] = useState("en");       // "en" | "vi"
+  const [viDefs, setViDefs] = useState([]);     // Vietnamese definitions cache
+  const [loadingVi, setLoadingVi] = useState(false);
 
   // Tra từ khi word thay đổi
   useEffect(() => {
@@ -239,6 +285,8 @@ export default function VocabPopup({ word, anchorRect, themeMode, onClose, onSav
     setSaved(false);
     setKanjiEntries([]);
     setActiveTab("word");
+    setLang("en");
+    setViDefs([]);
     setLoadingWord(true);
     setLoadingKanji(true);
 
@@ -288,6 +336,17 @@ export default function VocabPopup({ word, anchorRect, themeMode, onClose, onSav
     saveWord(entry);
     setSaved(true);
     onSaved?.();
+  };
+
+  // Dịch sang tiếng Việt (gọi Gemini, cache kết quả)
+  const handleLangChange = (newLang) => {
+    setLang(newLang);
+    if (newLang === "vi" && viDefs.length === 0 && !loadingVi && entry) {
+      setLoadingVi(true);
+      translateVocabToVi(entry.word, entry.reading, entry.definitions)
+        .then((defs) => { setViDefs(defs); })
+        .finally(() => setLoadingVi(false));
+    }
   };
 
   if (!word) return null;
@@ -395,8 +454,10 @@ export default function VocabPopup({ word, anchorRect, themeMode, onClose, onSav
                 isDark={isDark}
                 accent={accent}
                 text={text}
-                sub={sub}
-              />
+                sub={sub}                lang={lang}
+                onLangChange={handleLangChange}
+                viDefs={viDefs}
+                loadingVi={loadingVi}              />
             )}
             {activeTab === "kanji" && (
               <TabKanji
