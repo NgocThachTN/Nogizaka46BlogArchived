@@ -1073,7 +1073,7 @@ export default function BlogDetailMobile({
           }
 
           .jp-prose p {
-             margin-bottom: 1.5em;
+             margin: 0;
           }
           
           /* Blockquote style */

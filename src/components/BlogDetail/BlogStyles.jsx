@@ -52,11 +52,7 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           font-stretch: normal !important;
           font-family: ${bookFont[language].fontFamily} !important;
         }
-        /* Extra spacing between paragraphs - use multiple of line height */
-        .jp-prose p + p,
-        .jp-prose br + p {
-          margin-top: ${Math.round(sz.px * sz.lh)}px !important;
-        }
+        /* Extra spacing between paragraphs - removed to preserve original HTML spacing */
         .jp-prose div[dir="auto"],
         .jp-prose div[style*="font-size"] { 
           font-size: ${sz.px}px !important;

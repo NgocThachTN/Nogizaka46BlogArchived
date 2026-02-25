@@ -139,7 +139,7 @@ export default function BlogDetailContent({
                     overflowWrap: "anywhere",
                     wordBreak: "normal",
                     lineBreak: "strict",
-                    whiteSpace: "pre-wrap",
+                    whiteSpace: "normal",
 
                     textAlign: "left",
                 }}

@@ -99,7 +99,7 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Strict margin reset for lined paper alignment */
+/* Preserve original HTML paragraph spacing */
 .jp-prose p {
   margin: 0 !important;
   padding: 0 !important;
@@ -122,9 +122,8 @@
 }
 
 .jp-prose br {
-  display: block;
-  content: "";
-  margin: 0;
+  /* Let <br> behave naturally to preserve original blog line spacing */
+  line-height: inherit;
 }
 
 .polaroid-image:hover,
