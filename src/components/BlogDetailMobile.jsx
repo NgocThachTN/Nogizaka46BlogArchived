@@ -51,6 +51,7 @@ import {
 } from "../services/blogService";
 import { isIOS, isIOS18Plus, isIPhoneXS } from "../utils/deviceDetection";
 import { initKuroshiro, addFuriganaToHtml } from "../utils/furiganaHelper";
+import ImageLightbox from "./BlogDetail/ImageLightbox";
 
 const { Title, Text } = Typography;
 
@@ -256,7 +257,25 @@ export default function BlogDetailMobile({
   const [kuroshiroReady, setKuroshiroReady] = useState(false);
   const [kuroshiroInitializing, setKuroshiroInitializing] = useState(false);
 
+  // --- Lightbox ---
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState("");
+  const [allImages, setAllImages] = useState([]);
+
   const scrollWrapRef = useRef(null);
+
+  const handleMobileContentClick = useCallback((e) => {
+    const target = e.target;
+    if (target.tagName === "IMG" && target.src) {
+      // Thu thập tất cả ảnh hiện tại trong content
+      const imgs = Array.from(
+        scrollWrapRef.current?.querySelectorAll(".jp-prose img") || []
+      ).map(img => img.src).filter(Boolean);
+      setAllImages(imgs);
+      setLightboxUrl(target.src);
+      setLightboxOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
@@ -938,6 +957,7 @@ export default function BlogDetailMobile({
               // Align text to the background grid
               // lineHeight must match backgroundSize in the overlay
             }}
+            onClick={handleMobileContentClick}
             dangerouslySetInnerHTML={{ __html: optimizedHtml }}
           />
         </div>
@@ -1086,6 +1106,14 @@ export default function BlogDetailMobile({
           }
         `}</style>
 
+      {/* Image Lightbox */}
+      <ImageLightbox
+        open={lightboxOpen}
+        imageUrl={lightboxUrl}
+        allImages={allImages}
+        themeMode={themeMode}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 }

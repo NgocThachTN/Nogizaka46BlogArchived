@@ -1,7 +1,9 @@
+import { useState, useCallback, useEffect } from "react";
 import { Typography, Space, Divider, Button } from "antd";
 import { CalendarOutlined, LinkOutlined } from "@ant-design/icons";
 import { bookFont, t } from "./constants";
 import TranslationOverlay from "./TranslationOverlay";
+import ImageLightbox from "./ImageLightbox";
 
 const { Title, Text } = Typography;
 
@@ -20,7 +22,30 @@ export default function BlogDetailContent({
 }) {
     const isDark = themeMode === "dark";
 
+    // --- Lightbox state ---
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxUrl, setLightboxUrl] = useState("");
+    const [allImages, setAllImages] = useState([]);
+
+    // Thu thập tất cả ảnh trong content khi displayContent thay đổi
+    useEffect(() => {
+        if (!contentRef?.current) return;
+        const imgs = Array.from(contentRef.current.querySelectorAll("img"))
+            .map(img => img.src)
+            .filter(Boolean);
+        setAllImages(imgs);
+    }, [displayContent, contentRef]);
+
+    const handleContentClick = useCallback((e) => {
+        const target = e.target;
+        if (target.tagName === "IMG" && target.src) {
+            setLightboxUrl(target.src);
+            setLightboxOpen(true);
+        }
+    }, []);
+
     return (
+        <>
         <div
             className="diary-sheet"
             style={{
@@ -143,6 +168,7 @@ export default function BlogDetailContent({
 
                     textAlign: "left",
                 }}
+                onClick={handleContentClick}
                 dangerouslySetInnerHTML={{ __html: displayContent }}
             />
 
@@ -163,5 +189,15 @@ export default function BlogDetailContent({
                 )}
             </div>
         </div>
+
+        {/* Image Lightbox */}
+        <ImageLightbox
+            open={lightboxOpen}
+            imageUrl={lightboxUrl}
+            allImages={allImages}
+            themeMode={themeMode}
+            onClose={() => setLightboxOpen(false)}
+        />
+        </>
     );
 }

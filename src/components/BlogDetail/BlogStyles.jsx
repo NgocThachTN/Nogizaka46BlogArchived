@@ -119,6 +119,7 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           transform: rotate(-1deg);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
           border: none !important;
+          cursor: pointer;
         }
         .jp-prose img:nth-child(even) {
           transform: rotate(1.5deg);
