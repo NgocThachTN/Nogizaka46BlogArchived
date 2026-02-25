@@ -94,6 +94,53 @@ app.options("/api/proxy", (req, res) => {
   res.status(200).end();
 });
 
+// Jisho dictionary proxy — tránh CORS khi dev
+app.get("/api/jisho", async (req, res) => {
+  const setCors = () => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  };
+
+  try {
+    const { word } = req.query;
+    if (!word) {
+      setCors();
+      return res.status(400).json({ error: "word param required" });
+    }
+
+    const jishoUrl = `https://jisho.org/api/v1/search/words?keyword=${encodeURIComponent(word.trim())}`;
+    console.log("Jisho lookup:", word);
+
+    const response = await fetch(jishoUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; NogizakaBlogReader/1.0)",
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) throw new Error(`Jisho returned ${response.status}`);
+
+    const data = await response.json();
+    setCors();
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error("[jisho proxy] error:", err.message);
+    setCors();
+    return res.status(502).json({ error: err.message, data: [] });
+  }
+});
+
+app.options("/api/jisho", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.status(200).end();
+});
+
 app.listen(PORT, () => {
   console.log(`Local proxy server running on http://localhost:${PORT}`);
   console.log("Proxy endpoint: http://localhost:3001/api/proxy");

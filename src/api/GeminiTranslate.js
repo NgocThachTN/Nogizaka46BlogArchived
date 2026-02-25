@@ -541,3 +541,32 @@ Title to translate: ${title}`;
     throw new Error("Failed to translate title: " + error.message);
   }
 }
+
+/**
+ * Dịch nhanh 1 đoạn ngắn (bôi chọn) — không chunk, không streaming
+ * @param {string} text - Văn bản cần dịch (thường 1–3 câu)
+ * @param {"vi"|"en"} targetLang
+ * @returns {Promise<string>}
+ */
+export async function translateSnippet(text, targetLang = "vi") {
+  if (!text?.trim()) return "";
+
+  const model = getCurrentModel();
+  const langLabel = targetLang === "vi" ? "Vietnamese" : "English";
+
+  const prompt = `Translate the following Japanese text to ${langLabel}.
+Rules:
+- Return ONLY the translation, no explanation, no Japanese, no extra text
+- Natural, casual tone (idol blog / diary style)
+- Keep it concise
+
+Text: ${text.trim()}`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (err) {
+    console.error("[translateSnippet] error:", err);
+    throw err;
+  }
+}

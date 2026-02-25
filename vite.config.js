@@ -3,6 +3,50 @@ import react from "@vitejs/plugin-react";
 import fs from 'fs';
 import path from 'path';
 
+// Jisho dictionary middleware — chạy trực tiếp trong Vite, không cần local-proxy-server
+function jishoDictPlugin() {
+  return {
+    name: 'jisho-dict-plugin',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url || !req.url.startsWith('/api/jisho')) return next();
+
+        const url = new URL(req.url, 'http://localhost');
+        const word = url.searchParams.get('word');
+        if (!word) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'word param required' }));
+          return;
+        }
+
+        try {
+          const jishoUrl = `https://jisho.org/api/v1/search/words?keyword=${encodeURIComponent(word.trim())}`;
+          const response = await fetch(jishoUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; NogizakaBlogReader/1.0)',
+              'Accept': 'application/json',
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+
+          if (!response.ok) throw new Error(`Jisho returned ${response.status}`);
+          const data = await response.json();
+
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.statusCode = 200;
+          res.end(JSON.stringify(data));
+        } catch (err) {
+          console.error('[jisho middleware] error:', err.message);
+          res.statusCode = 502;
+          res.end(JSON.stringify({ error: err.message, data: [] }));
+        }
+      });
+    }
+  };
+}
+
 // Custom plugin to serve kuromoji dictionary files correctly
 function kuromojiDictPlugin() {
   return {
@@ -33,7 +77,7 @@ function kuromojiDictPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), kuromojiDictPlugin()],
+  plugins: [react(), jishoDictPlugin(), kuromojiDictPlugin()],
   resolve: {
     alias: {
       path: "path-browserify",
@@ -73,6 +117,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+
     },
   },
 });

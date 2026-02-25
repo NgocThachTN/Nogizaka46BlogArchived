@@ -1,9 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
 import { Typography, Space, Button } from "antd";
-import { CalendarOutlined, LinkOutlined } from "@ant-design/icons";
+import { CalendarOutlined, LinkOutlined, BookOutlined } from "@ant-design/icons";
 import { bookFont, t } from "./constants";
 import TranslationOverlay from "./TranslationOverlay";
 import ImageLightbox from "./ImageLightbox";
+import VocabPopup from "./VocabPopup";
+import VocabPanel from "./VocabPanel";
+import SelectionTooltip from "./SelectionTooltip";
+import { isJapanese, getSavedVocab } from "../../utils/jishoService";
 
 const { Title, Text } = Typography;
 
@@ -42,6 +46,40 @@ export default function BlogDetailContent({
             setLightboxUrl(target.src);
             setLightboxOpen(true);
         }
+    }, []);
+
+    // --- Vocabulary (tra từ) state ---
+    const [vocabWord, setVocabWord] = useState("");
+    const [vocabAnchorRect, setVocabAnchorRect] = useState(null);
+    const [vocabOpen, setVocabOpen] = useState(false);
+    const [vocabPanelOpen, setVocabPanelOpen] = useState(false);
+    const [vocabRefreshKey, setVocabRefreshKey] = useState(0);
+    const [savedCount, setSavedCount] = useState(() => getSavedVocab().length);
+
+    // Double-click trên text → tra từ tiếng Nhật
+    const handleContentDblClick = useCallback((e) => {
+        if (e.target.tagName === "IMG") return;
+
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed) return;
+
+        const selected = selection.toString().trim();
+        if (!selected || selected.length > 20) return; // Không tra cụm quá dài
+        if (!isJapanese(selected)) return;
+
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setVocabWord(selected);
+        setVocabAnchorRect({ ...rect.toJSON() });
+        setVocabOpen(true);
+    }, []);
+
+    // Callback từ SelectionTooltip khi user nhấn "Tra từ"
+    const openVocabFromSelection = useCallback((word, rect) => {
+        if (!word) return;
+        setVocabWord(word);
+        setVocabAnchorRect(rect);
+        setVocabOpen(true);
     }, []);
 
     return (
@@ -176,11 +214,58 @@ export default function BlogDetailContent({
                     textAlign: "left",
                 }}
                 onClick={handleContentClick}
+                onDoubleClick={handleContentDblClick}
                 dangerouslySetInnerHTML={{ __html: displayContent }}
             />
 
-            {/* Footer */}
-            <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
+            {/* Footer + vocab button */}
+            <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                {/* Nút mở từ điển */}
+                <button
+                    onClick={() => setVocabPanelOpen(true)}
+                    title="Từ vựng đã lưu"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "5px 12px",
+                        borderRadius: 20,
+                        border: isDark ? "1px solid rgba(210,168,106,0.3)" : "1px solid rgba(139,69,19,0.25)",
+                        background: isDark ? "rgba(210,168,106,0.1)" : "rgba(139,69,19,0.06)",
+                        color: isDark ? "#d2a86a" : "#8B4513",
+                        fontSize: 12,
+                        cursor: "pointer",
+                        fontFamily: "'Mali', 'Caveat', serif",
+                        fontWeight: 600,
+                        transition: "all 0.2s ease",
+                        position: "relative",
+                    }}
+                >
+                    <BookOutlined style={{ fontSize: 13 }} />
+                    単語帳
+                    {savedCount > 0 && (
+                        <span style={{
+                            position: "absolute",
+                            top: -6,
+                            right: -6,
+                            minWidth: 16,
+                            height: 16,
+                            borderRadius: 8,
+                            background: isDark ? "#d2a86a" : "#8B4513",
+                            color: isDark ? "#1e1a15" : "#fff",
+                            fontSize: 9,
+                            fontWeight: 700,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "0 3px",
+                            fontFamily: "system-ui, sans-serif",
+                        }}>
+                            {savedCount}
+                        </span>
+                    )}
+                </button>
+
                 {blog.originalUrl && (
                     <Button
                         type="text"
@@ -204,6 +289,39 @@ export default function BlogDetailContent({
             allImages={allImages}
             themeMode={themeMode}
             onClose={() => setLightboxOpen(false)}
+        />
+
+        {/* Vocabulary popup (tra từ khi double-click) */}
+        {vocabOpen && (
+            <VocabPopup
+                word={vocabWord}
+                anchorRect={vocabAnchorRect}
+                themeMode={themeMode}
+                onClose={() => setVocabOpen(false)}
+                onSaved={() => {
+                    setVocabRefreshKey((k) => k + 1);
+                    setSavedCount(getSavedVocab().length);
+                }}
+            />
+        )}
+
+        {/* Selection tooltip — bôi text → nút Dịch / Tra từ */}
+        <SelectionTooltip
+            containerRef={contentRef}
+            themeMode={themeMode}
+            language={language}
+            onVocabLookup={openVocabFromSelection}
+        />
+
+        {/* Vocabulary panel (danh sách từ đã lưu) */}
+        <VocabPanel
+            open={vocabPanelOpen}
+            themeMode={themeMode}
+            refreshKey={vocabRefreshKey}
+            onClose={() => {
+                setVocabPanelOpen(false);
+                setSavedCount(getSavedVocab().length);
+            }}
         />
         </>
     );
