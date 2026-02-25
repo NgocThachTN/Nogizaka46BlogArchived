@@ -4,7 +4,7 @@
  * Nút "Tra từ" → mở VocabPopup (chỉ khi chọn <= 10 ký tự Japanese)
  */
 import { createPortal } from "react-dom";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import {
   TranslationOutlined,
   BookOutlined,
@@ -38,6 +38,7 @@ export default function SelectionTooltip({
   themeMode,
   language,
   onVocabLookup, // callback(word, anchorRect) → mở VocabPopup
+  vocabOpen,     // khi VocabPopup đang mở → ẩn tooltip này
 }) {
   const isDark = themeMode === "dark";
   const tooltipRef = useRef(null);
@@ -53,6 +54,16 @@ export default function SelectionTooltip({
 
   const targetLang = language === "en" ? "en" : "vi";
 
+  // Ref để check trong setTimeout mà không bị stale closure
+  // Dùng useLayoutEffect: chạy sync sau render, trước paint → luôn cập nhật trước setTimeout 10ms
+  const vocabOpenRef = useRef(vocabOpen);
+  useLayoutEffect(() => { vocabOpenRef.current = vocabOpen; }, [vocabOpen]);
+
+  // Ẩn tooltip ngay khi VocabPopup mở (safety net cho các path khác)
+  useEffect(() => {
+    if (vocabOpen) setVisible(false);
+  }, [vocabOpen]);
+
   // Mỗi khi chọn text mới thì reset translated
   const reset = useCallback(() => {
     setTranslated("");
@@ -67,6 +78,9 @@ export default function SelectionTooltip({
       if (tooltipRef.current?.contains(e.target)) return;
 
       setTimeout(() => {
+        // Nếu trong lúc chờ, VocabPopup đã được mở (dblclick) → bỏ qua
+        if (vocabOpenRef.current) return;
+
         const sel = window.getSelection();
         const text = sel?.toString().trim() ?? "";
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import { Typography, Space, Button } from "antd";
 import { CalendarOutlined, LinkOutlined, BookOutlined } from "@ant-design/icons";
 import { bookFont, t } from "./constants";
@@ -10,6 +10,35 @@ import SelectionTooltip from "./SelectionTooltip";
 import { isJapanese, getSavedVocab } from "../../utils/jishoService";
 
 const { Title, Text } = Typography;
+
+/**
+ * Tách content body thành component riêng + memo
+ * → tránh re-render (và re-trigger animation) khi state vocab thay đổi
+ */
+const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, language, isDark, onClick, onDoubleClick }) {
+  return (
+    <div
+      ref={contentRef}
+      className="jp-prose"
+      style={{
+        animation: "content-reveal 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both",
+        fontSize: sz.px,
+        lineHeight: `${Math.round(sz.px * sz.lh)}px`,
+        letterSpacing: language === "ja" ? 0.5 : 0.3,
+        color: isDark ? "#f5ede0" : "#2c2c2c",
+        fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
+        overflowWrap: "anywhere",
+        wordBreak: "normal",
+        lineBreak: "strict",
+        whiteSpace: "normal",
+        textAlign: "left",
+      }}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      dangerouslySetInnerHTML={{ __html: displayContent }}
+    />
+  );
+});
 
 export default function BlogDetailContent({
     blog,
@@ -195,27 +224,14 @@ export default function BlogDetailContent({
             }} />
 
             {/* Content Body */}
-            <div
-                ref={contentRef}
-                className="jp-prose"
-                style={{
-                    animation: "content-reveal 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both",
-                    fontSize: sz.px,
-                    lineHeight: `${Math.round(sz.px * sz.lh)}px`,
-                    letterSpacing: language === "ja" ? 0.5 : 0.3,
-                    color: isDark ? "#f5ede0" : "#2c2c2c",
-                    fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
-
-                    overflowWrap: "anywhere",
-                    wordBreak: "normal",
-                    lineBreak: "strict",
-                    whiteSpace: "normal",
-
-                    textAlign: "left",
-                }}
+            <BlogBody
+                contentRef={contentRef}
+                displayContent={displayContent}
+                sz={sz}
+                language={language}
+                isDark={isDark}
                 onClick={handleContentClick}
                 onDoubleClick={handleContentDblClick}
-                dangerouslySetInnerHTML={{ __html: displayContent }}
             />
 
             {/* Footer + vocab button */}
@@ -311,6 +327,7 @@ export default function BlogDetailContent({
             themeMode={themeMode}
             language={language}
             onVocabLookup={openVocabFromSelection}
+            vocabOpen={vocabOpen}
         />
 
         {/* Vocabulary panel (danh sách từ đã lưu) */}
