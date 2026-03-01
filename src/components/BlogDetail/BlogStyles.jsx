@@ -343,8 +343,8 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
       <style>{`
         /* Tategaki — images stay horizontal and shouldn't bleed */
         .tategaki-text img {
-          max-width: none !important;
-          max-height: 100% !important; /* Cap at the physical container height, no vh! */
+          max-width: 90vw !important; /* Cap max width relative to viewport, not dynamic content */
+          max-height: 500px !important; /* Cap explicitly to avoid 100% resolution against vertical-rl auto heights */
           width: auto !important;
           height: auto !important;
           object-fit: contain;
@@ -352,26 +352,24 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           display: block !important;
           break-inside: avoid;
           
-          /* CRITICAL: Force hardware acceleration on each image so the GPU doesn't dump off-screen textures during huge vertical-rl container slides */
-          transform: translate3d(0, 0, 0) !important;
-          -webkit-transform: translate3d(0, 0, 0) !important;
+          /* Promote individual images to their own GPU layers. 
+             This prevents Chromium from dropping their textures when the massive parent container slides. */
+          transform: translateZ(0) !important;
+          will-change: transform !important;
           backface-visibility: hidden !important;
           -webkit-backface-visibility: hidden !important;
-          perspective: 1000px !important;
-          -webkit-perspective: 1000px !important;
           
-          /* CRITICAL: Remove all transitions and shadows */
           transition: none !important;
           box-shadow: none !important;
           background: transparent !important;
           padding: 0 !important;
-          border-radius: 0 !important;
+          border-radius: 0.1px !important;
         }
         .tategaki-text img:nth-child(n) {
-          transform: translate3d(0, 0, 0) !important;
+          transform: translateZ(0) !important;
         }
         .tategaki-text img:hover {
-          transform: none !important;
+          transform: translateZ(0) !important;
           box-shadow: none !important;
         }
         .tategaki-text ruby rt {

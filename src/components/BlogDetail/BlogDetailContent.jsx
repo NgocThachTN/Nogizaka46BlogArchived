@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo, useRef } from "react";
+import { useState, useCallback, useEffect, memo, useRef, useMemo } from "react";
 import { Typography, Space, Button } from "antd";
 import { CalendarOutlined, LinkOutlined, BookOutlined } from "@ant-design/icons";
 import { bookFont, t } from "./constants";
@@ -87,9 +87,7 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
         // Do not use ResizeObserver on `inner` in vertical-rl with max-content width!
         // It causes an infinite layout thrashing loop in Chrome because measuring scrollWidth
         // affects max-content which re-triggers the observer.
-        // Instead, measure it statically after rendering and on window resize.
-
-        // Initial measurements with staggered fallbacks for image loading
+        // Initial measurements for text, but images handled in a separate effect
         const t1 = setTimeout(updateDimensions, 50);
         const t2 = setTimeout(updateDimensions, 400);
         const t3 = setTimeout(updateDimensions, 1000);
@@ -124,6 +122,16 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
         return () => window.removeEventListener("keydown", handleKey);
     }, [tategaki, goNext, goPrev]);
 
+    const processedContent = useMemo(() => {
+        if (!tategaki) return displayContent;
+        // Strip lazy loading and async decoding from the raw HTML string BEFORE it mounts
+        // Because if it mounts as lazy, the browser sets up an IntersectionObserver that fires mid-transition,
+        // causing the image to blank out and flash white during page turns.
+        return displayContent
+            .replace(/loading=["']lazy["']/gi, 'loading="eager"')
+            .replace(/decoding=["']async["']/gi, 'decoding="sync"');
+    }, [displayContent, tategaki]);
+
     if (tategaki) {
         const pageH = Math.max(400, viewportH - 280) + "px";
         const offsetPx = page * snappedWidth;
@@ -154,13 +162,8 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                             position: "absolute",
                             right: 0,
                             top: 0,
-                            transform: `translateX(${offsetPx}px) translateZ(0)`,
-                            WebkitTransform: `translateX(${offsetPx}px) translateZ(0)`,
+                            transform: `translateX(${offsetPx}px) translateZ(0)`, // Positive offset to shift content right (revealing leftwards text)
                             willChange: "transform",
-                            WebkitBackfaceVisibility: "hidden",
-                            backfaceVisibility: "hidden",
-                            WebkitPerspective: 1000,
-                            perspective: 1000,
                             transition: "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
                             fontSize: sz.px,
                             lineHeight: `${lineH}px`,
@@ -171,7 +174,7 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                         }}
                         onClick={onClick}
                         onDoubleClick={onDoubleClick}
-                        dangerouslySetInnerHTML={{ __html: displayContent }}
+                        dangerouslySetInnerHTML={{ __html: processedContent }}
                     />
                 </div>
 
