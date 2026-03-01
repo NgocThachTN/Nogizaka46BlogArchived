@@ -352,9 +352,15 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           display: block !important;
           break-inside: avoid;
           
-          /* CRITICAL: Remove all transforms, transitions, and shadows to prevent GPU texture limits 
-             and paint flashing on huge vertical-rl containers when translating/paginating */
-          transform: none !important;
+          /* CRITICAL: Force hardware acceleration on each image so the GPU doesn't dump off-screen textures during huge vertical-rl container slides */
+          transform: translate3d(0, 0, 0) !important;
+          -webkit-transform: translate3d(0, 0, 0) !important;
+          backface-visibility: hidden !important;
+          -webkit-backface-visibility: hidden !important;
+          perspective: 1000px !important;
+          -webkit-perspective: 1000px !important;
+          
+          /* CRITICAL: Remove all transitions and shadows */
           transition: none !important;
           box-shadow: none !important;
           background: transparent !important;
@@ -362,7 +368,7 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           border-radius: 0 !important;
         }
         .tategaki-text img:nth-child(n) {
-          transform: none !important;
+          transform: translate3d(0, 0, 0) !important;
         }
         .tategaki-text img:hover {
           transform: none !important;
