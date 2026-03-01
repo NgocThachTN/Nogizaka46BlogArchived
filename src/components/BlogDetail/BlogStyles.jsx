@@ -344,10 +344,9 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         /* Tategaki — images stay horizontal and shouldn't bleed */
         .tategaki-text img {
           writing-mode: horizontal-tb !important;
-          max-height: 45vh !important;
-          max-width: none !important;
-          width: auto !important;
-          height: auto !important;
+          max-width: 100% !important;
+          max-height: 400px !important;
+          object-fit: contain;
           margin: 16px auto !important;
           display: block !important;
           break-inside: avoid;

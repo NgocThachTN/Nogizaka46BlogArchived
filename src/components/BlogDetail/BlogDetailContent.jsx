@@ -62,9 +62,14 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
         const inner = innerRef.current;
         if (!inner) return;
 
+        let lastW = 0;
+        let updateTimeout = null;
+
         const updateDimensions = () => {
             const currentScrollW = inner.scrollWidth;
-            if (currentScrollW > 0) {
+            // Only update state if the width fundamentally changed to prevent React rendering loops
+            if (currentScrollW > 0 && Math.abs(currentScrollW - lastW) > 5) {
+                lastW = currentScrollW;
                 setContentWidth(currentScrollW);
                 const pages = Math.max(1, Math.ceil(currentScrollW / snappedWidth));
                 setTotalPages(pages);
@@ -73,7 +78,8 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
         };
 
         const ro = new ResizeObserver(() => {
-            updateDimensions();
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(updateDimensions, 100);
         });
         ro.observe(inner);
 
@@ -82,6 +88,7 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
 
         return () => {
             ro.disconnect();
+            clearTimeout(updateTimeout);
             clearTimeout(t1);
             clearTimeout(t2);
         };
