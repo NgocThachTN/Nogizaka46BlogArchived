@@ -9,6 +9,7 @@ import {
     RightOutlined,
     FullscreenOutlined,
     FullscreenExitOutlined,
+    ColumnWidthOutlined,
 } from "@ant-design/icons";
 import { getCachedBlogDetail } from "../../services/blogService";
 import { t } from "./constants";
@@ -37,6 +38,8 @@ export default function BlogDetailHeader({
     onHoverPrefetch,
     readingMode,
     setReadingMode,
+    tategaki,
+    setTategaki,
 }) {
     return (
         <div
@@ -187,6 +190,27 @@ export default function BlogDetailHeader({
                     </Button>
                 </Tooltip>
             )}
+
+            {/* Tategaki (縦書き) toggle — only for Japanese */}
+            {language === "ja" && setTategaki && (
+                <Tooltip
+                    key="tategaki-toggle"
+                    title={tategaki ? t.tategakiOn[language] : t.tategakiOff[language]}
+                >
+                    <Button
+                        type={tategaki ? "primary" : "default"}
+                        onClick={() => setTategaki(!tategaki)}
+                        style={{
+                            fontFamily: "'Noto Serif JP', serif",
+                            fontWeight: 600,
+                            letterSpacing: 1,
+                        }}
+                    >
+                        {t.tategaki[language]}
+                    </Button>
+                </Tooltip>
+            )}
+
             {setThemeMode && (
                 <Button
                     key="theme"

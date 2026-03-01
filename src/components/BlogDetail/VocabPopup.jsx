@@ -54,7 +54,7 @@ const popupKeyframes = `
 
 // ── Tab: 単語 ──────────────────────────────────────────────────────────────
 function TabWord({ entry, word, saved, onSave, isDark, accent, text, sub,
-  lang, onLangChange, viDefs, loadingVi }) {
+                   lang, onLangChange, viDefs, loadingVi }) {
   const jlptMeta = entry?.jlpt ? JLPT_META[entry.jlpt] : null;
 
   if (!entry) return (
@@ -175,16 +175,22 @@ function TabWord({ entry, word, saved, onSave, isDark, accent, text, sub,
       {/* Buttons */}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
         <button
-          onClick={() => window.open(`https://mazii.net/vi-VN/search/word/javi/${encodeURIComponent(entry.word)}`, "mazii_lookup")}
+          onClick={onSave}
+          disabled={saved}
           style={{
-            padding: "5px 10px", borderRadius: 6,
-            border: `1px solid ${isDark ? "rgba(114,46,209,0.3)" : "rgba(114,46,209,0.25)"}`,
-            background: isDark ? "rgba(114,46,209,0.12)" : "rgba(114,46,209,0.08)",
-            color: isDark ? "#b388ff" : "#7c3aed", fontSize: 12,
-            cursor: "pointer", fontFamily: "'Mali',sans-serif",
-            fontWeight: 600, transition: "all 0.15s ease",
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "5px 12px", borderRadius: 6,
+            border: `1px solid ${saved ? "#52c41a" : accent}`,
+            background: saved ? (isDark ? "rgba(82,196,26,0.18)" : "rgba(82,196,26,0.1)") : (isDark ? "rgba(210,168,106,0.15)" : "rgba(139,69,19,0.08)"),
+            color: saved ? "#52c41a" : accent,
+            fontSize: 12, fontWeight: 600,
+            cursor: saved ? "default" : "pointer",
+            fontFamily: "'Mali',sans-serif", transition: "all 0.2s ease",
           }}
-        >Mazii ↗</button>
+        >
+          {saved ? <StarFilled style={{ fontSize: 12 }} /> : <StarOutlined style={{ fontSize: 12 }} />}
+          {saved ? "Đã lưu" : "Lưu từ"}
+        </button>
         <button
           onClick={() => window.open(`https://jisho.org/word/${encodeURIComponent(entry.slug || entry.word)}`, "_blank")}
           style={{
@@ -448,10 +454,10 @@ export default function VocabPopup({ word, anchorRect, themeMode, onClose, onSav
                 isDark={isDark}
                 accent={accent}
                 text={text}
-                sub={sub} lang={lang}
+                sub={sub}                lang={lang}
                 onLangChange={handleLangChange}
                 viDefs={viDefs}
-                loadingVi={loadingVi} />
+                loadingVi={loadingVi}              />
             )}
             {activeTab === "kanji" && (
               <TabKanji

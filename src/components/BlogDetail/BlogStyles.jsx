@@ -1,10 +1,10 @@
 import { SIZE_PRESETS, bookFont } from "./constants";
 
 export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
-    return (
-        <>
-            {/* prose base */}
-            <style>{`
+  return (
+    <>
+      {/* prose base */}
+      <style>{`
         /* Furigana (Ruby) Styling */
         .jp-prose ruby {
           ruby-position: over;
@@ -113,9 +113,9 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           border-radius: 2px;
           /* Polaroid shadow and slight rotation */
           box-shadow: ${themeMode === "dark"
-                    ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
-                    : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
-                };
+          ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
+          : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
+        };
           transform: rotate(-1deg);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
           border: none !important;
@@ -130,9 +130,9 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         .jp-prose img:hover {
           transform: rotate(0deg) scale(1.02);
           box-shadow: ${themeMode === "dark"
-                    ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
-                    : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
-                };
+          ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
+          : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
+        };
         }
         .jp-prose div, .jp-prose span {
           word-break: break-word !important;
@@ -140,30 +140,30 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         }
       `}</style>
 
-            {/* dynamic heading scale */}
-            <style>{`
+      {/* dynamic heading scale */}
+      <style>{`
         .jp-prose h1 { 
           font-size: ${window.innerWidth < 768
-                    ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
-                    : SIZE_PRESETS[fontSizeKey].h1
-                }em; 
+          ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h1
+        }em; 
         }
         .jp-prose h2 { 
           font-size: ${window.innerWidth < 768
-                    ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
-                    : SIZE_PRESETS[fontSizeKey].h2
-                }em; 
+          ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h2
+        }em; 
         }
         .jp-prose h3 { 
           font-size: ${window.innerWidth < 768
-                    ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
-                    : SIZE_PRESETS[fontSizeKey].h3
-                }em; 
+          ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h3
+        }em; 
         }
       `}</style>
 
-            {/* Override PageContainer header max-width */}
-            <style>{`
+      {/* Override PageContainer header max-width */}
+      <style>{`
         /* Force full width for PageContainer and Header */
         .ant-pro-page-container,
         div.ant-pro-page-container,
@@ -303,8 +303,8 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         }
       `}</style>
 
-            {/* ── Diary open animations ── */}
-            <style>{`
+      {/* ── Diary open animations ── */}
+      <style>{`
         @keyframes diary-open {
           0%   { opacity: 0; transform: perspective(1400px) rotateX(5deg) translateY(36px); }
           100% { opacity: 1; transform: perspective(1400px) rotateX(0deg) translateY(0); }
@@ -338,6 +338,38 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-        </>
-    );
+
+      {/* ── Tategaki (縦書き) vertical text styles ── */}
+      <style>{`
+        /* Tategaki — images stay horizontal and shouldn't bleed */
+        .tategaki-text img {
+          writing-mode: horizontal-tb !important;
+          max-height: 45vh !important;
+          max-width: none !important;
+          width: auto !important;
+          height: auto !important;
+          margin: 16px auto !important;
+          display: block !important;
+          break-inside: avoid;
+        }
+        .tategaki-text ruby rt {
+          ruby-position: over;
+          text-orientation: mixed;
+        }
+        /* Combine 2-digit numbers into single upright char */
+        .tategaki-text {
+          text-combine-upright: digits 2;
+        }
+        /* Override paragraph writing-mode since .jp-prose p forces text-align: left */
+        .tategaki-text p,
+        .tategaki-text p.p1,
+        .tategaki-text p.p2,
+        .tategaki-text p.p3,
+        .tategaki-text div {
+          text-align: justify !important;
+          break-inside: auto;
+        }
+      `}</style>
+    </>
+  );
 }

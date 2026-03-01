@@ -75,6 +75,9 @@ export const t = {
     furigana: { ja: "ふりがな", en: "Furigana", vi: "Phiên âm" },
     furiganaOn: { ja: "ふりがな表示中", en: "Furigana ON", vi: "Đang hiển thị" },
     furiganaOff: { ja: "ふりがな非表示", en: "Furigana OFF", vi: "Đã tắt" },
+    tategaki: { ja: "縦書き", en: "Vertical", vi: "Chữ dọc" },
+    tategakiOn: { ja: "縦書きモード", en: "Vertical Mode ON", vi: "Chế độ dọc" },
+    tategakiOff: { ja: "横書きモード", en: "Horizontal Mode", vi: "Chế độ ngang" },
     fontSizes: {
         sm: { ja: "小", en: "Small", vi: "Nhỏ" },
         md: { ja: "標準", en: "Normal", vi: "Chuẩn" },

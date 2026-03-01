@@ -60,6 +60,19 @@ export default function BlogDetail({
 
   const [language, setLanguage] = useState(propLanguage || "ja");
   const [readingMode, _SET_READING_MODE] = useState(false);
+  const [tategaki, setTategaki] = useState(false);
+  const prevReadingMode = useRef(false);
+
+  // Auto-enable reading mode when tategaki is on
+  useEffect(() => {
+    if (tategaki) {
+      prevReadingMode.current = readingMode;
+      _SET_READING_MODE(true);
+    } else {
+      _SET_READING_MODE(prevReadingMode.current);
+    }
+  }, [tategaki]);
+
   const [fontSizeKey, setFontSizeKey] = useState(
     () => localStorage.getItem(LS_KEY_SIZE) || "sm"
   );
@@ -645,6 +658,8 @@ export default function BlogDetail({
               // Pass reading mode toggle to header if needed, or keeping it separate
               readingMode={readingMode}
               setReadingMode={_SET_READING_MODE}
+              tategaki={tategaki}
+              setTategaki={setTategaki}
             />
           </div>
         </div>
@@ -691,6 +706,7 @@ export default function BlogDetail({
               contentRef={contentRef}
               translating={translating}
               translationProgress={translationProgress}
+              tategaki={tategaki}
             />
           </div>
 
