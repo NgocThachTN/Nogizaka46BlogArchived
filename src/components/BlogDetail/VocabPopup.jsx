@@ -175,7 +175,7 @@ function TabWord({ entry, word, saved, onSave, isDark, accent, text, sub,
       {/* Buttons */}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
         <button
-          onClick={() => window.open(`https://mazii.net/vi-VN/search/word/javi/${encodeURIComponent(entry.word)}`, "_blank")}
+          onClick={() => window.open(`https://mazii.net/vi-VN/search/word/javi/${encodeURIComponent(entry.word)}`, "mazii_lookup")}
           style={{
             padding: "5px 10px", borderRadius: 6,
             border: `1px solid ${isDark ? "rgba(114,46,209,0.3)" : "rgba(114,46,209,0.25)"}`,
