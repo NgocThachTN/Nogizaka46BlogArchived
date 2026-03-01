@@ -344,12 +344,23 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         /* Tategaki — images stay horizontal and shouldn't bleed */
         .tategaki-text img {
           writing-mode: horizontal-tb !important;
-          max-width: 100% !important;
-          max-height: 400px !important;
+          max-width: none !important;  /* Chrome bug: 100% max-width in max-content vertical block causes infinite CSS calculation loop */
+          max-height: 60vh !important;
+          width: auto !important;
+          height: auto !important;
           object-fit: contain;
-          margin: 16px auto !important;
+          margin: 16px 20px !important;
           display: block !important;
           break-inside: avoid;
+          /* Prevent hover scale loop which moves image away from cursor horizontally and creates a flash loop */
+          transform: none !important;
+          transition: box-shadow 0.3s ease !important;
+        }
+        .tategaki-text img:nth-child(n) {
+          transform: none !important;
+        }
+        .tategaki-text img:hover {
+          transform: none !important;
         }
         .tategaki-text ruby rt {
           ruby-position: over;

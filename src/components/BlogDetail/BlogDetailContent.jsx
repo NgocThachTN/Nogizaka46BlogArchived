@@ -20,6 +20,7 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
     const [totalPages, setTotalPages] = useState(1);
     const [snappedWidth, setSnappedWidth] = useState(0);
     const [contentWidth, setContentWidth] = useState(0);
+    const [viewportH, setViewportH] = useState(() => window.innerHeight);
     const lineH = Math.round(sz.px * sz.lh);
 
     useEffect(() => {
@@ -37,6 +38,10 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
             // Snap to exact multiple of lineH to prevent text columns from bleeding
             const snapped = Math.floor(availableW / lineH) * lineH;
             setSnappedWidth(snapped);
+            setViewportH(prev => {
+                const h = window.innerHeight;
+                return Math.abs(h - prev) > 80 ? h : prev;
+            });
         };
 
         resizeSnapper();
@@ -62,14 +67,9 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
         const inner = innerRef.current;
         if (!inner) return;
 
-        let lastW = 0;
-        let updateTimeout = null;
-
         const updateDimensions = () => {
             const currentScrollW = inner.scrollWidth;
-            // Only update state if the width fundamentally changed to prevent React rendering loops
-            if (currentScrollW > 0 && Math.abs(currentScrollW - lastW) > 5) {
-                lastW = currentScrollW;
+            if (currentScrollW > 0) {
                 setContentWidth(currentScrollW);
                 const pages = Math.max(1, Math.ceil(currentScrollW / snappedWidth));
                 setTotalPages(pages);
@@ -77,20 +77,30 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
             }
         };
 
-        const ro = new ResizeObserver(() => {
-            clearTimeout(updateTimeout);
-            updateTimeout = setTimeout(updateDimensions, 100);
-        });
-        ro.observe(inner);
+        // Do not use ResizeObserver on `inner` in vertical-rl with max-content width!
+        // It causes an infinite layout thrashing loop in Chrome because measuring scrollWidth
+        // affects max-content which re-triggers the observer.
+        // Instead, measure it statically after rendering and on window resize.
 
+        // Initial measurements with staggered fallbacks for image loading
         const t1 = setTimeout(updateDimensions, 50);
-        const t2 = setTimeout(updateDimensions, 300);
+        const t2 = setTimeout(updateDimensions, 400);
+        const t3 = setTimeout(updateDimensions, 1000);
+
+        // Re-measure when window resizes (since height changes, affecting vertical text flow width)
+        let resizeTimer;
+        const handleWindowResize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(updateDimensions, 200);
+        };
+        window.addEventListener("resize", handleWindowResize);
 
         return () => {
-            ro.disconnect();
-            clearTimeout(updateTimeout);
             clearTimeout(t1);
             clearTimeout(t2);
+            clearTimeout(t3);
+            clearTimeout(resizeTimer);
+            window.removeEventListener("resize", handleWindowResize);
         };
     }, [tategaki, snappedWidth, displayContent, sz]);
 
@@ -108,7 +118,7 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
     }, [tategaki, goNext, goPrev]);
 
     if (tategaki) {
-        const pageH = "calc(100vh - 280px)";
+        const pageH = Math.max(400, viewportH - 280) + "px";
         const offsetPx = page * snappedWidth;
 
         return (
@@ -137,7 +147,8 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                             position: "absolute",
                             right: 0,
                             top: 0,
-                            transform: `translateX(${offsetPx}px)`,
+                            transform: `translateX(${offsetPx}px) translateZ(0)`,
+                            willChange: "transform",
                             transition: "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
                             fontSize: sz.px,
                             lineHeight: `${lineH}px`,
