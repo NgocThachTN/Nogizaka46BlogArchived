@@ -109,6 +109,30 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
         };
     }, [tategaki, snappedWidth, displayContent, sz]);
 
+    useEffect(() => {
+        if (!tategaki) return;
+        const inner = innerRef.current;
+        if (!inner) return;
+
+        const imgs = Array.from(inner.querySelectorAll("img"));
+
+        const lockDimensions = (img) => {
+            if (img.clientWidth && img.clientHeight) {
+                // Lock the physical footprint. If texture drops, layout won't thrash.
+                img.style.minWidth = img.clientWidth + 'px';
+                img.style.minHeight = img.clientHeight + 'px';
+            }
+        };
+
+        imgs.forEach(img => {
+            if (img.complete) {
+                lockDimensions(img);
+            } else {
+                img.addEventListener("load", () => lockDimensions(img), { once: true });
+            }
+        });
+    }, [displayContent, tategaki, snappedWidth]);
+
     const goNext = useCallback(() => setPage(p => Math.min(p + 1, totalPages - 1)), [totalPages]);
     const goPrev = useCallback(() => setPage(p => Math.max(p - 1, 0)), []);
 
@@ -146,36 +170,45 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                         height: pageH,
                         overflow: "hidden",
                         position: "relative",
+                        writingMode: "horizontal-tb", // Protect transform from vertical-rl bugs
                     }}
                 >
                     <div
-                        ref={(node) => {
-                            innerRef.current = node;
-                            if (contentRef) contentRef.current = node;
-                        }}
-                        className="jp-prose tategaki-text"
                         style={{
-                            writingMode: "vertical-rl",
-                            textOrientation: "mixed",
-                            height: "100%",
-                            width: "max-content",
                             position: "absolute",
                             right: 0,
                             top: 0,
-                            transform: `translateX(${offsetPx}px) translateZ(0)`, // Positive offset to shift content right (revealing leftwards text)
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: "row-reverse", // Native right-to-left layout direction
+                            transform: `translateX(${offsetPx}px) translateZ(0)`,
                             willChange: "transform",
                             transition: "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                            fontSize: sz.px,
-                            lineHeight: `${lineH}px`,
-                            letterSpacing: 0.5,
-                            color: isDark ? "#f5ede0" : "#2c2c2c",
-                            fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
-                            textAlign: "left",
                         }}
-                        onClick={onClick}
-                        onDoubleClick={onDoubleClick}
-                        dangerouslySetInnerHTML={{ __html: processedContent }}
-                    />
+                    >
+                        <div
+                            ref={(node) => {
+                                innerRef.current = node;
+                                if (contentRef) contentRef.current = node;
+                            }}
+                            className="jp-prose tategaki-text"
+                            style={{
+                                writingMode: "vertical-rl",
+                                textOrientation: "mixed",
+                                height: "100%",
+                                width: "max-content",
+                                fontSize: sz.px,
+                                lineHeight: `${lineH}px`,
+                                letterSpacing: 0.5,
+                                color: isDark ? "#f5ede0" : "#2c2c2c",
+                                fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
+                                textAlign: "left",
+                            }}
+                            onClick={onClick}
+                            onDoubleClick={onDoubleClick}
+                            dangerouslySetInnerHTML={{ __html: processedContent }}
+                        />
+                    </div>
                 </div>
 
                 {/* Page controls */}
