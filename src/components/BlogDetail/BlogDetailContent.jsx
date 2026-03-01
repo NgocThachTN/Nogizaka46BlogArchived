@@ -44,20 +44,27 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
             });
         };
 
+        let resizeTimer = null;
+        const debouncedResizeSnapper = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeSnapper, 200);
+        };
+
         resizeSnapper();
-        window.addEventListener("resize", resizeSnapper);
+        window.addEventListener("resize", debouncedResizeSnapper);
 
         let ro = null;
         if (grandParentRef.current) {
             ro = new ResizeObserver(() => {
-                resizeSnapper();
+                debouncedResizeSnapper();
             });
             ro.observe(grandParentRef.current);
         }
 
         return () => {
-            window.removeEventListener("resize", resizeSnapper);
+            window.removeEventListener("resize", debouncedResizeSnapper);
             if (ro) ro.disconnect();
+            clearTimeout(resizeTimer);
         };
     }, [tategaki, lineH]);
 
@@ -155,7 +162,7 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                             letterSpacing: 0.5,
                             color: isDark ? "#f5ede0" : "#2c2c2c",
                             fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
-                            textAlign: "justify",
+                            textAlign: "left",
                         }}
                         onClick={onClick}
                         onDoubleClick={onDoubleClick}

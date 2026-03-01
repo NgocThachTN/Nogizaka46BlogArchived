@@ -343,24 +343,30 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
       <style>{`
         /* Tategaki — images stay horizontal and shouldn't bleed */
         .tategaki-text img {
-          writing-mode: horizontal-tb !important;
-          max-width: none !important;  /* Chrome bug: 100% max-width in max-content vertical block causes infinite CSS calculation loop */
-          max-height: 60vh !important;
+          max-width: none !important;
+          max-height: 100% !important; /* Cap at the physical container height, no vh! */
           width: auto !important;
           height: auto !important;
           object-fit: contain;
           margin: 16px 20px !important;
           display: block !important;
           break-inside: avoid;
-          /* Prevent hover scale loop which moves image away from cursor horizontally and creates a flash loop */
+          
+          /* CRITICAL: Remove all transforms, transitions, and shadows to prevent GPU texture limits 
+             and paint flashing on huge vertical-rl containers when translating/paginating */
           transform: none !important;
-          transition: box-shadow 0.3s ease !important;
+          transition: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
         }
         .tategaki-text img:nth-child(n) {
           transform: none !important;
         }
         .tategaki-text img:hover {
           transform: none !important;
+          box-shadow: none !important;
         }
         .tategaki-text ruby rt {
           ruby-position: over;
@@ -376,7 +382,7 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         .tategaki-text p.p2,
         .tategaki-text p.p3,
         .tategaki-text div {
-          text-align: justify !important;
+          text-align: start !important;
           break-inside: auto;
         }
       `}</style>
