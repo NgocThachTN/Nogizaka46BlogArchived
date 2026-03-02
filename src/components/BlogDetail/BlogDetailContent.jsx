@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, memo, useRef, useMemo } from "react";
 import { Typography, Space, Button } from "antd";
 import {
   CalendarOutlined,
@@ -28,6 +28,7 @@ const BlogBody = memo(function BlogBody({
   const wrapperRef = useRef(null);
   const innerRef = useRef(null);
   const grandParentRef = useRef(null);
+  const contentWidthRef = useRef(0);
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -37,12 +38,41 @@ const BlogBody = memo(function BlogBody({
   const lineH = Math.round(sz.px * sz.lh);
   const isScrollingRef = useRef(false);
 
+  // ── Synchronous pre-paint measurements ──
+  // React 18 processes setState inside useLayoutEffect synchronously:
+  // mount → layout done → useLayoutEffect fires → setState → sync re-render
+  // → layout done → next useLayoutEffect fires → setState → sync re-render
+  // → browser finally paints the THIRD render which has correct transform.
+  // Result: zero flicker, first visible frame is already page 1.
+  useLayoutEffect(() => {
+    if (!tategaki || !grandParentRef.current) return;
+    const availableW = grandParentRef.current.clientWidth;
+    const snapped = Math.floor(availableW / lineH) * lineH;
+    if (snapped > 0) setSnappedWidth(snapped);
+  }, [tategaki, lineH]);
+
+  useLayoutEffect(() => {
+    if (!tategaki || !snappedWidth) return;
+    const inner = innerRef.current;
+    if (!inner) return;
+    const w = inner.scrollWidth;
+    if (w > 0) {
+      contentWidthRef.current = w;
+      setContentWidth(w);
+      const pages = Math.max(1, Math.ceil(w / snappedWidth));
+      setTotalPages(pages);
+      setPage((p) => Math.min(p, pages - 1));
+    }
+  }, [tategaki, snappedWidth, displayContent, sz]);
+
+  // ── Async measurements for resize / ongoing updates ──
   useEffect(() => {
     if (!tategaki) {
       setPage(0);
       setTotalPages(1);
       setSnappedWidth(0);
       setContentWidth(0);
+      contentWidthRef.current = 0;
       return;
     }
 
@@ -90,20 +120,21 @@ const BlogBody = memo(function BlogBody({
 
     const updateDimensions = () => {
       const currentScrollW = inner.scrollWidth;
-      if (currentScrollW > 0) {
-        setContentWidth(currentScrollW);
-        const pages = Math.max(1, Math.ceil(currentScrollW / snappedWidth));
-        setTotalPages(pages);
-        setPage((p) => Math.min(p, pages - 1));
-      }
+      if (currentScrollW <= 0) return;
+      // Skip tiny changes — Chrome's vertical-rl layout engine can oscillate
+      // by a few pixels when reading scrollWidth on max-content elements.
+      if (contentWidthRef.current > 0 && Math.abs(currentScrollW - contentWidthRef.current) <= lineH) return;
+      contentWidthRef.current = currentScrollW;
+      setContentWidth(currentScrollW);
+      const pages = Math.max(1, Math.ceil(currentScrollW / snappedWidth));
+      setTotalPages(pages);
+      setPage((p) => Math.min(p, pages - 1));
     };
 
     // Do not use ResizeObserver on `inner` in vertical-rl with max-content width!
     // It causes an infinite layout thrashing loop in Chrome because measuring scrollWidth
     // affects max-content which re-triggers the observer.
-    // t0 at 0ms so contentWidth is set ASAP (keeps wrapper hidden for minimal time).
-    const t0 = setTimeout(updateDimensions, 0);
-    const t1 = setTimeout(updateDimensions, 50);
+    // useLayoutEffect already handles initial measurement; these catch image-load changes.
     const t2 = setTimeout(updateDimensions, 400);
     const t3 = setTimeout(updateDimensions, 1000);
 
@@ -116,8 +147,6 @@ const BlogBody = memo(function BlogBody({
     window.addEventListener("resize", handleWindowResize);
 
     return () => {
-      clearTimeout(t0);
-      clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
       clearTimeout(resizeTimer);
@@ -278,36 +307,46 @@ const BlogBody = memo(function BlogBody({
             overflow: "hidden",
             position: "relative",
             writingMode: "horizontal-tb",
+            visibility: (snappedWidth && contentWidth) ? "visible" : "hidden",
           }}
         >
+          {/* Transform carrier — MUST be separate from the measured element.
+              Chrome recalculates max-content layout when reading scrollWidth on
+              vertical-rl elements; if a transform is on that same element, the
+              new layout feeds back into the transform → infinite oscillation. */}
           <div
-            ref={(node) => {
-              innerRef.current = node;
-              if (contentRef) contentRef.current = node;
-            }}
-            className="jp-prose tategaki-text"
             style={{
-              writingMode: "vertical-rl",
-              textOrientation: "mixed",
+              width: contentWidth || "100%",
               height: "100%",
-              width: "max-content",
-              fontSize: sz.px,
-              lineHeight: `${lineH}px`,
-              letterSpacing: 0.5,
-              color: isDark ? "#f5ede0" : "#2c2c2c",
-              fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
-              textAlign: "left",
-              // Position content via transform instead of scrollLeft.
-              // In vertical-rl the first column is at the rightmost edge,
-              // so we shift left to reveal page 0 (rightmost portion).
+              transition: "none",
               transform: (contentWidth > snappedWidth && snappedWidth > 0)
                 ? `translateX(${-(contentWidth - snappedWidth) + page * snappedWidth}px)`
                 : undefined,
             }}
-            onClick={onClick}
-            onDoubleClick={onDoubleClick}
-            dangerouslySetInnerHTML={{ __html: processedContent }}
-          />
+          >
+            <div
+              ref={(node) => {
+                innerRef.current = node;
+                if (contentRef) contentRef.current = node;
+              }}
+              className="jp-prose tategaki-text"
+              style={{
+                writingMode: "vertical-rl",
+                textOrientation: "mixed",
+                height: "100%",
+                width: "max-content",
+                fontSize: sz.px,
+                lineHeight: `${lineH}px`,
+                letterSpacing: 0.5,
+                color: isDark ? "#f5ede0" : "#2c2c2c",
+                fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
+                textAlign: "left",
+              }}
+              onClick={onClick}
+              onDoubleClick={onDoubleClick}
+              dangerouslySetInnerHTML={{ __html: processedContent }}
+            />
+          </div>
         </div>
 
         {/* Page controls */}
