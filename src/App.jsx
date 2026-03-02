@@ -7,9 +7,7 @@ import {
 import { ProLayout } from "@ant-design/pro-components";
 import { ConfigProvider, theme, Segmented } from "antd";
 import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
-import { useEffect, useMemo, useState } from "react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
-import { Analytics } from "@vercel/analytics/react";
+import { useEffect, useMemo, useState, lazy, Suspense, useSyncExternalStore } from "react";
 import BlogList from "./components/BlogList";
 import BlogListMobile from "./components/BlogListMobile";
 import BlogDetail from "./components/BlogDetail";
@@ -17,27 +15,41 @@ import MemberProfile from "./components/MemberProfile";
 import MemberList from "./components/MemberList";
 import "./App.css";
 
+const SpeedInsights = lazy(() =>
+  import("@vercel/speed-insights/react").then((m) => ({ default: m.SpeedInsights }))
+);
+const Analytics = lazy(() =>
+  import("@vercel/analytics/react").then((m) => ({ default: m.Analytics }))
+);
+
+const mobileQuery = typeof window !== "undefined"
+  ? window.matchMedia("(max-width: 767px)")
+  : { matches: false, addEventListener() {}, removeEventListener() {} };
+
+function subscribeMobile(cb) {
+  mobileQuery.addEventListener("change", cb);
+  return () => mobileQuery.removeEventListener("change", cb);
+}
+
+function getIsMobile() {
+  return mobileQuery.matches;
+}
+
 function App() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const isMobile = useSyncExternalStore(subscribeMobile, getIsMobile);
   const [language, setLanguage] = useState("ja");
   const [themeMode, setThemeMode] = useState(() => {
-    const saved = localStorage.getItem("theme-mode");
-    if (saved === "light" || saved === "dark") return saved;
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return prefersDark ? "dark" : "light";
+    try {
+      const saved = localStorage.getItem("theme-mode");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {}
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {
     document.title = "Nogizaka46 Blog Archive";
-
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -214,8 +226,10 @@ function App() {
           </ProLayout>
         </div>
       </Router>
-      <SpeedInsights />
-      <Analytics />
+      <Suspense fallback={null}>
+        <SpeedInsights />
+        <Analytics />
+      </Suspense>
     </ConfigProvider>
   );
 }

@@ -1,5 +1,5 @@
 // MemberList.jsx — Ant Design Pro + nhóm theo Gen + 5 thẻ mỗi hàng
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -14,6 +14,17 @@ import MemberListHeader from "./MemberList/Components/MemberListHeader";
 import MemberListFilterBar from "./MemberList/Components/MemberListFilterBar";
 
 import GenerationGroup from "./MemberList/Components/GenerationGroup";
+
+const mobileQueryML = typeof window !== "undefined"
+  ? window.matchMedia("(max-width: 767px)")
+  : { matches: false, addEventListener() {}, removeEventListener() {} };
+function subscribeMobileML(cb) {
+  mobileQueryML.addEventListener("change", cb);
+  return () => mobileQueryML.removeEventListener("change", cb);
+}
+function getIsMobileML() {
+  return mobileQueryML.matches;
+}
 
 // Diary-style handwriting fonts for journal-like reading experience
 const bookFont = {
@@ -95,15 +106,8 @@ const MemberList = ({
   const [loading, setLoading] = useState(true);
   const [genFilter, setGenFilter] = useState("ALL");
   const [keyword, setKeyword] = useState("");
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const isMobile = useSyncExternalStore(subscribeMobileML, getIsMobileML);
   const [showGraduated, setShowGraduated] = useState(false);
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   useEffect(() => {
     const fetchMembers = async () => {

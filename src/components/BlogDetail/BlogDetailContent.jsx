@@ -22,6 +22,7 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
     const [contentWidth, setContentWidth] = useState(0);
     const [viewportH, setViewportH] = useState(() => window.innerHeight);
     const lineH = Math.round(sz.px * sz.lh);
+    const isScrollingRef = useRef(false);
 
     useEffect(() => {
         if (!tategaki) {
@@ -118,10 +119,15 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
 
         const lockDimensions = (img) => {
             if (img.clientWidth && img.clientHeight) {
-                // Lock the physical footprint. If texture drops, layout won't thrash.
-                img.style.minWidth = img.clientWidth + 'px';
-                img.style.minHeight = img.clientHeight + 'px';
+                const w = img.clientWidth + 'px';
+                const h = img.clientHeight + 'px';
+                img.style.minWidth = w;
+                img.style.minHeight = h;
+                img.style.width = w;
+                img.style.height = h;
             }
+            img.setAttribute("decoding", "sync");
+            img.setAttribute("fetchpriority", "high");
         };
 
         imgs.forEach(img => {
@@ -131,10 +137,81 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                 img.addEventListener("load", () => lockDimensions(img), { once: true });
             }
         });
+
+        // Force-decode all images upfront so textures are GPU-resident
+        Promise.allSettled(
+            imgs.filter(i => i.complete && i.naturalWidth > 0)
+                .map(i => i.decode().catch(() => {}))
+        );
     }, [displayContent, tategaki, snappedWidth]);
 
-    const goNext = useCallback(() => setPage(p => Math.min(p + 1, totalPages - 1)), [totalPages]);
-    const goPrev = useCallback(() => setPage(p => Math.max(p - 1, 0)), []);
+    // Fade-based page transition to completely eliminate Chrome image flicker.
+    // Chrome evicts decoded image bitmaps when they leave the viewport and
+    // needs to re-decode when they reappear — causing white flash regardless
+    // of whether we use transform or scroll. The fix: hide the container
+    // while scrolling, wait for Chrome to rasterize, then reveal.
+    // Total transition ~250ms: fade-out 100ms + rasterize 33ms + fade-in 120ms.
+    const scrollToPage = useCallback((targetPage, smooth = true) => {
+        const wrapper = wrapperRef.current;
+        if (!wrapper || !snappedWidth) {
+            setPage(targetPage);
+            return;
+        }
+
+        const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+        const targetScroll = Math.max(0, maxScroll - targetPage * snappedWidth);
+
+        if (!smooth) {
+            wrapper.scrollLeft = targetScroll;
+            setPage(targetPage);
+            return;
+        }
+
+        isScrollingRef.current = true;
+        setPage(targetPage);
+
+        wrapper.style.transition = "opacity 0.1s ease-out";
+        wrapper.style.opacity = "0";
+
+        setTimeout(() => {
+            wrapper.scrollLeft = targetScroll;
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    wrapper.style.transition = "opacity 0.12s ease-in";
+                    wrapper.style.opacity = "1";
+
+                    setTimeout(() => {
+                        wrapper.style.transition = "";
+                        isScrollingRef.current = false;
+                    }, 140);
+                });
+            });
+        }, 110);
+    }, [snappedWidth]);
+
+    const goNext = useCallback(() => {
+        const target = Math.min(page + 1, totalPages - 1);
+        if (target !== page) scrollToPage(target);
+    }, [page, totalPages, scrollToPage]);
+
+    const goPrev = useCallback(() => {
+        const target = Math.max(page - 1, 0);
+        if (target !== page) scrollToPage(target);
+    }, [page, scrollToPage]);
+
+    // Sync scroll position on resize / content reflow (skip during user navigation)
+    useEffect(() => {
+        if (!tategaki || !snappedWidth || isScrollingRef.current) return;
+        const wrapper = wrapperRef.current;
+        if (!wrapper) return;
+
+        const raf = requestAnimationFrame(() => {
+            const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+            wrapper.scrollLeft = Math.max(0, maxScroll - page * snappedWidth);
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [tategaki, page, snappedWidth, contentWidth]);
 
     useEffect(() => {
         if (!tategaki) return;
@@ -144,6 +221,33 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
         };
         window.addEventListener("keydown", handleKey);
         return () => window.removeEventListener("keydown", handleKey);
+    }, [tategaki, goNext, goPrev]);
+
+    useEffect(() => {
+        if (!tategaki) return;
+        const wrapper = wrapperRef.current;
+        if (!wrapper) return;
+
+        let startX = 0, startY = 0;
+        const onTouchStart = (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        };
+        const onTouchEnd = (e) => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                if (dx < 0) goNext();
+                else goPrev();
+            }
+        };
+
+        wrapper.addEventListener("touchstart", onTouchStart, { passive: true });
+        wrapper.addEventListener("touchend", onTouchEnd, { passive: true });
+        return () => {
+            wrapper.removeEventListener("touchstart", onTouchStart);
+            wrapper.removeEventListener("touchend", onTouchEnd);
+        };
     }, [tategaki, goNext, goPrev]);
 
     const processedContent = useMemo(() => {
@@ -158,57 +262,44 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
 
     if (tategaki) {
         const pageH = Math.max(400, viewportH - 280) + "px";
-        const offsetPx = page * snappedWidth;
 
         return (
             <div style={{ position: "relative", width: "100%", padding: "0 24px" }} ref={grandParentRef}>
                 <div
                     ref={wrapperRef}
+                    className="tategaki-scroll-wrapper"
                     style={{
                         width: snappedWidth || "100%",
                         margin: "0 auto",
                         height: pageH,
-                        overflow: "hidden",
+                        overflowX: "scroll",
+                        overflowY: "hidden",
                         position: "relative",
-                        writingMode: "horizontal-tb", // Protect transform from vertical-rl bugs
+                        writingMode: "horizontal-tb",
                     }}
                 >
                     <div
-                        style={{
-                            position: "absolute",
-                            right: 0,
-                            top: 0,
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "row-reverse", // Native right-to-left layout direction
-                            transform: `translateX(${offsetPx}px) translateZ(0)`,
-                            willChange: "transform",
-                            transition: "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                        ref={(node) => {
+                            innerRef.current = node;
+                            if (contentRef) contentRef.current = node;
                         }}
-                    >
-                        <div
-                            ref={(node) => {
-                                innerRef.current = node;
-                                if (contentRef) contentRef.current = node;
-                            }}
-                            className="jp-prose tategaki-text"
-                            style={{
-                                writingMode: "vertical-rl",
-                                textOrientation: "mixed",
-                                height: "100%",
-                                width: "max-content",
-                                fontSize: sz.px,
-                                lineHeight: `${lineH}px`,
-                                letterSpacing: 0.5,
-                                color: isDark ? "#f5ede0" : "#2c2c2c",
-                                fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
-                                textAlign: "left",
-                            }}
-                            onClick={onClick}
-                            onDoubleClick={onDoubleClick}
-                            dangerouslySetInnerHTML={{ __html: processedContent }}
-                        />
-                    </div>
+                        className="jp-prose tategaki-text"
+                        style={{
+                            writingMode: "vertical-rl",
+                            textOrientation: "mixed",
+                            height: "100%",
+                            width: "max-content",
+                            fontSize: sz.px,
+                            lineHeight: `${lineH}px`,
+                            letterSpacing: 0.5,
+                            color: isDark ? "#f5ede0" : "#2c2c2c",
+                            fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
+                            textAlign: "left",
+                        }}
+                        onClick={onClick}
+                        onDoubleClick={onDoubleClick}
+                        dangerouslySetInnerHTML={{ __html: processedContent }}
+                    />
                 </div>
 
                 {/* Page controls */}
@@ -418,7 +509,7 @@ export default function BlogDetailContent({
                         display: "flex",
                         alignItems: "flex-end",
                         justifyContent: "space-between",
-                        marginBottom: window.innerWidth < 768 ? 16 : 24,
+                        marginBottom: 24,
                         width: "100%",
                         padding: "0 4px",
                         animation: "ink-appear 0.5s ease 0.35s both",
@@ -428,7 +519,7 @@ export default function BlogDetailContent({
                     <div
                         style={{
                             color: isDark ? "#b8a586" : "#666",
-                            fontSize: window.innerWidth < 768 ? 16 : 18,
+                            fontSize: 18,
                             fontFamily: bookFont[language].fontFamily,
                             display: "flex",
                             alignItems: "center",
@@ -459,7 +550,7 @@ export default function BlogDetailContent({
                                 style={{
                                     margin: 0,
                                     lineHeight: 1.3,
-                                    fontSize: window.innerWidth < 768 ? 18 : 22,
+                                    fontSize: "clamp(18px, 3vw, 22px)",
                                     wordWrap: "break-word",
                                     wordBreak: "break-word",
                                     whiteSpace: "normal",

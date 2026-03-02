@@ -343,33 +343,29 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
       <style>{`
         /* Tategaki — images stay horizontal and shouldn't bleed */
         .tategaki-text img {
-          max-width: 90vw !important; /* Cap max width relative to viewport, not dynamic content */
-          max-height: 500px !important; /* Cap explicitly to avoid 100% resolution against vertical-rl auto heights */
+          max-width: 90vw !important;
+          max-height: 500px !important;
           width: auto !important;
           height: auto !important;
           object-fit: contain;
           margin: 16px 20px !important;
           display: block !important;
           break-inside: avoid;
-          
-          /* Promote individual images to their own GPU layers. 
-             This prevents Chromium from dropping their textures when the massive parent container slides. */
-          transform: translateZ(0) !important;
-          will-change: transform !important;
-          backface-visibility: hidden !important;
-          -webkit-backface-visibility: hidden !important;
-          
+
+          content-visibility: visible !important;
+          contain-intrinsic-size: none !important;
+
+          /* Disable polaroid effects for cleaner vertical layout */
+          transform: none !important;
           transition: none !important;
           box-shadow: none !important;
           background: transparent !important;
           padding: 0 !important;
-          border-radius: 0.1px !important;
-        }
-        .tategaki-text img:nth-child(n) {
-          transform: translateZ(0) !important;
+          border-radius: 0 !important;
+          border: none !important;
         }
         .tategaki-text img:hover {
-          transform: translateZ(0) !important;
+          transform: none !important;
           box-shadow: none !important;
         }
         .tategaki-text ruby rt {

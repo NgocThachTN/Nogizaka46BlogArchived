@@ -3,9 +3,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
 import { Card, Typography, Spin, Button, FloatButton, message, notification } from "antd";
 import { LeftOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
+
+const mobileQuery = typeof window !== "undefined"
+  ? window.matchMedia("(max-width: 767px)")
+  : { matches: false, addEventListener() {}, removeEventListener() {} };
+function subscribeMobileDetail(cb) {
+  mobileQuery.addEventListener("change", cb);
+  return () => mobileQuery.removeEventListener("change", cb);
+}
+function getIsMobileDetail() {
+  return mobileQuery.matches;
+}
 import {
   fetchBlogDetail,
   fetchAllBlogs,
@@ -82,7 +93,7 @@ export default function BlogDetail({
   const [trTitle, setTrTitle] = useState({ en: "", vi: "" });
   const [translating, setTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const isMobile = useSyncExternalStore(subscribeMobileDetail, getIsMobileDetail);
 
   // Furigana states
   const [showFurigana, setShowFurigana] = useState(false);
@@ -98,13 +109,6 @@ export default function BlogDetail({
 
   // Use navigation hook
   const { fastGo, onHoverPrefetch, navLock, pendingNavId } = useBlogNavigation(navigate, navIds);
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Reset translation state when blog changes
   useEffect(() => {
