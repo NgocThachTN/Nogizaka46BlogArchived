@@ -112,10 +112,11 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           background: ${themeMode === "dark" ? "#f5f0e6" : "#ffffff"};
           border-radius: 2px;
           /* Polaroid shadow and slight rotation */
-          box-shadow: ${themeMode === "dark"
-          ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
-          : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
-        };
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
+              : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
+          };
           transform: rotate(-1deg);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
           border: none !important;
@@ -129,10 +130,11 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         }
         .jp-prose img:hover {
           transform: rotate(0deg) scale(1.02);
-          box-shadow: ${themeMode === "dark"
-          ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
-          : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
-        };
+          box-shadow: ${
+            themeMode === "dark"
+              ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
+              : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
+          };
         }
         .jp-prose div, .jp-prose span {
           word-break: break-word !important;
@@ -143,22 +145,25 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
       {/* dynamic heading scale */}
       <style>{`
         .jp-prose h1 { 
-          font-size: ${window.innerWidth < 768
-          ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
-          : SIZE_PRESETS[fontSizeKey].h1
-        }em; 
+          font-size: ${
+            window.innerWidth < 768
+              ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
+              : SIZE_PRESETS[fontSizeKey].h1
+          }em; 
         }
         .jp-prose h2 { 
-          font-size: ${window.innerWidth < 768
-          ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
-          : SIZE_PRESETS[fontSizeKey].h2
-        }em; 
+          font-size: ${
+            window.innerWidth < 768
+              ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
+              : SIZE_PRESETS[fontSizeKey].h2
+          }em; 
         }
         .jp-prose h3 { 
-          font-size: ${window.innerWidth < 768
-          ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
-          : SIZE_PRESETS[fontSizeKey].h3
-        }em; 
+          font-size: ${
+            window.innerWidth < 768
+              ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
+              : SIZE_PRESETS[fontSizeKey].h3
+          }em; 
         }
       `}</style>
 

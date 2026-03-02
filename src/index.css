@@ -43,7 +43,8 @@
   content: "";
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(
+  background-image:
+    radial-gradient(
       circle at 20% 50%,
       rgba(139, 69, 19, 0.03) 0%,
       transparent 50%
@@ -70,7 +71,7 @@
 /* ===== Diary paper texture ===== */
 .paper-texture,
 .diary-paper {
-  background-color: #FFF9E6;
+  background-color: #fff9e6;
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0px,
@@ -118,7 +119,9 @@
     0 4px 12px rgba(0, 0, 0, 0.15),
     0 8px 24px rgba(0, 0, 0, 0.1);
   transform: rotate(-1deg);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .jp-prose p {
@@ -136,7 +139,8 @@
 .jp-prose div[style],
 .jp-prose *[style*="font-family"],
 .jp-prose *[style*="font:"] {
-  font-family: 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', serif !important;
+  font-family:
+    "Yomogi", "Patrick Hand SC", "Zen Kurenaido", "Noto Serif JP", serif !important;
 }
 
 .jp-prose br {
@@ -254,7 +258,8 @@
 
 .prose img {
   border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15),
+  box-shadow:
+    0 4px 12px rgba(139, 69, 19, 0.15),
     0 2px 4px rgba(139, 69, 19, 0.1);
 }
 
@@ -278,14 +283,14 @@
   background-color: rgba(253, 246, 227, 0.9) !important;
   border-color: rgba(139, 69, 19, 0.3) !important;
   color: #3c2415 !important;
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif !important;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
 }
 
 .ant-select-dropdown,
 .ant-select-item {
   background-color: rgba(253, 246, 227, 0.95) !important;
   color: #3c2415 !important;
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif !important;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
 }
 
 .ant-select-item:hover,
@@ -383,8 +388,10 @@
 /* Vietnamese text rendering fix */
 .ant-select-item-option-content,
 .ant-select-selection-item {
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif !important;
-  font-feature-settings: "liga" 1, "kern" 1 !important;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
+  font-feature-settings:
+    "liga" 1,
+    "kern" 1 !important;
   text-rendering: optimizeLegibility !important;
   -webkit-font-smoothing: antialiased !important;
   -moz-osx-font-smoothing: grayscale !important;
@@ -392,16 +399,19 @@
 
 .ant-select-item-option-content span,
 .ant-select-selection-item span {
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif !important;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
   font-variant-ligatures: normal !important;
-  font-feature-settings: "liga" 1, "kern" 1, "calt" 1 !important;
+  font-feature-settings:
+    "liga" 1,
+    "kern" 1,
+    "calt" 1 !important;
 }
 
 /* ===== Global typography ===== */
 body,
 html,
 #root {
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif !important;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
   min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
@@ -414,19 +424,24 @@ html,
 }
 
 /* Android Japanese font optimization */
-@supports (-webkit-appearance: none) and (not (-webkit-overflow-scrolling: touch)) {
+@supports (-webkit-appearance: none) and
+  (not (-webkit-overflow-scrolling: touch)) {
   body,
   html {
-    font-family: 'Noto Sans JP', 'Droid Sans Japanese', 'Meiryo', 'MS PGothic', 'Roboto', sans-serif !important;
+    font-family:
+      "Noto Sans JP", "Droid Sans Japanese", "Meiryo", "MS PGothic", "Roboto",
+      sans-serif !important;
   }
 
   [lang="ja"],
   .japanese-text {
-    font-family: 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', 'Noto Sans JP', sans-serif !important;
+    font-family:
+      "Yomogi", "Patrick Hand SC", "Zen Kurenaido", "Noto Serif JP",
+      "Noto Sans JP", sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-feature-settings: 'palt' 1;
+    font-feature-settings: "palt" 1;
   }
 }
 
@@ -448,14 +463,14 @@ html,
 .ant-typography h6,
 .ant-typography p,
 .ant-typography span {
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif !important;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
 }
 
 .ant-btn,
 .ant-input,
 .ant-select,
 .ant-tag {
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif !important;
+  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
 }
 
 /* ===== Dark mode: book background ===== */
@@ -469,7 +484,8 @@ html,
   content: "";
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(
+  background-image:
+    radial-gradient(
       circle at 20% 50%,
       rgba(255, 228, 196, 0.04) 0%,
       transparent 50%
@@ -668,7 +684,8 @@ html,
   top: 0;
   bottom: 0;
   width: 40px;
-  background-image: radial-gradient(circle at 0% 50%, #333 10%, transparent 11%),
+  background-image:
+    radial-gradient(circle at 0% 50%, #333 10%, transparent 11%),
     radial-gradient(circle at 10% 50%, #333 10%, transparent 11%);
   background-size: 10px 40px;
   background-repeat: repeat-y;
