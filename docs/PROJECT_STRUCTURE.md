@@ -12,16 +12,16 @@ Project da duoc refactor lai theo huong folder structure ban yeu cau, nhung van 
 - `docs/`: tai lieu du an.
 - `public/`: static assets va local data.
 - `src/`: source code chinh.
-- `globals.css`: global stylesheet duoc import tu `src/app/main.jsx`.
-- `proxy.js`: local proxy server cho moi truong dev.
-- `eslint.config.mjs`, `postcss.config.mjs`, `vite.config.js`, `tailwind.config.js`: tool configs.
+- `globals.css`: global stylesheet duoc import tu `src/app/main.tsx`.
+- `proxy.ts`: local proxy server cho moi truong dev.
+- `eslint.config.mjs`, `postcss.config.mjs`, `vite.config.ts`, `tailwind.config.ts`: tool configs.
 
 ## src
 
 - `src/app/`: app shell va entrypoint cua ung dung.
-  - `App.jsx`: root app component.
+  - `App.tsx`: root app component.
   - `App.css`: app-level styles.
-  - `main.jsx`: Vite entry file.
+  - `main.tsx`: Vite entry file.
 - `src/components/`: de trong cho shared components moi trong tuong lai.
 - `src/features/`: code duoc chia theo feature.
   - `src/features/blogs/`: blog listing, blog detail, calendar, vocab, furigana.
@@ -38,5 +38,5 @@ Project da duoc refactor lai theo huong folder structure ban yeu cau, nhung van 
 ## Ghi chu
 
 - Repo goc khong phai Next.js app, vi vay cac muc nhu `src/app/(auth)` hay `src/app/api` khong duoc tao gia lap.
-- `proxy.ts` trong mau duoc map thanh `proxy.js` de phu hop voi stack JavaScript hien tai va giu nguyen cach chay.
+- Repo da duoc doi sang TypeScript cho app source, API routes va cac runtime/config file chinh.
 - Cac duong dan import da duoc cap nhat de khong thay doi behavior.

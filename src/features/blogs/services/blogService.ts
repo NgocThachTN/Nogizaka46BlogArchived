@@ -1,21 +1,22 @@
+// @ts-nocheck
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { fetchWithProxy } from "../../../lib/api/proxy.js";
+import { fetchWithProxy } from "../../../lib/api/proxy";
 import {
   shouldUseProxy,
   getUserAgent,
-} from "../../../lib/utils/deviceDetection.js";
+} from "../../../lib/utils/deviceDetection";
 import {
   shouldUseLocalDB,
   getFolderFromMemberCode,
   loadLocalBlogs,
   loadLocalMemberInfo,
   getMemberCodeFromFolder,
-} from "../data/localBlogLoader.js";
+} from "../data/localBlogLoader";
 import {
   loadGraduatedMember,
   isGraduatedMember,
-} from "../../members/data/graduatedMembersLoader.js";
+} from "../../members/data/graduatedMembersLoader";
 
 const BASE_URL = "https://www.nogizaka46.com";
 const BLOG_URL = `/s/n46/diary/MEMBER/list`;

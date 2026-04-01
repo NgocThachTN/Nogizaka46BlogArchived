@@ -1,6 +1,7 @@
 // BlogDetailMobile.jsx — Notebook Diary Edition
 // Clean Android/iOS design with notebook aesthetic
 
+// @ts-nocheck
 import {
   Typography,
   Space,

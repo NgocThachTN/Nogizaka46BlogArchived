@@ -1,5 +1,5 @@
 // Proxy API để tránh CORS issues trên iOS Safari
-import { isIOS18Plus } from "../utils/deviceDetection.js";
+import { isIOS18Plus } from "../utils/deviceDetection";
 
 const BASE_URL = "https://www.nogizaka46.com";
 

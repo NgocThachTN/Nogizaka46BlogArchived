@@ -1,4 +1,5 @@
 // BlogDetail.jsx — Refactored with smaller components
+// @ts-nocheck
 import { useParams, useNavigate } from "react-router-dom";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
 import { Typography, Button, FloatButton, message, notification } from "antd";

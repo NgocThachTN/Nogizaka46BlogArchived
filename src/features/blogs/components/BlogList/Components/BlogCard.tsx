@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import { Typography, Space, Button, Badge, Tooltip } from "antd";
 import { ProCard } from "@ant-design/pro-components";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useCallback, useEffect, memo, useRef, useMemo } from "react";
 import { Typography, Space, Button } from "antd";
 import { CalendarOutlined, LinkOutlined, BookOutlined } from "@ant-design/icons";

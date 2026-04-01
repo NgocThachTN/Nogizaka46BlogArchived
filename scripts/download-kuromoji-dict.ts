@@ -42,7 +42,7 @@ if (!fs.existsSync(OUTPUT_DIR)) {
  * Download file từ URL (GIỮ NGUYÊN .gz format)
  */
 function downloadFile(url, outputPath) {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     const file = fs.createWriteStream(outputPath);
 
     https

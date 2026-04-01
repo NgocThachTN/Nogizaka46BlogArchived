@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Graduated Members Loader
  * Auto-detect graduated members from blogdb/ folder

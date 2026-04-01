@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/proxy.js": {
+    "api/proxy.ts": {
       "maxDuration": 30
     }
   },

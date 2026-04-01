@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "concurrently \"npm run proxy\" \"npm run dev\"",
-    "proxy": "node proxy.js",
-    "download-dict": "node scripts/download-kuromoji-dict.js",
+    "proxy": "tsx proxy.ts",
+    "download-dict": "tsx scripts/download-kuromoji-dict.ts",
     "prebuild": "npm run download-dict",
     "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -40,6 +41,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
@@ -50,6 +54,8 @@
     "globals": "^16.3.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
     "vite": "^7.1.2"
   }
 }

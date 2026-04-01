@@ -131,7 +131,7 @@ echo "VITE_USE_LOCAL_DB=true" >> .env
 npm run download-dict
 
 # Or manually download
-node scripts/download-kuromoji-dict.js
+tsx scripts/download-kuromoji-dict.ts
 ```
 
 **Dictionary Storage:**

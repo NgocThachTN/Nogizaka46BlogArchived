@@ -10,7 +10,7 @@ app.use(cors());
 // Custom proxy handler for Nogizaka46 API
 app.get("/api/proxy", async (req, res) => {
   try {
-    const { url } = req.query;
+    const url = typeof req.query.url === "string" ? req.query.url : undefined;
 
     if (!url) {
       return res.status(400).json({ error: "URL parameter is required" });
@@ -103,7 +103,7 @@ app.get("/api/jisho", async (req, res) => {
   };
 
   try {
-    const { word } = req.query;
+    const word = typeof req.query.word === "string" ? req.query.word : undefined;
     if (!word) {
       setCors();
       return res.status(400).json({ error: "word param required" });

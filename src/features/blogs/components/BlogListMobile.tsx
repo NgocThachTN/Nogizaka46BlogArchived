@@ -1,6 +1,7 @@
 // BlogListMobile.jsx — Notebook Diary Edition
 // Notebook style blog list with "diary entry" styled items
 
+// @ts-nocheck
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   Typography,

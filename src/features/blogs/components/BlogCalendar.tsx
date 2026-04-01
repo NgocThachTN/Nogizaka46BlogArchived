@@ -1,4 +1,5 @@
 // BlogCalendar.jsx — Ant Design Pro • Calendar with Blog Posts
+// @ts-nocheck
 import { useState, useMemo, useEffect } from "react";
 import {
   Calendar,

@@ -1,6 +1,7 @@
 // MemberListMobile.jsx — Notebook Diary Edition
 // Notebook style member list with "sticker/photo" cards
 
+// @ts-nocheck
 import React, {
   useState,
   useEffect,

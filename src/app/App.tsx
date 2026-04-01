@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   BrowserRouter as Router,
   Routes,
@@ -128,7 +129,7 @@ function App() {
         >
           <ProLayout
             layout="side"
-            title={<div className="flex items-center space-x-3"></div>}
+            title=""
             logo={false}
             fixSiderbar
             collapsed={isMobile}

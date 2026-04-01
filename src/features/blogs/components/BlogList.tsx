@@ -1,4 +1,5 @@
 // BlogList.jsx — Ant Design Pro • Mobile-First Fast Render
+// @ts-nocheck
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Typography,

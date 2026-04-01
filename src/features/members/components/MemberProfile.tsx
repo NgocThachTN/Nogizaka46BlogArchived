@@ -154,7 +154,7 @@ const formatEnglishName = (englishName) => {
   return englishName;
 };
 
-const MemberProfile = ({ memberInfo, className, themeMode = "light", language = "ja" }) => {
+const MemberProfile = ({ memberInfo = null, className = "", themeMode = "light", language = "ja" }) => {
   if (!memberInfo) return null;
 
   const isDark = themeMode === "dark";
