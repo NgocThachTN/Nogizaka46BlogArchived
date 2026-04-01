@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "concurrently \"npm run proxy\" \"npm run dev\"",
-    "proxy": "node local-proxy-server.js",
+    "proxy": "node proxy.js",
     "download-dict": "node scripts/download-kuromoji-dict.js",
     "prebuild": "npm run download-dict",
     "build": "vite build",
