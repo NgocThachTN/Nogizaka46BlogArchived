@@ -349,8 +349,9 @@ export default function MemberListMobile({
 
   /** Member card */
   // Tạo card đặc biệt cho gen 6 blog
-  const Gen6BlogCard = () => (
-    <div
+  function Gen6BlogCard() {
+    return (
+      <div
       onClick={() => navigate(`/blogs/40008`)}
       style={{
         display: "flex",
@@ -416,10 +417,11 @@ export default function MemberListMobile({
           OFFICIAL
         </Tag>
       </div>
-    </div>
-  );
+      </div>
+    );
+  }
 
-  const MemberCard = ({ m }) => {
+  function MemberCard({ m }) {
     const age = getAge(m.birthday);
     return (
       <div
@@ -525,7 +527,7 @@ export default function MemberListMobile({
         </div>
       </div>
     );
-  };
+  }
 
   if (loading) {
     return (
