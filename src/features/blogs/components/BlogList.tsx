@@ -54,6 +54,7 @@ export default function BlogList({
   } = useMemberBlogs(memberCode, currentLanguage, pageSize);
 
   const calendarTitle = useMemo(() => "CALENDAR", []);
+  const showSkeleton = (loading || isPending) && !blogs.length;
 
   if (error) {
     return (
@@ -87,7 +88,7 @@ export default function BlogList({
       }}
     >
       <div
-        className="diary-paper notebook-container"
+        className={`diary-paper notebook-container${showSkeleton ? " desktop-skeleton-paper" : ""}`}
         style={{
           minHeight: "100vh",
           padding: "40px",
@@ -97,7 +98,7 @@ export default function BlogList({
         <div className="notebook-binding" style={{ left: 0 }}></div>
 
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-          {(loading || isPending) && !blogs.length ? (
+          {showSkeleton ? (
             <BlogListDesktopSkeleton themeMode={themeMode} isMobile={screens.xs} />
           ) : (
             <ProCard ghost gutter={[24, 24]} wrap>

@@ -19,7 +19,6 @@ import {
   BlogListMobileSkeleton,
   MemberListDesktopSkeleton,
   MemberListMobileSkeleton,
-  MemberProfileSkeleton,
 } from "../shared/components/PageSkeletons";
 import type { PageProps, ThemeMode } from "../shared/types";
 import "./App.css";
@@ -39,9 +38,6 @@ const BlogListMobile = lazy(
 const BlogDetailPage = lazy(
   () => import("../features/blogs/components/BlogDetail")
 );
-const MemberProfile = lazy(
-  () => import("../features/members/components/MemberProfile")
-);
 
 type RouteKey = "members" | "blogs" | "blog-detail";
 
@@ -58,7 +54,7 @@ function RouteFallback({
     return isMobile ? (
       <MemberListMobileSkeleton themeMode={themeMode} />
     ) : (
-      <div className="diary-paper notebook-container" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
+      <div className="diary-paper notebook-container desktop-skeleton-paper" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
         <div className="notebook-binding" style={{ left: 0 }}></div>
         <MemberListDesktopSkeleton themeMode={themeMode} />
       </div>
@@ -69,7 +65,7 @@ function RouteFallback({
     return isMobile ? (
       <BlogListMobileSkeleton themeMode={themeMode} />
     ) : (
-      <div className="diary-paper notebook-container" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
+      <div className="diary-paper notebook-container desktop-skeleton-paper" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
         <div className="notebook-binding" style={{ left: 0 }}></div>
         <BlogListDesktopSkeleton themeMode={themeMode} />
       </div>
@@ -79,7 +75,7 @@ function RouteFallback({
   return isMobile ? (
     <BlogDetailMobileSkeleton themeMode={themeMode} />
   ) : (
-    <div className="diary-paper notebook-container" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
+    <div className="diary-paper notebook-container desktop-skeleton-paper" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
       <div className="notebook-binding" style={{ left: 0 }}></div>
       <BlogDetailDesktopSkeleton themeMode={themeMode} />
     </div>
@@ -201,15 +197,8 @@ function App() {
             fixSiderbar
             collapsed={isMobile}
             siderWidth={320}
-            menuRender={() =>
-              !isMobile ? (
-                <div className="p-4 h-full overflow-y-auto">
-                  <Suspense fallback={<MemberProfileSkeleton themeMode={themeMode} />}>
-                    <MemberProfile />
-                  </Suspense>
-                </div>
-              ) : null
-            }
+            menuRender={false}
+            collapsedButtonRender={false}
             headerRender={isMobile ? false : undefined}
             actionsRender={() => [
               <Segmented

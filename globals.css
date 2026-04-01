@@ -91,6 +91,18 @@
   display: none !important;
 }
 
+.desktop-skeleton-paper {
+  padding-left: 40px !important;
+}
+
+.desktop-skeleton-paper::before {
+  display: none !important;
+}
+
+.desktop-skeleton-paper .notebook-binding {
+  display: none;
+}
+
 /* Polaroid image styling */
 .polaroid-image,
 .jp-prose img {

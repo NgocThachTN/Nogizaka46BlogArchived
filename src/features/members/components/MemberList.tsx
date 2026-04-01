@@ -64,6 +64,7 @@ export default function MemberList({
     loading,
     shouldShowGraduatedToggle,
   } = useMemberDirectory(keyword, genFilter, showGraduated);
+  const showSkeleton = loading;
 
   return (
     <div
@@ -73,7 +74,7 @@ export default function MemberList({
       }}
     >
       <div
-        className="diary-paper notebook-container"
+        className={`diary-paper notebook-container${showSkeleton ? " desktop-skeleton-paper" : ""}`}
         style={{
           minHeight: "100vh",
           padding: "40px",
@@ -91,7 +92,7 @@ export default function MemberList({
             margin: "0 auto",
           }}
         >
-          {loading ? (
+          {showSkeleton ? (
             <MemberListDesktopSkeleton themeMode={themeMode} />
           ) : (
             <>

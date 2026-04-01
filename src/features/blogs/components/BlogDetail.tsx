@@ -639,7 +639,7 @@ export default function BlogDetail({
   if (loading) {
     return (
       <div
-        className="diary-paper notebook-container"
+        className="diary-paper notebook-container desktop-skeleton-paper"
         style={{
           minHeight: "100vh",
           padding: "40px",
