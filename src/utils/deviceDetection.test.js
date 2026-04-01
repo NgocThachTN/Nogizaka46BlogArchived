@@ -48,7 +48,7 @@ describe("deviceDetection", () => {
     expect(mod.isIOS18Plus()).toBe(true);
   });
 
-  it("returns null-like result for non matching iOS version pattern", async () => {
+  it("returns falsy for non-iOS user agents", async () => {
     setNavigator({ userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" });
     const mod = await import("./deviceDetection.js");
     expect(Boolean(mod.isIOS18Plus())).toBe(false);

@@ -59,7 +59,7 @@ describe("proxy api helpers", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const mod = await import("./proxy.js");
-    const promise = mod.fetchWithProxy("/s/n46/diary/MEMBER/list", { page: 0 }, 2);
+    const promise = mod.fetchWithProxy("/s/n46/api/list/blog", { page: 0 }, 2);
     await vi.runAllTimersAsync();
     const data = await promise;
 
