@@ -98,19 +98,9 @@ export default defineConfig({
             return "translation-sdk";
           }
 
-          if (id.includes("node_modules")) {
-            if (id.includes("@ant-design") || id.includes(`${path.sep}antd${path.sep}`)) {
-              return "antd-vendor";
-            }
-
-            if (
-              id.includes(`${path.sep}react${path.sep}`) ||
-              id.includes("react-dom") ||
-              id.includes("react-router-dom")
-            ) {
-              return "react-vendor";
-            }
-          }
+          // Let Rollup decide how React/Ant Design vendor modules are grouped.
+          // Forcing them into separate manual chunks was creating a circular
+          // dependency in the production bundle that breaks on Vercel.
 
           if (id.includes(`${path.sep}src${path.sep}features${path.sep}blogs${path.sep}services${path.sep}blogService`)) {
             return "blog-service";
