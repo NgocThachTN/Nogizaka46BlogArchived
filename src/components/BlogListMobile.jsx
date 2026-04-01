@@ -500,7 +500,7 @@ export default function BlogListMobile({
     return (
       <div
         ref={scrollWrapRef}
-        className="diary-paper notebook-container no-scrollbar"
+        className="diary-paper notebook-container no-scrollbar mobile-skeleton-paper"
         style={{
           width: "100%",
           minHeight: "100vh",

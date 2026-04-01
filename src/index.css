@@ -87,6 +87,10 @@
   background: rgba(180, 100, 100, 0.2);
 }
 
+.mobile-skeleton-paper::before {
+  display: none !important;
+}
+
 /* Polaroid image styling */
 .polaroid-image,
 .jp-prose img {

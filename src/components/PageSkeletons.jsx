@@ -499,7 +499,7 @@ export function BlogDetailDesktopSkeleton({ themeMode }) {
 export function BlogDetailMobileSkeleton({ themeMode }) {
   return (
     <div
-      className="diary-paper notebook-container"
+      className="diary-paper notebook-container mobile-skeleton-paper"
       style={{
         width: "100%",
         minHeight: "100vh",
