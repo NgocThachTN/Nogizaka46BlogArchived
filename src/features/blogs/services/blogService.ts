@@ -28,6 +28,27 @@ const _blogPageCache = new Map(); // key: `${memberCode}:${page}` -> { blogs, ne
 const MEMBER_CACHE_MS = 1000 * 60 * 10; // 10 minutes
 const PAGE_CACHE_MS = 1000 * 60 * 5; // 5 minutes
 
+const parseMemberListResponse = (memberData) => {
+  if (Array.isArray(memberData)) return memberData;
+  if (memberData && typeof memberData === "object" && Array.isArray(memberData.data)) {
+    return memberData.data;
+  }
+  if (typeof memberData !== "string") {
+    throw new Error("Invalid member list response type");
+  }
+
+  const trimmed = memberData.trim();
+  const jsonStr = trimmed.startsWith("res(")
+    ? trimmed.replace(/^res\(/, "").replace(/\);?$/, "")
+    : trimmed;
+  const api = JSON.parse(jsonStr);
+
+  if (Array.isArray(api)) return api;
+  if (api && Array.isArray(api.data)) return api.data;
+
+  throw new Error("Member list payload missing data array");
+};
+
 export const getCachedBlogDetail = (blogId) => _detailCache.get(String(blogId));
 export const prefetchBlogDetail = async (blogId) => {
   try {
@@ -392,11 +413,10 @@ const fetchMemberListAPI = async () => {
     memberData = response.data;
   }
 
-  const jsonStr = memberData.replace(/^res\(/, "").replace(/\);?$/, "");
-  const api = JSON.parse(jsonStr);
-  _memberListCache.data = api.data;
+  const parsedMembers = parseMemberListResponse(memberData);
+  _memberListCache.data = parsedMembers;
   _memberListCache.ts = now;
-  return api.data;
+  return parsedMembers;
 };
 
 // Fetch thông tin member từ code - Optimized with cache

@@ -11,9 +11,17 @@ const CACHE_TTL = 1000 * 60 * 5; // 5 phút cache
 export const createProxyUrl = (path, params = {}) => {
   const searchParams = new URLSearchParams(params);
   const queryString = searchParams.toString();
-  return `/api/proxy?url=${encodeURIComponent(
-    BASE_URL + path + (queryString ? "?" + queryString : "")
-  )}`;
+  const targetUrl = BASE_URL + path + (queryString ? "?" + queryString : "");
+  const isDev = Boolean(import.meta.env?.DEV);
+  const hostname =
+    typeof window !== "undefined" && window.location?.hostname
+      ? window.location.hostname
+      : "localhost";
+  const proxyBase = isDev
+    ? `http://${hostname}:3001/api/proxy`
+    : "/api/proxy";
+
+  return `${proxyBase}?url=${encodeURIComponent(targetUrl)}`;
 };
 
 // Fetch với proxy để tránh CORS - Optimized with cache and reduced retries
@@ -58,6 +66,15 @@ export const fetchWithProxy = async (path, params = {}, retries = 2) => {
       const trimmed = (data || "").trim();
 
       if (trimmed.length > 0) {
+        if (
+          trimmed.startsWith("export const config") ||
+          trimmed.startsWith("export default async function handler") ||
+          trimmed.includes("runtime: 'edge'") ||
+          trimmed.includes('runtime: "edge"')
+        ) {
+          throw new Error("Proxy returned source code instead of upstream data");
+        }
+
         // Cache successful response
         _responseCache.set(cacheKey, { data: trimmed, ts: Date.now() });
 
