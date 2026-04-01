@@ -5,7 +5,7 @@
 import {
   fetchMemberInfo,
   fetchMemberInfoByName,
-} from "../../blogs/services/blogService";
+} from "../services/memberService";
 
 /**
  * iOS-specific member loading with comprehensive fallback strategies

@@ -6,6 +6,7 @@ import {
   shouldUseProxy,
   getUserAgent,
 } from "../../../lib/utils/deviceDetection";
+import { fetchMemberListAPI } from "../../members/services/memberService";
 import {
   shouldUseLocalDB,
   getFolderFromMemberCode,
@@ -13,41 +14,15 @@ import {
   loadLocalMemberInfo,
   getMemberCodeFromFolder,
 } from "../data/localBlogLoader";
-import {
-  loadGraduatedMember,
-  isGraduatedMember,
-} from "../../members/data/graduatedMembersLoader";
+import { loadGraduatedMember } from "../../members/data/graduatedMembersLoader";
 
 const BASE_URL = "https://www.nogizaka46.com";
 const BLOG_URL = `/s/n46/diary/MEMBER/list`;
 
 // Enhanced caching system
 const _detailCache = new Map(); // key: blogId -> blog detail object
-const _memberListCache = { data: null, ts: 0 }; // Cache member list API (10 min TTL)
 const _blogPageCache = new Map(); // key: `${memberCode}:${page}` -> { blogs, nextPage, ts }
-const MEMBER_CACHE_MS = 1000 * 60 * 10; // 10 minutes
 const PAGE_CACHE_MS = 1000 * 60 * 5; // 5 minutes
-
-const parseMemberListResponse = (memberData) => {
-  if (Array.isArray(memberData)) return memberData;
-  if (memberData && typeof memberData === "object" && Array.isArray(memberData.data)) {
-    return memberData.data;
-  }
-  if (typeof memberData !== "string") {
-    throw new Error("Invalid member list response type");
-  }
-
-  const trimmed = memberData.trim();
-  const jsonStr = trimmed.startsWith("res(")
-    ? trimmed.replace(/^res\(/, "").replace(/\);?$/, "")
-    : trimmed;
-  const api = JSON.parse(jsonStr);
-
-  if (Array.isArray(api)) return api;
-  if (api && Array.isArray(api.data)) return api.data;
-
-  throw new Error("Member list payload missing data array");
-};
 
 export const getCachedBlogDetail = (blogId) => _detailCache.get(String(blogId));
 export const prefetchBlogDetail = async (blogId) => {
@@ -388,36 +363,6 @@ export const getImageUrl = (imagePath, options = {}) => {
 };
 
 // Cached member list API fetch
-const fetchMemberListAPI = async () => {
-  const now = Date.now();
-  if (_memberListCache.data && now - _memberListCache.ts < MEMBER_CACHE_MS) {
-    return _memberListCache.data;
-  }
-
-  let memberData;
-  if (shouldUseProxy()) {
-    try {
-      memberData = await fetchWithProxy("/s/n46/api/list/member", { callback: "res" });
-    } catch {
-      const response = await axios.get(`${BASE_URL}/s/n46/api/list/member?callback=res`, {
-        responseType: "text",
-        headers: { "User-Agent": getUserAgent() },
-      });
-      memberData = response.data;
-    }
-  } else {
-    const response = await axios.get(`${BASE_URL}/s/n46/api/list/member?callback=res`, {
-      responseType: "text",
-      headers: { "User-Agent": getUserAgent() },
-    });
-    memberData = response.data;
-  }
-
-  const parsedMembers = parseMemberListResponse(memberData);
-  _memberListCache.data = parsedMembers;
-  _memberListCache.ts = now;
-  return parsedMembers;
-};
 
 // Fetch thông tin member từ code - Optimized with cache
 export const fetchMemberInfo = async (memberCode) => {

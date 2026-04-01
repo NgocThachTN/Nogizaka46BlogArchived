@@ -2,7 +2,7 @@ import React from "react";
 import { Space, Typography, Tag, Button } from "antd";
 import { LinkOutlined } from "@ant-design/icons";
 import { ProCard } from "@ant-design/pro-components";
-import { prefetchMemberInfo } from "../../../../blogs/services/blogService";
+import { prefetchMemberInfo } from "../../../services/memberService";
 
 const { Text } = Typography;
 

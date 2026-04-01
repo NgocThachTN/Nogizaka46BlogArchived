@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
 import { Typography, Button, FloatButton, message, notification } from "antd";
 import { LeftOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import {
@@ -15,15 +15,13 @@ import {
   getCachedBlogDetail,
   prefetchBlogDetail,
 } from "../services/blogService";
-import { isIOS } from "../../../lib/utils/deviceDetection";
-import BlogDetailMobile from "./BlogDetailMobile";
 import MemberProfile from "../../members/components/MemberProfile";
-import {
-  translateJapaneseToEnglish,
-  translateJapaneseToVietnamese,
-  translateTitleToVietnamese,
-} from "../../translation/api/GeminiTranslate";
-import { initKuroshiro, addFuriganaToHtml } from "../lib/furiganaHelper";
+import { isIOS } from "../../../lib/utils/deviceDetection";
+import { useResponsive } from "../../../lib/hooks/useResponsive";
+import { useStoredState } from "../../../lib/hooks/useStoredState";
+import { useBlogTranslation } from "../hooks/useBlogTranslation";
+import { useFuriganaContent } from "../hooks/useFuriganaContent";
+import type { PageProps } from "../../../shared/types";
 
 // Import new components
 import BlogDetailHeader from "./BlogDetail/BlogDetailHeader";
@@ -43,28 +41,32 @@ import {
 } from "./BlogDetail/constants";
 import {
   BlogDetailDesktopSkeleton,
+  BlogDetailMobileSkeleton,
   MemberProfileSkeleton,
 } from "../../../shared/components/PageSkeletons";
 
 const { Title } = Typography;
 dayjs.locale("ja");
 
+const BlogDetailMobile = lazy(() => import("./BlogDetailMobile"));
+
 export default function BlogDetail({
   language: propLanguage,
   setLanguage: propSetLanguage,
   themeMode,
   setThemeMode,
-}) {
+}: PageProps) {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const { isMobile } = useResponsive();
   const [blog, setBlog] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
   const [memberBlogs, setMemberBlogs] = useState([]);
   const [memberBlogsLoading, setMemberBlogsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
-
-  const [language, setLanguage] = useState(propLanguage || "ja");
+  const [navIds, setNavIds] = useState({ prevId: null, nextId: null });
+  const language = propLanguage || "ja";
+  const setLanguage = propSetLanguage;
   const [readingMode, _SET_READING_MODE] = useState(false);
   const [tategaki, setTategaki] = useState(false);
   const prevReadingMode = useRef(false);
@@ -79,48 +81,37 @@ export default function BlogDetail({
     }
   }, [tategaki]);
 
-  const [fontSizeKey, setFontSizeKey] = useState(
-    () => localStorage.getItem(LS_KEY_SIZE) || "sm"
+  const [fontSizeKey, setFontSizeKey] = useStoredState(
+    LS_KEY_SIZE,
+    () => "sm"
   );
-
-  // translated caches
-  const [trHtml, setTrHtml] = useState({ en: "", vi: "" });
-  const [trTitle, setTrTitle] = useState({ en: "", vi: "" });
-  const [translating, setTranslating] = useState(false);
-  const [translationProgress, setTranslationProgress] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  // Furigana states
-  const [showFurigana, setShowFurigana] = useState(false);
-  const [furiganaContent, setFuriganaContent] = useState("");
-  const [furiganaLoading, setFuriganaLoading] = useState(false);
-  const [kuroshiroReady, setKuroshiroReady] = useState(false);
-  const [kuroshiroInitializing, setKuroshiroInitializing] = useState(false);
-
-  const [navIds, setNavIds] = useState({ prevId: null, nextId: null });
+  const {
+    displayTitle: translatedTitle,
+    displayContent: translatedContent,
+    translating,
+    translationProgress,
+  } = useBlogTranslation({
+    blog,
+    blogId: id,
+    language,
+  });
+  const {
+    showFurigana,
+    setShowFurigana,
+    furiganaContent,
+    furiganaLoading,
+    kuroshiroReady,
+    kuroshiroInitializing,
+  } = useFuriganaContent({
+    blogId: id,
+    content: blog?.content,
+    language,
+  });
 
   const contentRef = useRef(null);
-  const currentBlogIdRef = useRef(id); // Track current blog ID for translation cancellation
 
   // Use navigation hook
   const { fastGo, onHoverPrefetch, navLock, pendingNavId } = useBlogNavigation(navigate, navIds);
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Reset translation state when blog changes
-  useEffect(() => {
-    if (currentBlogIdRef.current !== id) {
-      setTranslating(false);
-      setTrHtml({ en: "", vi: "" });
-      setTrTitle({ en: "", vi: "" });
-      currentBlogIdRef.current = id;
-    }
-  }, [id]);
 
   // Scroll to top when blog ID changes
   useEffect(() => {
@@ -423,6 +414,7 @@ export default function BlogDetail({
     return Math.max(1, Math.ceil(n / 600));
   }, [plainText]);
 
+  /*
   // Translate when language changes
   useEffect(() => {
     (async () => {
@@ -605,43 +597,41 @@ export default function BlogDetail({
     setShowFurigana(false);
     setFuriganaContent("");
   }, [id]);
+  */
 
   // Display title/content by language
-  const displayTitle =
-    language === "ja"
-      ? blog?.title
-      : cleanDisplayText(trTitle[language]) || blog?.title;
+  const displayTitle = translatedTitle || blog?.title;
 
   const displayContent =
-    language === "ja" || translating || !trHtml[language]
-      ? showFurigana && furiganaContent
-        ? furiganaContent
-        : blog?.content
-      : cleanDisplayText(trHtml[language]);
+    language === "ja" && showFurigana && furiganaContent
+      ? furiganaContent
+      : translatedContent || blog?.content;
 
   const sz = SIZE_PRESETS[fontSizeKey] || SIZE_PRESETS.md;
 
   // Mobile
   if (isMobile) {
     return (
-      <BlogDetailMobile
-        blog={blog}
-        loading={loading}
-        translating={translating}
-        language={language}
-        setLanguage={setLanguage}
-        displayTitle={displayTitle}
-        displayContent={displayContent}
-        prevId={navIds.prevId}
-        nextId={navIds.nextId}
-        fastGo={fastGo}
-        pendingNavId={pendingNavId}
-        navLock={navLock}
-        memberInfo={memberInfo}
-        setMemberInfo={setMemberInfo}
-        themeMode={themeMode}
-        setThemeMode={setThemeMode}
-      />
+      <Suspense fallback={<BlogDetailMobileSkeleton themeMode={themeMode} />}>
+        <BlogDetailMobile
+          blog={blog}
+          loading={loading}
+          translating={translating}
+          language={language}
+          setLanguage={setLanguage}
+          displayTitle={displayTitle}
+          displayContent={displayContent}
+          prevId={navIds.prevId}
+          nextId={navIds.nextId}
+          fastGo={fastGo}
+          pendingNavId={pendingNavId}
+          navLock={navLock}
+          memberInfo={memberInfo}
+          setMemberInfo={setMemberInfo}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+        />
+      </Suspense>
     );
   }
 

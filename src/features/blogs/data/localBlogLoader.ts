@@ -4,6 +4,8 @@
  * Priority: Local DB → Online API
  */
 
+import { shouldUseLocalDB } from "../../members/lib/localData";
+
 const LOCAL_DB_PATH = "/blogdb";
 
 // Map English names to folder names
@@ -152,22 +154,7 @@ export const loadLocalLinks = async (folderName) => {
     }
 };
 
-/**
- * Check if we should use local database
- * Conditions: 
- * 1. Environment variable flag enabled
- * 2. Development mode
- * 3. Member has local data available
- */
-export const shouldUseLocalDB = () => {
-    // Allow override via environment variable
-    if (import.meta.env.VITE_USE_LOCAL_DB === "true") return true;
-
-    // Auto-enable in development mode
-    if (import.meta.env.DEV) return true;
-
-    return false;
-};
+export { shouldUseLocalDB };
 
 /**
  * Get member code from folder name (reverse mapping)

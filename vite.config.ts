@@ -89,9 +89,36 @@ export default defineConfig({
     // Optimize for Vercel deployment
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split Kuroshiro into separate chunk for lazy loading
-          'furigana': ['kuroshiro', 'kuroshiro-analyzer-kuromoji'],
+        manualChunks(id) {
+          if (id.includes("kuroshiro") || id.includes("kuromoji")) {
+            return "furigana";
+          }
+
+          if (id.includes("@google/generative-ai")) {
+            return "translation-sdk";
+          }
+
+          if (id.includes("node_modules")) {
+            if (id.includes("@ant-design") || id.includes(`${path.sep}antd${path.sep}`)) {
+              return "antd-vendor";
+            }
+
+            if (
+              id.includes(`${path.sep}react${path.sep}`) ||
+              id.includes("react-dom") ||
+              id.includes("react-router-dom")
+            ) {
+              return "react-vendor";
+            }
+          }
+
+          if (id.includes(`${path.sep}src${path.sep}features${path.sep}blogs${path.sep}services${path.sep}blogService`)) {
+            return "blog-service";
+          }
+
+          if (id.includes(`${path.sep}src${path.sep}features${path.sep}members${path.sep}data${path.sep}graduatedMembersLoader`)) {
+            return "member-data";
+          }
         },
       },
     },

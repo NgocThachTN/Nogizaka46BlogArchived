@@ -1,4 +1,4 @@
-// @ts-nocheck
+import { lazy, Suspense, useEffect, useMemo, type ReactNode } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,50 +6,105 @@ import {
   Navigate,
 } from "react-router-dom";
 import { ProLayout } from "@ant-design/pro-components";
-import { ConfigProvider, theme, Segmented } from "antd";
+import { ConfigProvider, Segmented, theme } from "antd";
 import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
-import { useEffect, useMemo, useState } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
-import BlogList from "../features/blogs/components/BlogList";
-import BlogListMobile from "../features/blogs/components/BlogListMobile";
-import BlogDetail from "../features/blogs/components/BlogDetail";
-import MemberProfile from "../features/members/components/MemberProfile";
-import MemberList from "../features/members/components/MemberList";
+import { useAppPreferences } from "../lib/hooks/useAppPreferences";
+import { useResponsive } from "../lib/hooks/useResponsive";
+import {
+  BlogDetailDesktopSkeleton,
+  BlogDetailMobileSkeleton,
+  BlogListDesktopSkeleton,
+  BlogListMobileSkeleton,
+  MemberListDesktopSkeleton,
+  MemberListMobileSkeleton,
+  MemberProfileSkeleton,
+} from "../shared/components/PageSkeletons";
+import type { PageProps, ThemeMode } from "../shared/types";
 import "./App.css";
 
+const MemberListDesktop = lazy(
+  () => import("../features/members/components/MemberList")
+);
+const MemberListMobile = lazy(
+  () => import("../features/members/components/MemberListMobile")
+);
+const BlogListDesktop = lazy(
+  () => import("../features/blogs/components/BlogList")
+);
+const BlogListMobile = lazy(
+  () => import("../features/blogs/components/BlogListMobile")
+);
+const BlogDetailPage = lazy(
+  () => import("../features/blogs/components/BlogDetail")
+);
+const MemberProfile = lazy(
+  () => import("../features/members/components/MemberProfile")
+);
+
+type RouteKey = "members" | "blogs" | "blog-detail";
+
+function RouteFallback({
+  routeKey,
+  themeMode,
+  isMobile,
+}: {
+  routeKey: RouteKey;
+  themeMode: ThemeMode;
+  isMobile: boolean;
+}) {
+  if (routeKey === "members") {
+    return isMobile ? (
+      <MemberListMobileSkeleton themeMode={themeMode} />
+    ) : (
+      <div className="diary-paper notebook-container" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
+        <div className="notebook-binding" style={{ left: 0 }}></div>
+        <MemberListDesktopSkeleton themeMode={themeMode} />
+      </div>
+    );
+  }
+
+  if (routeKey === "blogs") {
+    return isMobile ? (
+      <BlogListMobileSkeleton themeMode={themeMode} />
+    ) : (
+      <div className="diary-paper notebook-container" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
+        <div className="notebook-binding" style={{ left: 0 }}></div>
+        <BlogListDesktopSkeleton themeMode={themeMode} />
+      </div>
+    );
+  }
+
+  return isMobile ? (
+    <BlogDetailMobileSkeleton themeMode={themeMode} />
+  ) : (
+    <div className="diary-paper notebook-container" style={{ minHeight: "100vh", padding: "40px", paddingLeft: "60px" }}>
+      <div className="notebook-binding" style={{ left: 0 }}></div>
+      <BlogDetailDesktopSkeleton themeMode={themeMode} />
+    </div>
+  );
+}
+
+function renderLazyPage(
+  Component: typeof MemberListDesktop,
+  props: PageProps,
+  fallback: ReactNode
+) {
+  return (
+    <Suspense fallback={fallback}>
+      <Component {...props} />
+    </Suspense>
+  );
+}
+
 function App() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [language, setLanguage] = useState("ja");
-  const [themeMode, setThemeMode] = useState(() => {
-    const saved = localStorage.getItem("theme-mode");
-    if (saved === "light" || saved === "dark") return saved;
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return prefersDark ? "dark" : "light";
-  });
+  const { language, setLanguage, themeMode, setThemeMode } = useAppPreferences();
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     document.title = "Nogizaka46 Blog Archive";
-
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem("theme-mode", themeMode);
-    const root = document.documentElement;
-    if (themeMode === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [themeMode]);
 
   const algorithm = useMemo(
     () =>
@@ -72,6 +127,7 @@ function App() {
         fontFamily: "'Playfair Display', 'Times New Roman', 'Georgia', 'serif'",
       };
     }
+
     return {
       colorPrimary: "#8B4513",
       colorBgContainer: "#FDF6E3",
@@ -96,15 +152,15 @@ function App() {
       Card:
         themeMode === "dark"
           ? {
-            borderRadiusLG: 12,
-            boxShadowTertiary: "0 2px 8px rgba(0,0,0,0.35)",
-            colorBgContainer: "#24211d",
-          }
+              borderRadiusLG: 12,
+              boxShadowTertiary: "0 2px 8px rgba(0,0,0,0.35)",
+              colorBgContainer: "#24211d",
+            }
           : {
-            borderRadiusLG: 12,
-            boxShadowTertiary: "0 2px 8px rgba(139, 69, 19, 0.1)",
-            colorBgContainer: "#FDF6E3",
-          },
+              borderRadiusLG: 12,
+              boxShadowTertiary: "0 2px 8px rgba(139, 69, 19, 0.1)",
+              colorBgContainer: "#FDF6E3",
+            },
       Button: { borderRadius: 6, borderRadiusLG: 8 },
       Typography:
         themeMode === "dark"
@@ -113,6 +169,16 @@ function App() {
     }),
     [themeMode]
   );
+
+  const pageProps: PageProps = {
+    language,
+    setLanguage,
+    themeMode,
+    setThemeMode,
+  };
+
+  const memberPageComponent = isMobile ? MemberListMobile : MemberListDesktop;
+  const blogListPageComponent = isMobile ? BlogListMobile : BlogListDesktop;
 
   return (
     <ConfigProvider
@@ -124,8 +190,9 @@ function App() {
     >
       <Router>
         <div
-          className={`min-h-screen ${themeMode === "dark" ? "dark-book-background" : "book-background"
-            }`}
+          className={`min-h-screen ${
+            themeMode === "dark" ? "dark-book-background" : "book-background"
+          }`}
         >
           <ProLayout
             layout="side"
@@ -134,81 +201,58 @@ function App() {
             fixSiderbar
             collapsed={isMobile}
             siderWidth={320}
-            headerHeight={isMobile ? 0 : 72}
-            menuRender={() => {
-              return !isMobile ? (
+            menuRender={() =>
+              !isMobile ? (
                 <div className="p-4 h-full overflow-y-auto">
-                  <MemberProfile />
+                  <Suspense fallback={<MemberProfileSkeleton themeMode={themeMode} />}>
+                    <MemberProfile />
+                  </Suspense>
                 </div>
-              ) : null;
-            }}
+              ) : null
+            }
             headerRender={isMobile ? false : undefined}
             actionsRender={() => [
               <Segmented
                 key="theme-switch"
                 size="middle"
                 value={themeMode}
-                onChange={(val) => setThemeMode(val)}
+                onChange={(value) => setThemeMode(value as ThemeMode)}
                 options={[
                   { label: "Light", value: "light", icon: <BulbOutlined /> },
                   { label: "Dark", value: "dark", icon: <MoonOutlined /> },
                 ]}
               />,
             ]}
-            disableContentMargin
             contentStyle={{ margin: 0, padding: 0 }}
-            style={{
-              minHeight: "100vh",
-            }}
+            style={{ minHeight: "100vh" }}
             menuHeaderRender={false}
           >
-            <div
-              className="min-h-screen"
-              style={{ paddingTop: 0, marginTop: 0 }}
-            >
+            <div className="min-h-screen" style={{ paddingTop: 0, marginTop: 0 }}>
               <Routes>
                 <Route path="/" element={<Navigate to="/members" replace />} />
                 <Route
                   path="/members"
-                  element={
-                    <MemberList
-                      language={language}
-                      setLanguage={setLanguage}
-                      themeMode={themeMode}
-                      setThemeMode={setThemeMode}
-                    />
-                  }
+                  element={renderLazyPage(
+                    memberPageComponent,
+                    pageProps,
+                    <RouteFallback routeKey="members" themeMode={themeMode} isMobile={isMobile} />
+                  )}
                 />
                 <Route
                   path="/blogs/:memberCode"
-                  element={
-                    isMobile ? (
-                      <BlogListMobile
-                        language={language}
-                        setLanguage={setLanguage}
-                        themeMode={themeMode}
-                        setThemeMode={setThemeMode}
-                      />
-                    ) : (
-                      <BlogList
-                        language={language}
-                        setLanguage={setLanguage}
-                        themeMode={themeMode}
-                        setThemeMode={setThemeMode}
-                      />
-                    )
-                  }
+                  element={renderLazyPage(
+                    blogListPageComponent,
+                    pageProps,
+                    <RouteFallback routeKey="blogs" themeMode={themeMode} isMobile={isMobile} />
+                  )}
                 />
                 <Route
                   path="/blog/:id"
-                  element={
-                    <BlogDetail
-                      language={language}
-                      setLanguage={setLanguage}
-                      themeMode={themeMode}
-                      setThemeMode={setThemeMode}
-                    />
-                  }
+                  element={renderLazyPage(
+                    BlogDetailPage,
+                    pageProps,
+                    <RouteFallback routeKey="blog-detail" themeMode={themeMode} isMobile={isMobile} />
+                  )}
                 />
               </Routes>
             </div>

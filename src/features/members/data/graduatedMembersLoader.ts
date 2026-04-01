@@ -1,23 +1,10 @@
-// @ts-nocheck
+import { shouldUseLocalDB } from "../lib/localData";
 /**
  * Graduated Members Loader
  * Auto-detect graduated members from blogdb/ folder
  */
 
 const LOCAL_DB_PATH = "/blogdb";
-
-/**
- * Check if we should load graduated members from local database
- */
-export const shouldUseLocalDB = () => {
-    // Allow override via environment variable
-    if (import.meta.env.VITE_USE_LOCAL_DB === "true") return true;
-
-    // Auto-enable in development mode
-    if (import.meta.env.DEV) return true;
-
-    return false;
-};
 
 // Known graduated members with local data
 export const GRADUATED_MEMBERS = [
@@ -77,6 +64,8 @@ export const GRADUATED_MEMBERS = [
     },
 ];
 
+export { shouldUseLocalDB };
+
 /**
  * Load graduated member info from local database
  * @param {string} memberCode - Member code
@@ -94,7 +83,12 @@ export const loadGraduatedMember = async (memberCode) => {
         const localData = await response.json();
 
         // Transform intro array to flat structure for compatibility
-        const introMap = {};
+        const introMap: {
+            birthday?: string;
+            blood?: string;
+            constellation?: string;
+            height?: string;
+        } = {};
         if (Array.isArray(localData.intro)) {
             localData.intro.forEach((item) => {
                 if (!item || typeof item !== "object") return;
@@ -148,8 +142,11 @@ export const loadAllGraduatedMembers = async () => {
     );
 
     return results
-        .filter((r) => r.status === "fulfilled" && r.value && typeof r.value === "object")
-        .map((r) => r.value);
+        .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof loadGraduatedMember>>> => (
+            result.status === "fulfilled" && Boolean(result.value && typeof result.value === "object")
+        ))
+        .map((result) => result.value)
+        .filter(Boolean);
 };
 
 /**

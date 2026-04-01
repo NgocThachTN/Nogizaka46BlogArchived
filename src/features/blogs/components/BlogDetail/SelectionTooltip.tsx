@@ -11,7 +11,6 @@ import {
   CloseOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
-import { translateSnippet } from "../../../translation/api/GeminiTranslate";
 import { isJapanese } from "../../lib/jishoService";
 
 const keyframes = `
@@ -133,6 +132,7 @@ export default function SelectionTooltip({
     setTranslating(true);
     setError("");
     try {
+      const { translateSnippet } = await import("../../../translation/api/GeminiTranslate");
       const result = await translateSnippet(selectedText, targetLang);
       setTranslated(result);
     } catch (err) {

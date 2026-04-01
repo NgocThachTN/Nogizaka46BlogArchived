@@ -1,7 +1,6 @@
 // MemberListMobile.jsx — Notebook Diary Edition
 // Notebook style member list with "sticker/photo" cards
 
-// @ts-nocheck
 import React, {
   useState,
   useEffect,
@@ -49,6 +48,7 @@ import {
   shouldUseLocalDB,
 } from "../data/graduatedMembersLoader";
 import { MemberListMobileSkeleton } from "../../../shared/components/PageSkeletons";
+import type { PageProps } from "../../../shared/types";
 
 /** Typography */
 const { Title, Text } = Typography;
@@ -148,10 +148,10 @@ const getAge = (birthday) => {
 };
 
 const useRafDebounce = (fn, delay = 160) => {
-  const timer = useRef();
+  const timer = useRef<number | null>(null);
   return useCallback(
     (...args) => {
-      if (timer.current) cancelAnimationFrame(timer.current);
+      if (timer.current !== null) cancelAnimationFrame(timer.current);
       const start = performance.now();
       const tick = () => {
         if (performance.now() - start >= delay) {
@@ -171,7 +171,7 @@ export default function MemberListMobile({
   setLanguage,
   themeMode = "light",
   setThemeMode,
-}) {
+}: PageProps) {
   // Ensure language is valid, fallback to "ja"
   const currentLanguage = ["ja", "en", "vi"].includes(language)
     ? language
@@ -299,9 +299,9 @@ export default function MemberListMobile({
     return grouped
       .filter((group) => group?.gen && Array.isArray(group.items) && group.items.length > 0)
       .map(({ gen, items }) => {
-        const displayGen = gen === "ãã®ä»–"
+        const displayGen = gen === "その他"
           ? t.other[currentLanguage]
-          : gen.replace("æœŸç”Ÿ", currentLanguage === "en" ? " Gen" : "æœŸç”Ÿ").replace(/^(\d+)\s*(Gen|Tháº¿ há»‡)$/, currentLanguage === "en" ? "Gen $1" : "Tháº¿ há»‡ $1");
+          : gen.replace("期生", currentLanguage === "en" ? " Gen" : "期生").replace(/^(\d+)\s*(Gen|Thế hệ)$/, currentLanguage === "en" ? "Gen $1" : "Thế hệ $1");
 
         return {
           key: gen,
@@ -324,7 +324,7 @@ export default function MemberListMobile({
           ),
           children: (
             <div style={{ padding: "4px 0" }}>
-              {gen === "6æœŸç”Ÿ" && <Gen6BlogCard />}
+              {gen === "6期生" && <Gen6BlogCard />}
               {items.filter(Boolean).map((m) => (
                 <MemberCard key={m.code} m={m} />
               ))}
@@ -820,6 +820,7 @@ export default function MemberListMobile({
             defaultActiveKey={collapseItems.map((item) => item.key)}
             style={{ background: "transparent" }}
             expandIcon={({ isActive }) => <RightOutlined rotate={isActive ? 90 : 0} style={{ color: "#8b5a2b" }} />}
+            // @ts-expect-error legacyItems is kept temporarily while preserving current mobile collapse rendering
             legacyItems={grouped.map(({ gen, items }) => {
               const displayGen = gen === "その他"
                 ? t.other[currentLanguage]
