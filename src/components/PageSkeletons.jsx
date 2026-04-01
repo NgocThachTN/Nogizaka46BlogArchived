@@ -17,6 +17,38 @@ const getSurfaceStyle = (themeMode, extra = {}) => ({
   ...extra,
 });
 
+const getSkeletonBlockStyle = (themeMode, extra = {}) => ({
+  display: "block",
+  width: "100%",
+  borderRadius: 4,
+  background:
+    themeMode === "dark"
+      ? "linear-gradient(90deg, rgba(72, 66, 58, 0.92) 25%, rgba(100, 92, 81, 0.98) 37%, rgba(72, 66, 58, 0.92) 63%)"
+      : "linear-gradient(90deg, rgba(233, 226, 214, 0.95) 25%, rgba(245, 239, 229, 1) 37%, rgba(233, 226, 214, 0.95) 63%)",
+  backgroundSize: "400% 100%",
+  animation: "page-skeleton-shimmer 1.4s ease infinite",
+  ...extra,
+});
+
+const SkeletonShimmerStyles = () => (
+  <style>
+    {`
+      @keyframes page-skeleton-shimmer {
+        0% {
+          background-position: 100% 0;
+        }
+        100% {
+          background-position: 0 0;
+        }
+      }
+    `}
+  </style>
+);
+
+const MediaSkeletonBlock = ({ themeMode, style }) => (
+  <div aria-hidden="true" style={getSkeletonBlockStyle(themeMode, style)} />
+);
+
 const StickySkeleton = ({ themeMode, children, style }) => (
   <div className="sticky-note" style={style}>
     <div style={getSurfaceStyle(themeMode, { padding: 18 })}>{children}</div>
@@ -30,7 +62,25 @@ const MemberCardSkeleton = ({ themeMode }) => (
       transform: "rotate(-1deg)",
     })}
   >
-    <Skeleton.Image active style={{ width: "100%", height: 200, marginBottom: 12 }} />
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        paddingBottom: "120%",
+        marginBottom: 12,
+        overflow: "hidden",
+        borderRadius: 2,
+      }}
+    >
+      <MediaSkeletonBlock
+        themeMode={themeMode}
+        style={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: 2,
+        }}
+      />
+    </div>
     <Skeleton active title={{ width: "72%" }} paragraph={{ rows: 2, width: ["92%", "58%"] }} />
   </div>
 );
@@ -48,7 +98,10 @@ const MobileMemberCardSkeleton = ({ themeMode }) => (
       marginBottom: 16,
     }}
   >
-    <Skeleton.Image active style={{ width: 80, height: 96, borderRadius: 0, flexShrink: 0 }} />
+    <MediaSkeletonBlock
+      themeMode={themeMode}
+      style={{ width: 80, height: 96, borderRadius: 0, flexShrink: 0 }}
+    />
     <div style={{ flex: 1 }}>
       <Skeleton active title={{ width: "60%" }} paragraph={{ rows: 2, width: ["80%", "45%"] }} />
     </div>
@@ -57,7 +110,7 @@ const MobileMemberCardSkeleton = ({ themeMode }) => (
 
 const BlogCardSkeleton = ({ themeMode, height = 160 }) => (
   <div style={getSurfaceStyle(themeMode, { padding: 16 })}>
-    <Skeleton.Image active style={{ width: "100%", height, marginBottom: 16 }} />
+    <MediaSkeletonBlock themeMode={themeMode} style={{ height, marginBottom: 16, borderRadius: 12 }} />
     <Skeleton active title={{ width: "80%" }} paragraph={{ rows: 2, width: ["100%", "60%"] }} />
   </div>
 );
@@ -83,7 +136,10 @@ const MobileDiaryCardSkeleton = ({ themeMode }) => (
         overflow: "hidden",
       })}
     >
-      <Skeleton.Image active style={{ width: "100%", height: 180, borderRadius: 0, display: "block" }} />
+      <MediaSkeletonBlock
+        themeMode={themeMode}
+        style={{ width: "100%", height: 180, borderRadius: 0, display: "block" }}
+      />
       <div style={{ padding: "16px 20px" }}>
         <Skeleton active title={{ width: "78%" }} paragraph={{ rows: 1, width: "42%" }} />
       </div>
@@ -144,7 +200,10 @@ export function RecentBlogsWidgetSkeleton({ themeMode, isMobile = false, rows = 
               background: themeMode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
             }}
           >
-            <Skeleton.Image active style={{ width: isMobile ? 50 : 56, height: isMobile ? 50 : 56 }} />
+            <MediaSkeletonBlock
+              themeMode={themeMode}
+              style={{ width: isMobile ? 50 : 56, height: isMobile ? 50 : 56 }}
+            />
             <div style={{ flex: 1 }}>
               <Skeleton active title={{ width: "90%" }} paragraph={{ rows: 1, width: "48%" }} />
             </div>
@@ -158,6 +217,7 @@ export function RecentBlogsWidgetSkeleton({ themeMode, isMobile = false, rows = 
 export function MemberProfileSkeleton({ themeMode }) {
   return (
     <div style={{ position: "relative" }}>
+      <SkeletonShimmerStyles />
       <div
         style={{
           position: "absolute",
@@ -209,7 +269,8 @@ export function MemberProfileSkeleton({ themeMode }) {
 
 export function MemberListDesktopSkeleton({ themeMode }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 32, maxWidth: 1200, margin: "0 auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 32, width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+      <SkeletonShimmerStyles />
       <StickySkeleton themeMode={themeMode} style={{ transform: "rotate(-1deg)", zIndex: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 24 }}>
           <Skeleton active title={{ width: 280 }} paragraph={{ rows: 1, width: 180 }} />
@@ -252,6 +313,7 @@ export function MemberListDesktopSkeleton({ themeMode }) {
 export function MemberListMobileSkeleton({ themeMode }) {
   return (
     <>
+      <SkeletonShimmerStyles />
       <div
         style={{
           background: themeMode === "dark" ? "rgba(36, 33, 29, 0.95)" : "rgba(255,255,255,0.95)",
@@ -293,6 +355,7 @@ export function MemberListMobileSkeleton({ themeMode }) {
 export function BlogListDesktopSkeleton({ themeMode, isMobile = false }) {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+      <SkeletonShimmerStyles />
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 17fr) minmax(280px, 7fr)", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
           <StickySkeleton themeMode={themeMode} style={{ transform: "rotate(-1deg)", zIndex: 10 }}>
@@ -318,7 +381,7 @@ export function BlogListDesktopSkeleton({ themeMode, isMobile = false }) {
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 24 }}>
             {Array.from({ length: 9 }, (_, i) => (
-              <BlogCardSkeleton key={`blog-card-${i}`} themeMode={themeMode} />
+              <BlogCardSkeleton key={`blog-card-${i}`} themeMode={themeMode} height={isMobile ? 148 : 190} />
             ))}
           </div>
 
@@ -347,6 +410,7 @@ export function BlogListDesktopSkeleton({ themeMode, isMobile = false }) {
 export function BlogListMobileSkeleton({ themeMode }) {
   return (
     <>
+      <SkeletonShimmerStyles />
       <div
         style={{
           background: themeMode === "dark" ? "rgba(36, 33, 29, 0.95)" : "rgba(255,255,255,0.95)",
@@ -382,6 +446,7 @@ export function BlogListMobileSkeleton({ themeMode }) {
 export function BlogDetailDesktopSkeleton({ themeMode }) {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
+      <SkeletonShimmerStyles />
       <StickySkeleton themeMode={themeMode} style={{ transform: "rotate(-0.5deg)", zIndex: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", gap: 8 }}>
@@ -406,7 +471,7 @@ export function BlogDetailDesktopSkeleton({ themeMode }) {
           <div style={getSurfaceStyle(themeMode, { padding: "28px 32px" })}>
             <Skeleton active title={{ width: "56%" }} paragraph={{ rows: 1, width: "24%" }} />
             <div style={{ margin: "24px 0" }}>
-              <Skeleton.Image active style={{ width: "100%", height: 340 }} />
+              <MediaSkeletonBlock themeMode={themeMode} style={{ width: "100%", height: 340 }} />
             </div>
             <Skeleton active title={false} paragraph={{ rows: 14, width: ["100%", "100%", "96%", "94%", "91%", "88%", "100%", "98%", "95%", "92%", "90%", "86%", "82%", "58%"] }} />
           </div>
@@ -446,6 +511,7 @@ export function BlogDetailMobileSkeleton({ themeMode }) {
         backgroundColor: themeMode === "dark" ? "#1c1a17" : "#fdf6e3",
       }}
     >
+      <SkeletonShimmerStyles />
       <div
         style={{
           background: themeMode === "dark" ? "rgba(36,33,29,0.95)" : "rgba(255,255,255,0.95)",
@@ -490,7 +556,7 @@ export function BlogDetailMobileSkeleton({ themeMode }) {
         </div>
         <Skeleton active title={false} paragraph={{ rows: 4, width: ["100%", "100%", "86%", "64%"] }} />
         <div style={{ margin: "24px 0" }}>
-          <Skeleton.Image active style={{ width: "100%", height: 220, display: "block" }} />
+          <MediaSkeletonBlock themeMode={themeMode} style={{ width: "100%", height: 220, display: "block" }} />
         </div>
         <Skeleton active title={false} paragraph={{ rows: 10, width: ["100%", "100%", "100%", "96%", "94%", "92%", "88%", "84%", "80%", "58%"] }} />
       </div>

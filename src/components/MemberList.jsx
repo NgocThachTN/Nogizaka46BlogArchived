@@ -248,65 +248,68 @@ const MemberList = ({
         {!isMobile && <div className="notebook-binding" style={{ left: 0 }}></div>}
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px", maxWidth: 1200, margin: "0 auto" }}>
-
-          {/* Header Area - Sticky Note Style */}
-          <div className="sticky-note" style={{ transform: "rotate(-1deg)", zIndex: 10 }}>
-            <MemberListHeader
-              language={language}
-              setLanguage={setLanguage}
-              themeMode={themeMode}
-              setThemeMode={setThemeMode}
-              memberCount={members.length}
-              bookFont={bookFont}
-            />
-          </div>
-
-          {/* Filter Area - Sticky Note Style */}
-          <div className="sticky-note" style={{ transform: "rotate(1deg)", zIndex: 9, marginTop: "-10px" }}>
-            <MemberListFilterBar
-              language={language}
-              themeMode={themeMode}
-              genList={genList}
-              genFilter={genFilter}
-              setGenFilter={setGenFilter}
-              keyword={keyword}
-              setKeyword={setKeyword}
-              showGraduated={showGraduated}
-              setShowGraduated={setShowGraduated}
-              shouldShowGraduatedToggle={shouldUseLocalDB() && graduatedMembers.length > 0}
-              currentMemberCount={members.length}
-              graduatedMemberCount={graduatedMembers.length}
-              bookFont={bookFont}
-            />
-          </div>
-
           {loading ? (
             <MemberListDesktopSkeleton themeMode={themeMode} />
-          ) : grouped.length === 0 ? (
-            <ProCard
-              bordered
-              style={{
-                borderRadius: 14,
-                background:
-                  themeMode === "dark"
-                    ? "rgba(36, 33, 29, 0.85)"
-                    : "rgba(253, 246, 227, 0.8)",
-              }}
-            >
-              <Empty description={t.noMembers[currentLanguage]} />
-            </ProCard>
           ) : (
-            grouped.map(({ gen, items }) => (
-              <GenerationGroup
-                key={gen}
-                gen={gen}
-                items={items}
-                language={language}
-                themeMode={themeMode}
-                onMemberClick={(memberCode) => navigate(`/blogs/${memberCode}`)}
-                bookFont={bookFont}
-              />
-            ))
+            <>
+              {/* Header Area - Sticky Note Style */}
+              <div className="sticky-note" style={{ transform: "rotate(-1deg)", zIndex: 10 }}>
+                <MemberListHeader
+                  language={language}
+                  setLanguage={setLanguage}
+                  themeMode={themeMode}
+                  setThemeMode={setThemeMode}
+                  memberCount={members.length}
+                  bookFont={bookFont}
+                />
+              </div>
+
+              {/* Filter Area - Sticky Note Style */}
+              <div className="sticky-note" style={{ transform: "rotate(1deg)", zIndex: 9, marginTop: "-10px" }}>
+                <MemberListFilterBar
+                  language={language}
+                  themeMode={themeMode}
+                  genList={genList}
+                  genFilter={genFilter}
+                  setGenFilter={setGenFilter}
+                  keyword={keyword}
+                  setKeyword={setKeyword}
+                  showGraduated={showGraduated}
+                  setShowGraduated={setShowGraduated}
+                  shouldShowGraduatedToggle={shouldUseLocalDB() && graduatedMembers.length > 0}
+                  currentMemberCount={members.length}
+                  graduatedMemberCount={graduatedMembers.length}
+                  bookFont={bookFont}
+                />
+              </div>
+
+              {grouped.length === 0 ? (
+                <ProCard
+                  bordered
+                  style={{
+                    borderRadius: 14,
+                    background:
+                      themeMode === "dark"
+                        ? "rgba(36, 33, 29, 0.85)"
+                        : "rgba(253, 246, 227, 0.8)",
+                  }}
+                >
+                  <Empty description={t.noMembers[currentLanguage]} />
+                </ProCard>
+              ) : (
+                grouped.map(({ gen, items }) => (
+                  <GenerationGroup
+                    key={gen}
+                    gen={gen}
+                    items={items}
+                    language={language}
+                    themeMode={themeMode}
+                    onMemberClick={(memberCode) => navigate(`/blogs/${memberCode}`)}
+                    bookFont={bookFont}
+                  />
+                ))
+              )}
+            </>
           )}
         </div>
       </div>
