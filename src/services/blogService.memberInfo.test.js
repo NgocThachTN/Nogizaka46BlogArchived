@@ -18,7 +18,7 @@ const mockCommonDeps = ({
     getUserAgent: () => "test-agent",
   }));
   vi.doMock("../utils/localBlogLoader.js", () => ({
-    shouldUseLocalDB: () => false,
+    shouldUseLocalDB: () => useLocalDB,
     getFolderFromMemberCode: vi.fn(),
     loadLocalBlogs: vi.fn().mockResolvedValue([]),
     loadLocalMemberInfo: vi.fn().mockResolvedValue(null),
