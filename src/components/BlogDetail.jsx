@@ -164,15 +164,76 @@ export default function BlogDetail({
   // load blog (cache-first then revalidate)
   useEffect(() => {
     let isCancelled = false;
+    let sidebarRequestId = 0;
+    let lastSidebarKey = "";
+
+    const loadSidebarData = async (source) => {
+      if (!source || isCancelled) return;
+
+      const sidebarKey = `${source.memberCode || ""}:${source.author || ""}`;
+      if (sidebarKey && sidebarKey === lastSidebarKey) return;
+      lastSidebarKey = sidebarKey;
+
+      const requestId = ++sidebarRequestId;
+      const initialCode = source.memberCode ? String(source.memberCode).trim() : "";
+
+      const memberPromise = initialCode
+        ? fetchMemberInfo(initialCode).catch((memberError) => {
+          console.warn("Failed to fetch member info:", memberError);
+          return null;
+        })
+        : Promise.resolve(null);
+
+      const initialBlogsPromise = initialCode
+        ? fetchAllBlogs(initialCode).catch((blogError) => {
+          console.error("Failed to fetch member blogs:", blogError);
+          return [];
+        })
+        : null;
+
+      let member = await memberPromise;
+
+      if (!member && source.author) {
+        try {
+          member = await fetchMemberInfoByName(source.author);
+        } catch (memberError) {
+          console.warn("Failed to fetch member info by author:", memberError);
+        }
+      }
+
+      if (!isCancelled && requestId === sidebarRequestId) {
+        setMemberInfo(member);
+      }
+
+      const resolvedCode = member?.code ? String(member.code).trim() : initialCode;
+      let blogs = [];
+
+      if (initialBlogsPromise) {
+        blogs = await initialBlogsPromise;
+      } else if (resolvedCode) {
+        try {
+          blogs = await fetchAllBlogs(resolvedCode);
+        } catch (blogError) {
+          console.error("Failed to fetch member blogs:", blogError);
+        }
+      }
+
+      if (!isCancelled && requestId === sidebarRequestId) {
+        setMemberBlogs(blogs || []);
+        setMemberBlogsLoading(false);
+      }
+    };
 
     (async () => {
       try {
+        setMemberInfo(null);
         setMemberBlogs([]);
         setMemberBlogsLoading(true);
         const cached = getCachedBlogDetail(id);
         if (cached && !isCancelled) {
           setBlog(cached);
           setLoading(false);
+          loadSidebarData(cached);
         } else {
           setLoading(true);
         }
@@ -223,9 +284,11 @@ export default function BlogDetail({
         }
         if (!isCancelled) {
           setBlog(data);
+          loadSidebarData(data);
         }
 
         // Member info với error handling cho iOS
+        if (false) {
         let member = null;
         try {
           if (data.memberCode) member = await fetchMemberInfo(data.memberCode);
@@ -255,6 +318,7 @@ export default function BlogDetail({
           }
         } else if (!isCancelled) {
           setMemberBlogsLoading(false);
+        }
         }
       } catch (e) {
         console.error("Error loading blog:", e);
@@ -297,7 +361,12 @@ export default function BlogDetail({
 
         if (!code) return;
 
-        let list = await fetchAllBlogs(code);
+        let list =
+          String(code).trim() === String(blog?.memberCode || "").trim() &&
+          Array.isArray(memberBlogs) &&
+          memberBlogs.length > 0
+            ? memberBlogs
+            : await fetchAllBlogs(code);
 
         // Fallback: If no blogs found, try direct API call
         if (!Array.isArray(list) || list.length === 0) {
@@ -333,7 +402,7 @@ export default function BlogDetail({
         console.error("Failed to compute prev/next", e);
       }
     })();
-  }, [blog?.memberCode, blog?.author, blog?.id]);
+  }, [blog?.memberCode, blog?.author, blog?.id, memberBlogs]);
 
   // TOC & read time
   const { toc, plainText } = useMemo(() => {
