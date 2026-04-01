@@ -170,7 +170,6 @@ const MemberProfile = ({ memberInfo, className, themeMode = "light", language = 
         position: 'absolute',
         top: -12,
         left: '50%',
-        transform: 'translateX(-50%)',
         width: 100,
         height: 30,
         backgroundColor: 'rgba(255,255,255,0.3)',

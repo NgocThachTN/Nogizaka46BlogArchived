@@ -25,6 +25,7 @@ import {
   Badge,
   Divider,
   Select,
+  Skeleton,
 } from "antd";
 import {
   PageContainer,
@@ -46,6 +47,7 @@ import {
   loadAllGraduatedMembers,
   shouldUseLocalDB,
 } from "../utils/graduatedMembersLoader";
+import { MemberListMobileSkeleton } from "./PageSkeletons";
 
 /** Typography */
 const { Title, Text } = Typography;
@@ -251,7 +253,8 @@ export default function MemberListMobile({
   const genList = useMemo(() => {
     // Show generation options based on current view (current or graduated)
     const allMembers = showGraduated ? graduatedMembers : members;
-    const s = new Set(allMembers.map((m) => getGen(m)).filter(Boolean));
+    const safeMembers = allMembers.filter(Boolean);
+    const s = new Set(safeMembers.map((m) => getGen(m)).filter(Boolean));
     const ordered = GEN_ORDER.filter((g) => s.has(g));
     const rest = Array.from(s).filter((g) => !GEN_ORDER.includes(g));
     return ["ALL", ...ordered, ...rest];
@@ -263,6 +266,7 @@ export default function MemberListMobile({
     // Show only graduated members when showGraduated is true, otherwise show only current members
     const allMembers = showGraduated ? graduatedMembers : members;
     const totalMembers = allMembers.filter((m) => {
+      if (!m) return false;
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
       const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""
@@ -275,20 +279,63 @@ export default function MemberListMobile({
   /** Grouped */
   const grouped = useMemo(() => {
     const map = new Map();
-    filtered.forEach((m) => {
+    filtered.filter(Boolean).forEach((m) => {
       const g = getGen(m);
       if (!map.has(g)) map.set(g, []);
       map.get(g).push(m);
     });
     const known = GEN_ORDER.filter((g) => map.has(g)).map((g) => ({
       gen: g,
-      items: map.get(g),
+      items: (map.get(g) || []).filter(Boolean),
     }));
     const others = Array.from(map.keys())
       .filter((g) => !GEN_ORDER.includes(g))
-      .map((g) => ({ gen: g, items: map.get(g) }));
-    return [...known, ...others];
+      .map((g) => ({ gen: g, items: (map.get(g) || []).filter(Boolean) }));
+    return [...known, ...others].filter((group) => group?.gen && group.items?.length);
   }, [filtered]);
+
+  const collapseItems = useMemo(() => {
+    return grouped
+      .filter((group) => group?.gen && Array.isArray(group.items) && group.items.length > 0)
+      .map(({ gen, items }) => {
+        const displayGen = gen === "ãã®ä»–"
+          ? t.other[currentLanguage]
+          : gen.replace("æœŸç”Ÿ", currentLanguage === "en" ? " Gen" : "æœŸç”Ÿ").replace(/^(\d+)\s*(Gen|Tháº¿ há»‡)$/, currentLanguage === "en" ? "Gen $1" : "Tháº¿ há»‡ $1");
+
+        return {
+          key: gen,
+          label: (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{
+                fontFamily: "'Yomogi', cursive",
+                fontSize: 18,
+                fontWeight: "bold",
+                color: themeMode === "dark" ? "#f5ede0" : "#5c4033",
+                borderBottom: "2px solid rgba(139,69,19,0.3)"
+              }}>
+                {displayGen}
+              </span>
+              <Badge
+                count={items.length}
+                style={{ backgroundColor: "#8b5a2b", color: "#fff" }}
+              />
+            </div>
+          ),
+          children: (
+            <div style={{ padding: "4px 0" }}>
+              {gen === "6æœŸç”Ÿ" && <Gen6BlogCard />}
+              {items.filter(Boolean).map((m) => (
+                <MemberCard key={m.code} m={m} />
+              ))}
+            </div>
+          ),
+          style: {
+            borderBottom: "none",
+            marginBottom: 16
+          }
+        };
+      });
+  }, [currentLanguage, grouped, themeMode]);
 
   /** Toggle gen collapse */
   const toggleGenCollapse = (gen) => {
@@ -479,6 +526,50 @@ export default function MemberListMobile({
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div
+        ref={scrollWrapRef}
+        className="diary-paper notebook-container no-scrollbar"
+        style={{
+          width: "100%",
+          minHeight: "100vh",
+          height: "100dvh",
+          padding: 0,
+          margin: 0,
+          position: "relative",
+          overflowY: "auto",
+          overflowX: "hidden",
+          backgroundColor: themeMode === "dark" ? "#1c1a17" : "#fdf6e3",
+          display: "block",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          overscrollBehavior: "none",
+        }}
+      >
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        <div
+          className="notebook-binding"
+          style={{
+            position: "fixed",
+            top: 0,
+            bottom: 0,
+            left: -10,
+            width: 30,
+            backgroundSize: "8px 30px",
+            zIndex: 50,
+          }}
+        ></div>
+        <MemberListMobileSkeleton themeMode={themeMode} />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -714,11 +805,7 @@ export default function MemberListMobile({
           padding: "16px 16px 80px 32px", // Left padding for binding
         }}
       >
-        {loading ? (
-          <div style={{ textAlign: "center", padding: 40 }}>
-            <LoadingOutlined style={{ fontSize: 24, color: "#8b4513" }} />
-          </div>
-        ) : grouped.length === 0 ? (
+        {grouped.length === 0 ? (
           <div style={{ textAlign: "center", padding: 40, color: "#8b5a2b" }}>
             <Empty description={false} image={Empty.PRESENTED_IMAGE_SIMPLE} />
             <div style={{ marginTop: 16 }}>{t.noMembers[currentLanguage]}</div>
@@ -727,10 +814,10 @@ export default function MemberListMobile({
           <Collapse
             ghost
             size="middle"
-            defaultActiveKey={grouped.map(g => g.gen)}
+            defaultActiveKey={collapseItems.map((item) => item.key)}
             style={{ background: "transparent" }}
             expandIcon={({ isActive }) => <RightOutlined rotate={isActive ? 90 : 0} style={{ color: "#8b5a2b" }} />}
-            items={grouped.map(({ gen, items }) => {
+            legacyItems={grouped.map(({ gen, items }) => {
               const displayGen = gen === "その他"
                 ? t.other[currentLanguage]
                 : gen.replace("期生", currentLanguage === "en" ? " Gen" : "期生").replace(/^(\d+)\s*(Gen|Thế hệ)$/, currentLanguage === "en" ? "Gen $1" : "Thế hệ $1");
@@ -768,6 +855,7 @@ export default function MemberListMobile({
                 }
               };
             })}
+            items={collapseItems}
           />
         )}
       </div>

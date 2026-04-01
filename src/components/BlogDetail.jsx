@@ -1,22 +1,11 @@
 // BlogDetail.jsx — Refactored with smaller components
 import { useParams, useNavigate } from "react-router-dom";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
-import { Card, Typography, Spin, Button, FloatButton, message, notification } from "antd";
+import { Typography, Button, FloatButton, message, notification } from "antd";
 import { LeftOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
-
-const mobileQuery = typeof window !== "undefined"
-  ? window.matchMedia("(max-width: 767px)")
-  : { matches: false, addEventListener() {}, removeEventListener() {} };
-function subscribeMobileDetail(cb) {
-  mobileQuery.addEventListener("change", cb);
-  return () => mobileQuery.removeEventListener("change", cb);
-}
-function getIsMobileDetail() {
-  return mobileQuery.matches;
-}
 import {
   fetchBlogDetail,
   fetchAllBlogs,
@@ -51,6 +40,10 @@ import {
   t,
   cleanDisplayText,
 } from "./BlogDetail/constants";
+import {
+  BlogDetailDesktopSkeleton,
+  MemberProfileSkeleton,
+} from "./PageSkeletons";
 
 const { Title } = Typography;
 dayjs.locale("ja");
@@ -67,6 +60,7 @@ export default function BlogDetail({
   const [blog, setBlog] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
   const [memberBlogs, setMemberBlogs] = useState([]);
+  const [memberBlogsLoading, setMemberBlogsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const [language, setLanguage] = useState(propLanguage || "ja");
@@ -93,7 +87,7 @@ export default function BlogDetail({
   const [trTitle, setTrTitle] = useState({ en: "", vi: "" });
   const [translating, setTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState(0);
-  const isMobile = useSyncExternalStore(subscribeMobileDetail, getIsMobileDetail);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Furigana states
   const [showFurigana, setShowFurigana] = useState(false);
@@ -109,6 +103,13 @@ export default function BlogDetail({
 
   // Use navigation hook
   const { fastGo, onHoverPrefetch, navLock, pendingNavId } = useBlogNavigation(navigate, navIds);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Reset translation state when blog changes
   useEffect(() => {
@@ -166,6 +167,8 @@ export default function BlogDetail({
 
     (async () => {
       try {
+        setMemberBlogs([]);
+        setMemberBlogsLoading(true);
         const cached = getCachedBlogDetail(id);
         if (cached && !isCancelled) {
           setBlog(cached);
@@ -237,6 +240,7 @@ export default function BlogDetail({
 
         // Fetch member blogs for calendar với error handling
         if (member?.code && !isCancelled) {
+          setMemberBlogsLoading(true);
           try {
             const blogs = await fetchAllBlogs(member.code);
             if (!isCancelled) {
@@ -244,7 +248,13 @@ export default function BlogDetail({
             }
           } catch (e) {
             console.error("Failed to fetch member blogs:", e);
+          } finally {
+            if (!isCancelled) {
+              setMemberBlogsLoading(false);
+            }
           }
+        } else if (!isCancelled) {
+          setMemberBlogsLoading(false);
         }
       } catch (e) {
         console.error("Error loading blog:", e);
@@ -577,19 +587,7 @@ export default function BlogDetail({
         }}
       >
         <div className="notebook-binding" style={{ left: 0 }}></div>
-        <div
-          style={{
-            minHeight: "60vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-          }}
-        >
-          <Spin size="large" />
-          <span style={{ opacity: 0.5, fontSize: 14 }}>{t.loading[language]}</span>
-        </div>
+        <BlogDetailDesktopSkeleton themeMode={themeMode} />
       </div>
     );
   }
@@ -670,7 +668,7 @@ export default function BlogDetail({
 
         <div style={{ display: "flex", gap: "24px", alignItems: "flex-start", justifyContent: "center" }}>
           {/* Left Sidebar - Member Profile (Pinned Photo Style) */}
-          {memberInfo && !readingMode && (
+          {!readingMode && (
             <div
               style={{
                 width: 300,
@@ -682,11 +680,15 @@ export default function BlogDetail({
                 animation: "pin-swing 0.65s cubic-bezier(0.34,1.2,0.64,1) 0.1s both",
               }}
             >
-              <MemberProfile
-                memberInfo={memberInfo}
-                themeMode={themeMode}
-                language={language}
-              />
+              {memberInfo ? (
+                <MemberProfile
+                  memberInfo={memberInfo}
+                  themeMode={themeMode}
+                  language={language}
+                />
+              ) : (
+                <MemberProfileSkeleton themeMode={themeMode} />
+              )}
             </div>
           )}
 
@@ -737,6 +739,7 @@ export default function BlogDetail({
                 language={language}
                 themeMode={themeMode}
                 isMobile={isMobile}
+                memberBlogsLoading={memberBlogsLoading}
               />
             </div>
           )}

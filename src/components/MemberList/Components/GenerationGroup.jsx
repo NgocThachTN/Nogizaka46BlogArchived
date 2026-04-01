@@ -14,6 +14,7 @@ const GenerationGroup = ({ gen, items, language, themeMode, onMemberClick, bookF
     const currentLanguage = ["ja", "en", "vi"].includes(language)
         ? language
         : "ja";
+    const safeItems = Array.isArray(items) ? items.filter(Boolean) : [];
 
     const fontStyle = {
         fontFamily: bookFont?.[currentLanguage]?.fontFamily,
@@ -54,7 +55,7 @@ const GenerationGroup = ({ gen, items, language, themeMode, onMemberClick, bookF
                             )}
                 </span>
                 <Tag color={themeMode === "dark" ? "#d2a86a" : "purple"} style={{ marginLeft: "auto", opacity: 0.8 }}>
-                    {items.length} Members
+                    {safeItems.length} Members
                 </Tag>
             </div>
 
@@ -69,9 +70,10 @@ const GenerationGroup = ({ gen, items, language, themeMode, onMemberClick, bookF
                     xl: 5,
                     xxl: 5,
                 }}
-                dataSource={items}
+                dataSource={safeItems}
                 renderItem={(m) => (
-                    <div className="member-card-wrapper" style={{ height: "100%" }}>
+                    <List.Item key={m.code}>
+                        <div className="member-card-wrapper" style={{ height: "100%" }}>
                         <MemberCard
                             member={m}
                             language={language}
@@ -79,7 +81,8 @@ const GenerationGroup = ({ gen, items, language, themeMode, onMemberClick, bookF
                             onClick={() => onMemberClick(m.code)}
                             bookFont={bookFont}
                         />
-                    </div>
+                        </div>
+                    </List.Item>
                 )}
             />
         </div>

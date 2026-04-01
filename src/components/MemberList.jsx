@@ -1,9 +1,8 @@
 // MemberList.jsx — Ant Design Pro + nhóm theo Gen + 5 thẻ mỗi hàng
-import React, { useState, useEffect, useMemo, useSyncExternalStore } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Spin,
   Empty,
   notification,
 } from "antd";
@@ -14,17 +13,7 @@ import MemberListHeader from "./MemberList/Components/MemberListHeader";
 import MemberListFilterBar from "./MemberList/Components/MemberListFilterBar";
 
 import GenerationGroup from "./MemberList/Components/GenerationGroup";
-
-const mobileQueryML = typeof window !== "undefined"
-  ? window.matchMedia("(max-width: 767px)")
-  : { matches: false, addEventListener() {}, removeEventListener() {} };
-function subscribeMobileML(cb) {
-  mobileQueryML.addEventListener("change", cb);
-  return () => mobileQueryML.removeEventListener("change", cb);
-}
-function getIsMobileML() {
-  return mobileQueryML.matches;
-}
+import { MemberListDesktopSkeleton } from "./PageSkeletons";
 
 // Diary-style handwriting fonts for journal-like reading experience
 const bookFont = {
@@ -106,8 +95,15 @@ const MemberList = ({
   const [loading, setLoading] = useState(true);
   const [genFilter, setGenFilter] = useState("ALL");
   const [keyword, setKeyword] = useState("");
-  const isMobile = useSyncExternalStore(subscribeMobileML, getIsMobileML);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showGraduated, setShowGraduated] = useState(false);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -178,7 +174,8 @@ const MemberList = ({
   const genList = useMemo(() => {
     // Show generation options based on current view (current or graduated)
     const allMembers = showGraduated ? graduatedMembers : members;
-    const s = new Set(allMembers.map((m) => getGen(m)).filter(Boolean));
+    const safeMembers = allMembers.filter(Boolean);
+    const s = new Set(safeMembers.map((m) => getGen(m)).filter(Boolean));
     // sắp theo GEN_ORDER
     const ordered = GEN_ORDER.filter((g) => s.has(g));
     // thêm những gen lạ (nếu có)
@@ -192,6 +189,7 @@ const MemberList = ({
     // Show only graduated members when showGraduated is true, otherwise show only current members
     const allMembers = showGraduated ? graduatedMembers : members;
     return allMembers.filter((m) => {
+      if (!m) return false;
       if (genFilter !== "ALL" && getGen(m) !== genFilter) return false;
       if (!kw) return true;
       const hay = `${m.name} ${m.english_name || ""} ${m.kana || ""
@@ -203,7 +201,7 @@ const MemberList = ({
   // Nhóm theo Gen & sắp thứ tự
   const grouped = useMemo(() => {
     const map = new Map();
-    filtered.forEach((m) => {
+    filtered.filter(Boolean).forEach((m) => {
       const g = getGen(m);
       if (!map.has(g)) map.set(g, []);
       map.get(g).push(m);
@@ -211,12 +209,12 @@ const MemberList = ({
     // sắp Gen theo GEN_ORDER trước, sau đó gen lạ
     const known = GEN_ORDER.filter((g) => map.has(g)).map((g) => ({
       gen: g,
-      items: map.get(g),
+      items: (map.get(g) || []).filter(Boolean),
     }));
     const others = Array.from(map.keys())
       .filter((g) => !GEN_ORDER.includes(g))
-      .map((g) => ({ gen: g, items: map.get(g) }));
-    return [...known, ...others];
+      .map((g) => ({ gen: g, items: (map.get(g) || []).filter(Boolean) }));
+    return [...known, ...others].filter((group) => group?.gen && group.items?.length);
   }, [filtered]);
 
   // Mobile view
@@ -283,16 +281,7 @@ const MemberList = ({
           </div>
 
           {loading ? (
-            <div
-              style={{
-                minHeight: "50vh",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Spin size="large" />
-            </div>
+            <MemberListDesktopSkeleton themeMode={themeMode} />
           ) : grouped.length === 0 ? (
             <ProCard
               bordered

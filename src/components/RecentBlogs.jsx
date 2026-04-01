@@ -14,6 +14,7 @@ import {
 } from "@ant-design/icons";
 import { ProCard } from "@ant-design/pro-components";
 import { getImageUrl } from "../services/blogService";
+import { RecentBlogsWidgetSkeleton } from "./PageSkeletons";
 
 const { Title, Text } = Typography;
 
@@ -48,12 +49,17 @@ const RecentBlogs = ({
     language = "ja",
     themeMode = "light",
     maxItems = 5,
+    loading = false,
 }) => {
     const navigate = useNavigate();
 
     // Get the most recent blogs
     const recentBlogs = blogs.slice(0, maxItems);
     const isDark = themeMode === "dark";
+
+    if (loading) {
+        return <RecentBlogsWidgetSkeleton themeMode={themeMode} isMobile={isMobile} rows={maxItems} />;
+    }
 
     if (!blogs || blogs.length === 0) {
         return (

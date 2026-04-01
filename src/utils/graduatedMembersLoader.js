@@ -95,9 +95,11 @@ export const loadGraduatedMember = async (memberCode) => {
         // Transform intro array to flat structure for compatibility
         const introMap = {};
         if (Array.isArray(localData.intro)) {
-            localData.intro.forEach(item => {
-                const key = item.key;
-                const value = item.value;
+            localData.intro.forEach((item) => {
+                if (!item || typeof item !== "object") return;
+                const key = typeof item.key === "string" ? item.key : "";
+                const value = item.value ?? "";
+                if (!key) return;
 
                 if (key === "生年月日") introMap.birthday = value;
                 else if (key === "血液型") introMap.blood = value;
@@ -145,8 +147,8 @@ export const loadAllGraduatedMembers = async () => {
     );
 
     return results
-        .filter(r => r.status === 'fulfilled' && r.value !== null)
-        .map(r => r.value);
+        .filter((r) => r.status === "fulfilled" && r.value && typeof r.value === "object")
+        .map((r) => r.value);
 };
 
 /**

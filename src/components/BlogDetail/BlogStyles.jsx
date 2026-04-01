@@ -112,11 +112,10 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           background: ${themeMode === "dark" ? "#f5f0e6" : "#ffffff"};
           border-radius: 2px;
           /* Polaroid shadow and slight rotation */
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
-              : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
-          };
+          box-shadow: ${themeMode === "dark"
+          ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
+          : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
+        };
           transform: rotate(-1deg);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
           border: none !important;
@@ -130,11 +129,10 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         }
         .jp-prose img:hover {
           transform: rotate(0deg) scale(1.02);
-          box-shadow: ${
-            themeMode === "dark"
-              ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
-              : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
-          };
+          box-shadow: ${themeMode === "dark"
+          ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
+          : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
+        };
         }
         .jp-prose div, .jp-prose span {
           word-break: break-word !important;
@@ -145,25 +143,22 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
       {/* dynamic heading scale */}
       <style>{`
         .jp-prose h1 { 
-          font-size: ${
-            window.innerWidth < 768
-              ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
-              : SIZE_PRESETS[fontSizeKey].h1
-          }em; 
+          font-size: ${window.innerWidth < 768
+          ? SIZE_PRESETS[fontSizeKey].h1 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h1
+        }em; 
         }
         .jp-prose h2 { 
-          font-size: ${
-            window.innerWidth < 768
-              ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
-              : SIZE_PRESETS[fontSizeKey].h2
-          }em; 
+          font-size: ${window.innerWidth < 768
+          ? SIZE_PRESETS[fontSizeKey].h2 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h2
+        }em; 
         }
         .jp-prose h3 { 
-          font-size: ${
-            window.innerWidth < 768
-              ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
-              : SIZE_PRESETS[fontSizeKey].h3
-          }em; 
+          font-size: ${window.innerWidth < 768
+          ? SIZE_PRESETS[fontSizeKey].h3 * 0.85
+          : SIZE_PRESETS[fontSizeKey].h3
+        }em; 
         }
       `}</style>
 
@@ -348,29 +343,33 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
       <style>{`
         /* Tategaki — images stay horizontal and shouldn't bleed */
         .tategaki-text img {
-          max-width: 90vw !important;
-          max-height: 500px !important;
+          max-width: 90vw !important; /* Cap max width relative to viewport, not dynamic content */
+          max-height: 500px !important; /* Cap explicitly to avoid 100% resolution against vertical-rl auto heights */
           width: auto !important;
           height: auto !important;
           object-fit: contain;
           margin: 16px 20px !important;
           display: block !important;
           break-inside: avoid;
-
-          content-visibility: visible !important;
-          contain-intrinsic-size: none !important;
-
-          /* Disable polaroid effects for cleaner vertical layout */
-          transform: none !important;
+          
+          /* Promote individual images to their own GPU layers. 
+             This prevents Chromium from dropping their textures when the massive parent container slides. */
+          transform: translateZ(0) !important;
+          will-change: transform !important;
+          backface-visibility: hidden !important;
+          -webkit-backface-visibility: hidden !important;
+          
           transition: none !important;
           box-shadow: none !important;
           background: transparent !important;
           padding: 0 !important;
-          border-radius: 0 !important;
-          border: none !important;
+          border-radius: 0.1px !important;
+        }
+        .tategaki-text img:nth-child(n) {
+          transform: translateZ(0) !important;
         }
         .tategaki-text img:hover {
-          transform: none !important;
+          transform: translateZ(0) !important;
           box-shadow: none !important;
         }
         .tategaki-text ruby rt {

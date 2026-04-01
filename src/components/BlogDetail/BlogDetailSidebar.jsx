@@ -7,6 +7,7 @@ export default function BlogDetailSidebar({
     toc,
     readMinutes,
     memberBlogs,
+    memberBlogsLoading,
     memberInfo,
     onBlogClick,
     language,
@@ -37,12 +38,13 @@ export default function BlogDetailSidebar({
                 <BlogCalendar
                     blogs={memberBlogs}
                     memberInfo={memberInfo}
-                    onBlogClick={onBlogClick}
-                    isMobile={isMobile}
-                    language={language}
-                    themeMode={themeMode}
-                />
-            </div>
+                onBlogClick={onBlogClick}
+                isMobile={isMobile}
+                language={language}
+                themeMode={themeMode}
+                loading={memberBlogsLoading}
+            />
+          </div>
 
             {/* Recent Blogs - Sticky Note / Notepad */}
             <div className="sticky-note" style={{ transform: "rotate(-0.5deg)", zIndex: 1 }}>
@@ -53,6 +55,7 @@ export default function BlogDetailSidebar({
                     language={language}
                     themeMode={themeMode}
                     maxItems={5}
+                    loading={memberBlogsLoading}
                 />
             </div>
         </div>

@@ -2,37 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== PERFORMANCE: content-visibility for off-screen items ===== */
-.blog-card-item,
-.member-card-wrapper {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 320px;
-}
-
-.jp-prose img {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 300px;
-}
-
-/* Hide scrollbar for tategaki scroll container (programmatic scroll only) */
-.tategaki-scroll-wrapper {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.tategaki-scroll-wrapper::-webkit-scrollbar {
-  display: none;
-}
-
-/* Tategaki mode: images MUST always be rendered — override content-visibility
-   so Chrome doesn't skip rendering images in off-screen pages of the scroll container */
-.tategaki-text img,
-.tategaki-text .jp-prose img {
-  content-visibility: visible !important;
-  contain-intrinsic-size: none !important;
-  contain: none !important;
-}
-
-/* ===== Book-like background ===== */
+/* Book-like background styling */
 .book-background {
   background: linear-gradient(135deg, #fdf6e3 0%, #f4f1e8 50%, #f0e6d2 100%);
   background-attachment: fixed;
@@ -42,9 +12,11 @@
 .book-background::before {
   content: "";
   position: fixed;
-  inset: 0;
-  background-image:
-    radial-gradient(
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
       circle at 20% 50%,
       rgba(139, 69, 19, 0.03) 0%,
       transparent 50%
@@ -68,21 +40,24 @@
   z-index: 1;
 }
 
-/* ===== Diary paper texture ===== */
+/* Diary paper texture - yellow pages with horizontal ruled lines */
 .paper-texture,
 .diary-paper {
-  background-color: #fff9e6;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 31px,
-    rgba(139, 69, 19, 0.12) 31px,
-    rgba(139, 69, 19, 0.12) 32px
-  );
+  background-color: #FFF9E6;
+  background-image: 
+    /* Horizontal ruled lines like a notebook */
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 31px,
+      rgba(139, 69, 19, 0.12) 31px,
+      rgba(139, 69, 19, 0.12) 32px
+    );
   background-size: 100% 32px;
   position: relative;
 }
 
+/* Left margin line for diary effect */
 .diary-paper::before {
   content: "";
   position: absolute;
@@ -95,40 +70,44 @@
   z-index: 1;
 }
 
+/* Dark mode diary paper */
 .dark .diary-paper {
   background-color: #2a2520;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 31px,
-    rgba(139, 115, 85, 0.18) 31px,
-    rgba(139, 115, 85, 0.18) 32px
-  );
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 31px,
+      rgba(139, 115, 85, 0.18) 31px,
+      rgba(139, 115, 85, 0.18) 32px
+    );
 }
 
 .dark .diary-paper::before {
   background: rgba(180, 100, 100, 0.2);
 }
 
-/* ===== Polaroid image styling ===== */
+/* Polaroid image styling */
 .polaroid-image,
 .jp-prose img {
   background: #ffffff;
   padding: 12px 12px 40px 12px;
-  box-shadow:
+  box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.15),
     0 8px 24px rgba(0, 0, 0, 0.1);
   transform: rotate(-1deg);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Preserve original HTML paragraph spacing */
 .jp-prose p {
   margin: 0 !important;
   padding: 0 !important;
 }
 
+/* CRITICAL: Force handwriting font for all jp-prose children
+   Some blog content from API has inline font-family styles that override our font.
+   This ensures Yomogi is always used for the handwriting diary effect. */
 .jp-prose,
 .jp-prose *,
 .jp-prose p,
@@ -139,23 +118,23 @@
 .jp-prose div[style],
 .jp-prose *[style*="font-family"],
 .jp-prose *[style*="font:"] {
-  font-family:
-    "Yomogi", "Patrick Hand SC", "Zen Kurenaido", "Noto Serif JP", serif !important;
+  font-family: 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', serif !important;
 }
 
 .jp-prose br {
+  /* Let <br> behave naturally to preserve original blog line spacing */
   line-height: inherit;
 }
 
 .polaroid-image:hover,
 .jp-prose img:hover {
   transform: rotate(0deg) scale(1.02);
-  box-shadow:
+  box-shadow: 
     0 8px 20px rgba(0, 0, 0, 0.2),
     0 12px 32px rgba(0, 0, 0, 0.15);
 }
 
-/* ===== Blog content ===== */
+/* Blog content styles */
 .blog-content {
   font-size: 16px;
   line-height: 1.8;
@@ -198,7 +177,7 @@
   text-decoration: underline;
 }
 
-/* ===== Custom scrollbar ===== */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -216,7 +195,7 @@
   background: #a0522d;
 }
 
-/* ===== Utility classes ===== */
+/* Utility classes for Tailwind */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -233,7 +212,7 @@
   overflow: hidden;
 }
 
-/* ===== Prose styling ===== */
+/* Prose styling for blog content */
 .prose {
   color: #3c2415;
   max-width: none;
@@ -243,39 +222,7 @@
   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.1);
 }
 
-.prose p {
-  margin-top: 1.25em;
-  margin-bottom: 1.25em;
-  color: #3c2415;
-}
-
-.prose h1,
-.prose h2,
-.prose h3 {
-  color: #2d1b0e;
-  font-weight: 600;
-}
-
-.prose img {
-  border-radius: 0.5rem;
-  box-shadow:
-    0 4px 12px rgba(139, 69, 19, 0.15),
-    0 2px 4px rgba(139, 69, 19, 0.1);
-}
-
-/* Consistent image border radius */
-.ant-card img,
-.member-card img,
-.blog-card img,
-.thumb img {
-  border-radius: 12px !important;
-}
-
-.ant-picker-calendar img {
-  border-radius: 8px !important;
-}
-
-/* ===== Ant Design overrides — light mode ===== */
+/* Ant Design component overrides for book theme */
 .ant-select-selector,
 .ant-input,
 .ant-segmented-item,
@@ -283,14 +230,14 @@
   background-color: rgba(253, 246, 227, 0.9) !important;
   border-color: rgba(139, 69, 19, 0.3) !important;
   color: #3c2415 !important;
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
 }
 
 .ant-select-dropdown,
 .ant-select-item {
   background-color: rgba(253, 246, 227, 0.95) !important;
   color: #3c2415 !important;
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
 }
 
 .ant-select-item:hover,
@@ -321,6 +268,7 @@
   color: #5d4e37 !important;
 }
 
+/* Additional component styling for book theme */
 .ant-picker-calendar {
   background: rgba(253, 246, 227, 0.8) !important;
   border-color: rgba(139, 69, 19, 0.2) !important;
@@ -355,7 +303,10 @@
   color: #fdf6e3 !important;
 }
 
-.ant-empty,
+.ant-empty {
+  color: #5d4e37 !important;
+}
+
 .ant-empty-description {
   color: #5d4e37 !important;
 }
@@ -388,30 +339,59 @@
 /* Vietnamese text rendering fix */
 .ant-select-item-option-content,
 .ant-select-selection-item {
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
-  font-feature-settings:
-    "liga" 1,
-    "kern" 1 !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+  font-feature-settings: "liga" 1, "kern" 1 !important;
   text-rendering: optimizeLegibility !important;
   -webkit-font-smoothing: antialiased !important;
   -moz-osx-font-smoothing: grayscale !important;
 }
 
+/* Specific fix for Vietnamese diacritics */
 .ant-select-item-option-content span,
 .ant-select-selection-item span {
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
   font-variant-ligatures: normal !important;
-  font-feature-settings:
-    "liga" 1,
-    "kern" 1,
-    "calt" 1 !important;
+  font-feature-settings: "liga" 1, "kern" 1, "calt" 1 !important;
 }
 
-/* ===== Global typography ===== */
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  color: #3c2415;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  color: #2d1b0e;
+  font-weight: 600;
+}
+
+.prose img {
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15),
+    0 2px 4px rgba(139, 69, 19, 0.1);
+}
+
+/* Consistent image border radius across all components */
+.ant-card img,
+.member-card img,
+.blog-card img,
+.thumb img {
+  border-radius: 12px !important;
+}
+
+/* For small thumbnails in calendar */
+.ant-picker-calendar img {
+  border-radius: 8px !important;
+}
+
+/* Global serif font for all text */
 body,
 html,
 #root {
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
+  /* Mobile optimization: Use dynamic viewport height */
   min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
@@ -423,29 +403,27 @@ html,
   text-rendering: optimizeLegibility;
 }
 
-/* Android Japanese font optimization */
-@supports (-webkit-appearance: none) and
-  (not (-webkit-overflow-scrolling: touch)) {
+/* Android-specific Japanese font optimization */
+@supports (-webkit-appearance: none) and (not (-webkit-overflow-scrolling: touch)) {
   body,
   html {
-    font-family:
-      "Noto Sans JP", "Droid Sans Japanese", "Meiryo", "MS PGothic", "Roboto",
-      sans-serif !important;
+    font-family: 'Noto Sans JP', 'Droid Sans Japanese', 'Meiryo', 'MS PGothic', 'Roboto', sans-serif !important;
   }
-
+  
+  /* Japanese content - prioritize handwriting font Yomogi */
   [lang="ja"],
   .japanese-text {
-    font-family:
-      "Yomogi", "Patrick Hand SC", "Zen Kurenaido", "Noto Serif JP",
-      "Noto Sans JP", sans-serif !important;
+    font-family: 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', 'Noto Sans JP', sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-feature-settings: "palt" 1;
+    font-feature-settings: 'palt' 1;
   }
+  
+  /* jp-prose inherits font from inline style - don't override */
 }
 
-/* iOS Safari viewport fix */
+/* Fix for iOS Safari viewport height */
 @supports (-webkit-touch-callout: none) {
   body,
   html,
@@ -454,6 +432,7 @@ html,
   }
 }
 
+/* Typography components */
 .ant-typography,
 .ant-typography h1,
 .ant-typography h2,
@@ -463,17 +442,18 @@ html,
 .ant-typography h6,
 .ant-typography p,
 .ant-typography span {
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
 }
 
+/* Buttons and form elements */
 .ant-btn,
 .ant-input,
 .ant-select,
 .ant-tag {
-  font-family: "Playfair Display", "Times New Roman", Georgia, serif !important;
+  font-family: "'Playfair Display', 'Times New Roman', 'Georgia', serif" !important;
 }
 
-/* ===== Dark mode: book background ===== */
+/* Dark mode: book-like background styling */
 .dark-book-background {
   background: linear-gradient(135deg, #161513 0%, #12110f 50%, #0f0e0c 100%);
   background-attachment: fixed;
@@ -483,9 +463,11 @@ html,
 .dark-book-background::before {
   content: "";
   position: fixed;
-  inset: 0;
-  background-image:
-    radial-gradient(
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
       circle at 20% 50%,
       rgba(255, 228, 196, 0.04) 0%,
       transparent 50%
@@ -509,7 +491,7 @@ html,
   z-index: 1;
 }
 
-/* ===== Dark mode overrides ===== */
+/* Dark mode prose and blog content */
 .dark .prose {
   color: #f5ede0;
   background: rgba(28, 26, 23, 0.85);
@@ -535,12 +517,11 @@ html,
 .dark .blog-content a {
   color: #d2a86a;
 }
-
 .dark .blog-content a:hover {
   text-decoration: underline;
 }
 
-/* Dark mode Ant Design overrides */
+/* Dark mode Ant Design overrides aligned with book theme */
 .dark .ant-select-selector,
 .dark .ant-input,
 .dark .ant-segmented-item,
@@ -579,7 +560,6 @@ html,
 .dark .ant-typography {
   color: #f5ede0 !important;
 }
-
 .dark .ant-typography.ant-typography-secondary {
   color: #cfbfa6 !important;
 }
@@ -647,8 +627,9 @@ html,
 .dark .ant-pagination-next:hover {
   background: rgba(207, 191, 166, 0.12) !important;
 }
+/* Member List Scrapbook Styles */
 
-/* ===== Scrapbook member cards ===== */
+/* Random rotation for member cards to look like pasted photos */
 .member-card-wrapper:nth-child(odd) .member-card {
   transform: rotate(-1deg);
 }
@@ -668,36 +649,35 @@ html,
 .member-card:hover {
   transform: scale(1.05) rotate(0deg) !important;
   z-index: 10;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2) !important;
 }
 
-/* ===== Notebook container ===== */
+/* Notebook styling for MemberList */
 .notebook-container {
   min-height: 100vh;
   position: relative;
   padding: 24px;
 }
 
+/* Spiral binding effect */
 .notebook-binding {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
   width: 40px;
-  background-image:
-    radial-gradient(circle at 0% 50%, #333 10%, transparent 11%),
-    radial-gradient(circle at 10% 50%, #333 10%, transparent 11%);
+  background-image: radial-gradient(circle at 0% 50%, #333 10%, transparent 11%), radial-gradient(circle at 10% 50%, #333 10%, transparent 11%);
   background-size: 10px 40px;
   background-repeat: repeat-y;
   z-index: 100;
   pointer-events: none;
 }
 
-/* ===== Sticky note ===== */
+/* Sticky Note Style for Header/Filters */
 .sticky-note {
   position: relative;
   border-radius: 2px !important;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
   transform: rotate(-0.5deg);
   transition: transform 0.3s ease;
 }
@@ -711,16 +691,18 @@ html,
   position: absolute;
   top: -10px;
   left: 50%;
-  transform: translateX(-50%) rotate(-1deg);
+  transform: translateX(-50%);
   width: 120px;
   height: 25px;
   background-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transform: translateX(-50%) rotate(-1deg);
   z-index: 1;
 }
 
+/* Dark mode adjustments for MemberList specific items */
 .dark .sticky-note {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
 }
 
 .dark .sticky-note::after {

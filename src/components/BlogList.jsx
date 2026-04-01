@@ -1,11 +1,11 @@
-﻿// BlogList.jsx — Ant Design Pro • Mobile-First Fast Render
+// BlogList.jsx — Ant Design Pro • Mobile-First Fast Render
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Typography,
-  Spin,
   Empty,
   Pagination,
   Grid,
+  Button,
 } from "antd";
 import { PageContainer, ProCard } from "@ant-design/pro-components";
 import {
@@ -26,6 +26,7 @@ import RecentBlogs from "./RecentBlogs";
 import BlogListHeader from "./BlogList/Components/BlogListHeader";
 import BlogListFilterBar from "./BlogList/Components/BlogListFilterBar";
 import BlogCard from "./BlogList/Components/BlogCard";
+import { BlogListDesktopSkeleton } from "./PageSkeletons";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -331,6 +332,9 @@ export default function BlogList({
         {!isMobile && <div className="notebook-binding" style={{ left: 0 }}></div>}
 
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+          {(loading || isPending) && !blogs.length ? (
+            <BlogListDesktopSkeleton themeMode={themeMode} isMobile={screens.xs} />
+          ) : (
           <ProCard ghost gutter={[24, 24]} wrap>
             {/* Main Content */}
             <ProCard
@@ -364,23 +368,7 @@ export default function BlogList({
                 </div>
 
                 {/* LIST */}
-                {(loading || isPending) && !blogs.length ? (
-                  <div
-                    style={{
-                      minHeight: 320,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 12,
-                    }}
-                  >
-                    <Spin size="large" />
-                    <span style={{ opacity: 0.5, fontSize: 14 }}>
-                      {t.loading[currentLanguage]}
-                    </span>
-                  </div>
-                ) : current.length === 0 ? (
+                {current.length === 0 ? (
                   <ProCard
                     bordered
                     style={{
@@ -485,6 +473,7 @@ export default function BlogList({
               </div>
             </ProCard>
           </ProCard>
+          )}
         </div>
       </div>
 

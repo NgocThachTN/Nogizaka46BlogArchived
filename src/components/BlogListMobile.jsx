@@ -21,6 +21,7 @@ import {
   Col,
   Statistic,
   Select,
+  Skeleton,
 } from "antd";
 import {
   CalendarOutlined,
@@ -57,6 +58,7 @@ import {
   getImageUrl,
   fetchMemberInfo,
 } from "../services/blogService";
+import { BlogListMobileSkeleton } from "./PageSkeletons";
 
 const { Title, Text } = Typography;
 
@@ -494,6 +496,50 @@ export default function BlogListMobile({
     );
   }
 
+  if ((loading || isPending) && !blogs.length) {
+    return (
+      <div
+        ref={scrollWrapRef}
+        className="diary-paper notebook-container no-scrollbar"
+        style={{
+          width: "100%",
+          minHeight: "100vh",
+          height: "100dvh",
+          padding: 0,
+          margin: 0,
+          position: "relative",
+          overflowY: "auto",
+          overflowX: "hidden",
+          backgroundColor: themeMode === "dark" ? "#1c1a17" : "#fdf6e3",
+          display: "block",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          overscrollBehavior: "none",
+        }}
+      >
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        <div
+          className="notebook-binding"
+          style={{
+            position: "fixed",
+            top: 0,
+            bottom: 0,
+            left: -10,
+            width: 30,
+            backgroundSize: "8px 30px",
+            zIndex: 50,
+          }}
+        ></div>
+        <BlogListMobileSkeleton themeMode={themeMode} />
+      </div>
+    );
+  }
+
   // ====== RENDER ======
 
   return (
@@ -659,11 +705,7 @@ export default function BlogListMobile({
         />
 
         <div style={{ position: "relative", zIndex: 1 }}>
-          {(loading || isPending) ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <Spin size="large" style={{ color: "#8b4513" }} />
-            </div>
-          ) : filtered.length === 0 ? (
+          {filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: 40, color: "#8b5a2b" }}>
               <Empty description={false} image={Empty.PRESENTED_IMAGE_SIMPLE} />
               <div style={{ marginTop: 16 }}>No entries found</div>

@@ -13,6 +13,7 @@ import {
   Tag,
   Avatar,
   Divider,
+  Skeleton,
 } from "antd";
 import {
   LoadingOutlined,
@@ -52,6 +53,7 @@ import {
 import { isIOS, isIOS18Plus, isIPhoneXS } from "../utils/deviceDetection";
 import { initKuroshiro, addFuriganaToHtml } from "../utils/furiganaHelper";
 import ImageLightbox from "./BlogDetail/ImageLightbox";
+import { BlogDetailMobileSkeleton } from "./PageSkeletons";
 
 const { Title, Text } = Typography;
 
@@ -620,6 +622,10 @@ export default function BlogDetailMobile({
 
 
   // ---- New Notebook Render Structure ----
+  if (loading && !blog && !displayTitle && !displayContent) {
+    return <BlogDetailMobileSkeleton themeMode={themeMode} />;
+  }
+
   return (
     <div
       className="diary-paper notebook-container"
@@ -911,16 +917,20 @@ export default function BlogDetailMobile({
 
             {/* Right: Title & Date */}
             <div style={{ flex: 1, textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-              <Title level={3} style={{
-                margin: "12px 0 8px 0", // Added top margin to push title down
-                fontSize: 20, // Slightly smaller to fit side-by-side
-                color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
-                fontFamily: bookFont[language].fontFamily,
-                fontWeight: language === "ja" ? 600 : 700,
-                lineHeight: 1.3
-              }}>
-                {displayTitle || blog?.title || (loading ? "" : "No Title")}
-              </Title>
+              {loading && !displayTitle && !blog?.title ? (
+                <Skeleton active paragraph={false} title={{ width: '100%' }} style={{ marginTop: 16, marginBottom: 8 }} />
+              ) : (
+                <Title level={3} style={{
+                  margin: "12px 0 8px 0",
+                  fontSize: 20,
+                  color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
+                  fontFamily: bookFont[language].fontFamily,
+                  fontWeight: language === "ja" ? 600 : 700,
+                  lineHeight: 1.3
+                }}>
+                  {displayTitle || blog?.title || "No Title"}
+                </Title>
+              )}
 
               <div style={{ display: "flex", alignItems: "center", color: themeMode === "dark" ? "#8b7e66" : "#8b5a2b", fontSize: 13 }}>
                 <CalendarOutlined style={{ marginRight: 6 }} />
@@ -931,9 +941,12 @@ export default function BlogDetailMobile({
 
           {/* Loading / Error States */}
           {loading && !displayContent && (
-            <div style={{ padding: "40px 0", textAlign: "center" }}>
-              <LoadingOutlined style={{ fontSize: 32, color: "#8b4513" }} />
-              <div style={{ marginTop: 16, color: "#8b5a2b" }}>Loading entry...</div>
+            <div style={{ padding: "24px 0" }}>
+              <Skeleton active title={false} paragraph={{ rows: 4, width: ['100%', '100%', '80%', '60%'] }} />
+              <div style={{ margin: "24px 0" }}>
+                <Skeleton.Image active style={{ width: '100%', height: 200, display: 'block' }} />
+              </div>
+              <Skeleton active title={false} paragraph={{ rows: 6, width: ['100%', '100%', '100%', '90%', '80%', '40%'] }} />
             </div>
           )}
 

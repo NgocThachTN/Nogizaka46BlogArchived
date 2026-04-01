@@ -23,6 +23,7 @@ import enUS from "antd/es/locale/en_US";
 import viVN from "antd/es/locale/vi_VN";
 
 import { getImageUrl } from "../services/blogService";
+import { CalendarWidgetSkeleton } from "./PageSkeletons";
 
 const { Text } = Typography;
 
@@ -133,6 +134,7 @@ export default function BlogCalendar({
   isMobile = false,
   language = "ja",
   themeMode = "light",
+  loading = false,
 }) {
   // Set initial locale
   setDayjsLocale(language);
@@ -235,6 +237,10 @@ export default function BlogCalendar({
   };
 
   // Show loading state if no blogs yet
+  if (loading) {
+    return <CalendarWidgetSkeleton themeMode={themeMode} isMobile={isMobile} />;
+  }
+
   if (!blogs || blogs.length === 0) {
     return (
       <div
