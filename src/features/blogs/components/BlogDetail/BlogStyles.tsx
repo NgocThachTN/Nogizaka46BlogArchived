@@ -91,47 +91,39 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           letter-spacing: ${language === "ja" ? "0.05em" : "normal"};
         }
         .jp-prose a { 
-          color: ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"}; 
-          text-decoration: none; 
-          border-bottom: 1px dotted ${themeMode === "dark" ? "#d2a86a" : "#6b21a8"};
+          color: ${themeMode === "dark" ? "#e4c28f" : "#8a5a2b"}; 
+          text-decoration: underline; 
+          text-decoration-thickness: 1px;
+          text-underline-offset: 0.16em;
           word-break: break-all;
           overflow-wrap: break-word;
           hyphens: auto;
         }
         .jp-prose a:hover { 
-          border-bottom-style: solid;
+          color: ${themeMode === "dark" ? "#f0d7ad" : "#6d4721"};
         }
         .jp-prose img { 
-          /* Polaroid style image */
           display: block; 
           margin: ${window.innerWidth < 768 ? "24px" : "32px"} auto; 
-          max-width: ${window.innerWidth < 768 ? "85%" : "75%"}; 
+          max-width: 100%; 
           height: auto;
-          /* White polaroid frame */
-          padding: ${window.innerWidth < 768 ? "8px 8px 24px 8px" : "12px 12px 40px 12px"};
-          background: ${themeMode === "dark" ? "#f5f0e6" : "#ffffff"};
-          border-radius: 2px;
-          /* Polaroid shadow and slight rotation */
+          padding: 0;
+          background: transparent;
+          border-radius: 18px;
           box-shadow: ${themeMode === "dark"
-          ? "0 4px 12px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)"
-          : "0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)"
+          ? "0 14px 32px rgba(0,0,0,0.34)"
+          : "0 12px 28px rgba(86,61,31,0.16)"
         };
-          transform: rotate(-1deg);
+          transform: none;
           transition: transform 0.3s ease, box-shadow 0.3s ease;
-          border: none !important;
+          border: 1px solid ${themeMode === "dark" ? "rgba(228,194,143,0.14)" : "rgba(160,121,70,0.12)"} !important;
           cursor: pointer;
         }
-        .jp-prose img:nth-child(even) {
-          transform: rotate(1.5deg);
-        }
-        .jp-prose img:nth-child(3n) {
-          transform: rotate(-0.5deg);
-        }
         .jp-prose img:hover {
-          transform: rotate(0deg) scale(1.02);
+          transform: translateY(-2px);
           box-shadow: ${themeMode === "dark"
-          ? "0 8px 20px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4)"
-          : "0 8px 20px rgba(0,0,0,0.2), 0 12px 32px rgba(0,0,0,0.15)"
+          ? "0 18px 36px rgba(0,0,0,0.4)"
+          : "0 16px 34px rgba(86,61,31,0.2)"
         };
         }
         .jp-prose div, .jp-prose span {

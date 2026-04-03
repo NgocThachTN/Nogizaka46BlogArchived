@@ -12,6 +12,12 @@ import { BlogDetailTranslationSkeleton } from "../../../../shared/components/Pag
 
 const { Title, Text } = Typography;
 
+const readingFontFamily = {
+    ja: "'Noto Serif JP', 'Source Han Serif JP', 'Yu Mincho', serif",
+    en: "'Georgia', 'Cambria', 'Times New Roman', serif",
+    vi: "'Georgia', 'Times New Roman', 'Cambria', serif",
+};
+
 const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, language, isDark, onClick, onDoubleClick, tategaki }) {
     const wrapperRef = useRef(null);
     const innerRef = useRef(null);
@@ -277,12 +283,12 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
             ref={contentRef}
             className="jp-prose"
             style={{
-                animation: "content-reveal 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both",
+                animation: "content-reveal 0.45s ease 0.15s both",
                 fontSize: sz.px,
                 lineHeight: `${lineH}px`,
                 letterSpacing: language === "ja" ? 0.5 : 0.3,
                 color: isDark ? "#f5ede0" : "#2c2c2c",
-                fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
+                fontFamily: readingFontFamily[language],
                 overflowWrap: "anywhere",
                 wordBreak: "normal",
                 lineBreak: "strict",
@@ -373,16 +379,16 @@ export default function BlogDetailContent({
             <div
                 className={`diary-sheet${tategaki ? " tategaki-mode" : ""}`}
                 style={{
-                    borderRadius: 2,
+                    borderRadius: tategaki ? 20 : 24,
                     background: isDark
-                        ? "linear-gradient(to bottom, #2a2520 0%, #24211d 100%)"
-                        : "linear-gradient(to bottom, #FFF9E6 0%, #FFF5D6 100%)",
+                        ? "linear-gradient(180deg, rgba(40,35,31,0.98) 0%, rgba(29,26,24,0.98) 100%)"
+                        : "linear-gradient(180deg, rgba(255,252,245,0.98) 0%, rgba(252,247,238,0.98) 100%)",
                     boxShadow: isDark
-                        ? "0 4px 24px rgba(0,0,0,0.4), inset 0 0 60px rgba(139, 115, 85, 0.05)"
-                        : "0 4px 24px rgba(139, 69, 19, 0.15), inset 0 0 60px rgba(139, 69, 19, 0.03)",
+                        ? "0 18px 48px rgba(0,0,0,0.34)"
+                        : "0 20px 48px rgba(124, 90, 45, 0.14)",
                     border: isDark
-                        ? "1px solid rgba(139, 115, 85, 0.2)"
-                        : "1px solid rgba(139, 69, 19, 0.15)",
+                        ? "1px solid rgba(198, 171, 133, 0.16)"
+                        : "1px solid rgba(166, 128, 78, 0.14)",
                     position: "relative",
                     overflow: tategaki ? "visible" : "hidden",
                     minHeight: tategaki ? undefined : 600,
@@ -391,20 +397,11 @@ export default function BlogDetailContent({
                     willChange: "auto",
 
                     // Paper texture lines — vertical lines for tategaki, horizontal for normal
-                    backgroundImage: tategaki
-                        ? (isDark
-                            ? `linear-gradient(to right, transparent 0%, transparent calc(100% - 1px), rgba(139, 115, 85, 0.2) calc(100% - 1px), rgba(139, 115, 85, 0.2) 100%)`
-                            : `linear-gradient(to right, transparent 0%, transparent calc(100% - 1px), rgba(139, 69, 19, 0.15) calc(100% - 1px), rgba(139, 69, 19, 0.15) 100%)`)
-                        : (isDark
-                            ? `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 115, 85, 0.2) calc(100% - 1px), rgba(139, 115, 85, 0.2) 100%)`
-                            : `linear-gradient(to bottom, transparent 0%, transparent calc(100% - 1px), rgba(139, 69, 19, 0.15) calc(100% - 1px), rgba(139, 69, 19, 0.15) 100%)`),
-                    backgroundSize: tategaki ? `${sz.lh}em 100%` : `100% ${sz.lh}em`,
-
                     // Padding
-                    paddingTop: tategaki ? 32 : `${sz.lh + (sz.lh - 1) / 2 + (language === "ja" ? 0 : 0.3)}em`,
-                    paddingRight: tategaki ? 32 : (readingMode ? "8%" : 42),
-                    paddingBottom: tategaki ? 32 : (readingMode ? 60 : 42),
-                    paddingLeft: tategaki ? 32 : (readingMode ? "8%" : 42),
+                    paddingTop: tategaki ? 32 : (window.innerWidth < 768 ? 28 : 36),
+                    paddingRight: tategaki ? 32 : (readingMode ? "7%" : (window.innerWidth < 768 ? 22 : 40)),
+                    paddingBottom: tategaki ? 32 : (readingMode ? 56 : (window.innerWidth < 768 ? 28 : 38)),
+                    paddingLeft: tategaki ? 32 : (readingMode ? "7%" : (window.innerWidth < 768 ? 22 : 40)),
                 }}
             >
                 {translating && language !== "ja" ? (
@@ -420,38 +417,46 @@ export default function BlogDetailContent({
                                 display: "flex",
                                 alignItems: "flex-end",
                                 justifyContent: "space-between",
-                                marginBottom: window.innerWidth < 768 ? 16 : 24,
+                                flexWrap: "nowrap",
+                                gap: window.innerWidth < 768 ? 12 : 20,
+                                marginBottom: window.innerWidth < 768 ? 16 : 20,
                                 width: "100%",
-                                padding: "0 4px",
-                                animation: "ink-appear 0.5s ease 0.35s both",
+                                padding: 0,
+                                animation: "ink-appear 0.35s ease both",
                             }}
                         >
                             {/* Journal Date */}
                             <div
                                 style={{
-                                    color: isDark ? "#b8a586" : "#666",
-                                    fontSize: window.innerWidth < 768 ? 16 : 18,
-                                    fontFamily: bookFont[language].fontFamily,
+                                    color: isDark ? "#c6b28f" : "#7f6a53",
+                                    fontSize: window.innerWidth < 768 ? 13 : 14,
+                                    fontFamily: readingFontFamily[language],
                                     display: "flex",
                                     alignItems: "center",
+                                    gap: 8,
+                                    padding: "8px 12px",
+                                    borderRadius: 999,
+                                    background: isDark ? "rgba(198,178,143,0.08)" : "rgba(160,121,70,0.08)",
+                                    border: isDark ? "1px solid rgba(198,178,143,0.12)" : "1px solid rgba(160,121,70,0.12)",
                                 }}
                             >
-                                <CalendarOutlined style={{ marginRight: 8 }} />
-                                <span style={{ fontFamily: bookFont[language].fontFamily }}>
+                                <CalendarOutlined />
+                                <span style={{ fontFamily: readingFontFamily[language] }}>
                                     {blog.date}
                                 </span>
                             </div>
 
                             {/* Blog Title */}
-                            <div style={{ textAlign: "right", maxWidth: "70%" }}>
-                                <Space direction="vertical" size={2}>
+                            <div style={{ textAlign: "right", maxWidth: "70%", flex: "0 1 70%", minWidth: 0, marginLeft: "auto" }}>
+                                <Space direction="vertical" size={4} style={{ width: "100%" }}>
                                     <Text
-                                        type="secondary"
                                         style={{
-                                            letterSpacing: 2,
-                                            fontSize: 13,
+                                            color: isDark ? "#bca885" : "#8e7556",
+                                            letterSpacing: 1.6,
+                                            fontSize: 11,
                                             textTransform: "uppercase",
-                                            fontFamily: bookFont[language].fontFamily,
+                                            fontFamily: "system-ui, sans-serif",
+                                            fontWeight: 700,
                                         }}
                                     >
                                         {t.blogArticle[language]}
@@ -460,13 +465,15 @@ export default function BlogDetailContent({
                                         level={3}
                                         style={{
                                             margin: 0,
-                                            lineHeight: 1.3,
-                                            fontSize: window.innerWidth < 768 ? 18 : 22,
+                                            lineHeight: 1.4,
+                                            fontSize: window.innerWidth < 768 ? 21 : 28,
                                             wordWrap: "break-word",
                                             wordBreak: "break-word",
                                             whiteSpace: "normal",
-                                            fontFamily: bookFont[language].fontFamily,
-                                            fontWeight: language === "ja" ? 400 : 700,
+                                            color: isDark ? "#f7f0e4" : "#2f2418",
+                                            fontFamily: readingFontFamily[language],
+                                            fontWeight: language === "ja" ? 600 : 700,
+                                            maxWidth: "100%",
                                         }}
                                     >
                                         {displayTitle}
@@ -477,11 +484,13 @@ export default function BlogDetailContent({
 
                         {/* Animated ink divider */}
                         <div style={{
-                            margin: "19px 0 29px",
+                            margin: window.innerWidth < 768 ? "16px 0 24px" : "18px 0 28px",
                             height: 1,
-                            background: isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.15)",
+                            background: isDark
+                                ? "linear-gradient(90deg, rgba(198,178,143,0.3) 0%, rgba(198,178,143,0.08) 100%)"
+                                : "linear-gradient(90deg, rgba(160,121,70,0.26) 0%, rgba(160,121,70,0.08) 100%)",
                             transformOrigin: "left center",
-                            animation: "line-draw 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s both",
+                            animation: "line-draw 0.35s ease 0.1s both",
                         }} />
 
                         <BlogBody
@@ -498,7 +507,7 @@ export default function BlogDetailContent({
                 )}
 
                 {/* Footer + vocab button */}
-                <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                     {/* Nút mở từ điển */}
                     <button
                         onClick={() => setVocabPanelOpen(true)}
@@ -507,14 +516,14 @@ export default function BlogDetailContent({
                             display: "flex",
                             alignItems: "center",
                             gap: 6,
-                            padding: "5px 12px",
-                            borderRadius: 20,
-                            border: isDark ? "1px solid rgba(210,168,106,0.3)" : "1px solid rgba(139,69,19,0.25)",
-                            background: isDark ? "rgba(210,168,106,0.1)" : "rgba(139,69,19,0.06)",
-                            color: isDark ? "#d2a86a" : "#8B4513",
+                            padding: "7px 14px",
+                            borderRadius: 999,
+                            border: isDark ? "1px solid rgba(198,178,143,0.18)" : "1px solid rgba(160,121,70,0.16)",
+                            background: isDark ? "rgba(198,178,143,0.08)" : "rgba(160,121,70,0.08)",
+                            color: isDark ? "#dcc49e" : "#7a5a39",
                             fontSize: 12,
                             cursor: "pointer",
-                            fontFamily: "'Mali', 'Caveat', serif",
+                            fontFamily: "system-ui, sans-serif",
                             fontWeight: 600,
                             transition: "all 0.2s ease",
                             position: "relative",
