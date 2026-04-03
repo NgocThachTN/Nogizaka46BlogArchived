@@ -617,6 +617,7 @@ export default function BlogDetail({
           blog={blog}
           loading={loading}
           translating={translating}
+          translationProgress={translationProgress}
           language={language}
           setLanguage={setLanguage}
           displayTitle={displayTitle}

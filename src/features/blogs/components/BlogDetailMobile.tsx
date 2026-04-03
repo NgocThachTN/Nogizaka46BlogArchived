@@ -54,7 +54,10 @@ import {
 import { isIOS, isIOS18Plus, isIPhoneXS } from "../../../lib/utils/deviceDetection";
 import { initKuroshiro, addFuriganaToHtml } from "../lib/furiganaHelper";
 import ImageLightbox from "./BlogDetail/ImageLightbox";
-import { BlogDetailMobileSkeleton } from "../../../shared/components/PageSkeletons";
+import {
+  BlogDetailMobileSkeleton,
+  BlogDetailMobileTranslationSkeleton,
+} from "../../../shared/components/PageSkeletons";
 
 const { Title, Text } = Typography;
 
@@ -203,6 +206,7 @@ export default function BlogDetailMobile({
   blog,
   loading,
   translating,
+  translationProgress,
   language,
   setLanguage, // parent truyền xuống, đổi 'ja' | 'en' | 'vi' sẽ trigger dịch
   displayTitle, // Title (JP/EN/VI) render ra
@@ -812,7 +816,7 @@ export default function BlogDetailMobile({
       </div>
 
       {/* Translation Loading Overlay */}
-      {translating && (
+      {translating && cachedLanguage === "ja" && (
         <div
           style={{
             position: "absolute",
@@ -959,21 +963,28 @@ export default function BlogDetailMobile({
           )}
 
           {/* Blog Content */}
-          <div
-            className="jp-prose"
-            style={{
-              fontSize: fontSize,
-              lineHeight: 1.9,
-              color: themeMode === "dark" ? "#f5ede0" : "#2c2c2c",
-              fontFamily: `${bookFont[language].fontFamily}, serialized`,
-              overflowWrap: "anywhere",
-              wordBreak: "break-word",
-              // Align text to the background grid
-              // lineHeight must match backgroundSize in the overlay
-            }}
-            onClick={handleMobileContentClick}
-            dangerouslySetInnerHTML={{ __html: optimizedHtml }}
-          />
+          {translating && cachedLanguage !== "ja" ? (
+            <BlogDetailMobileTranslationSkeleton
+              themeMode={themeMode}
+              translationProgress={translationProgress}
+            />
+          ) : (
+            <div
+              className="jp-prose"
+              style={{
+                fontSize: fontSize,
+                lineHeight: 1.9,
+                color: themeMode === "dark" ? "#f5ede0" : "#2c2c2c",
+                fontFamily: `${bookFont[language].fontFamily}, serialized`,
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+                // Align text to the background grid
+                // lineHeight must match backgroundSize in the overlay
+              }}
+              onClick={handleMobileContentClick}
+              dangerouslySetInnerHTML={{ __html: optimizedHtml }}
+            />
+          )}
         </div>
 
         {/* Footer Actions */}

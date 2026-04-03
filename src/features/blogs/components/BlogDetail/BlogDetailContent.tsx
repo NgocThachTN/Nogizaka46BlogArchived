@@ -3,12 +3,12 @@ import { useState, useCallback, useEffect, memo, useRef, useMemo } from "react";
 import { Typography, Space, Button } from "antd";
 import { CalendarOutlined, LinkOutlined, BookOutlined } from "@ant-design/icons";
 import { bookFont, t } from "./constants";
-import TranslationOverlay from "./TranslationOverlay";
 import ImageLightbox from "./ImageLightbox";
 import VocabPopup from "./VocabPopup";
 import VocabPanel from "./VocabPanel";
 import SelectionTooltip from "./SelectionTooltip";
 import { isJapanese, getSavedVocab } from "../../lib/jishoService";
+import { BlogDetailTranslationSkeleton } from "../../../../shared/components/PageSkeletons";
 
 const { Title, Text } = Typography;
 
@@ -407,93 +407,95 @@ export default function BlogDetailContent({
                     paddingLeft: tategaki ? 32 : (readingMode ? "8%" : 42),
                 }}
             >
-                {/* Overlay translating */}
-                <TranslationOverlay
-                    translating={translating}
-                    translationProgress={translationProgress}
-                    themeMode={themeMode}
-                />
-
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "flex-end",
-                        justifyContent: "space-between",
-                        marginBottom: window.innerWidth < 768 ? 16 : 24,
-                        width: "100%",
-                        padding: "0 4px",
-                        animation: "ink-appear 0.5s ease 0.35s both",
-                    }}
-                >
-                    {/* Journal Date */}
-                    <div
-                        style={{
-                            color: isDark ? "#b8a586" : "#666",
-                            fontSize: window.innerWidth < 768 ? 16 : 18,
-                            fontFamily: bookFont[language].fontFamily,
-                            display: "flex",
-                            alignItems: "center",
-                        }}
-                    >
-                        <CalendarOutlined style={{ marginRight: 8 }} />
-                        <span style={{ fontFamily: bookFont[language].fontFamily }}>
-                            {blog.date}
-                        </span>
-                    </div>
-
-                    {/* Blog Title */}
-                    <div style={{ textAlign: "right", maxWidth: "70%" }}>
-                        <Space direction="vertical" size={2}>
-                            <Text
-                                type="secondary"
+                {translating && language !== "ja" ? (
+                    <BlogDetailTranslationSkeleton
+                        themeMode={themeMode}
+                        translationProgress={translationProgress}
+                        showHeader
+                    />
+                ) : (
+                    <>
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "flex-end",
+                                justifyContent: "space-between",
+                                marginBottom: window.innerWidth < 768 ? 16 : 24,
+                                width: "100%",
+                                padding: "0 4px",
+                                animation: "ink-appear 0.5s ease 0.35s both",
+                            }}
+                        >
+                            {/* Journal Date */}
+                            <div
                                 style={{
-                                    letterSpacing: 2,
-                                    fontSize: 13,
-                                    textTransform: "uppercase",
+                                    color: isDark ? "#b8a586" : "#666",
+                                    fontSize: window.innerWidth < 768 ? 16 : 18,
                                     fontFamily: bookFont[language].fontFamily,
+                                    display: "flex",
+                                    alignItems: "center",
                                 }}
                             >
-                                {t.blogArticle[language]}
-                            </Text>
-                            <Title
-                                level={3}
-                                style={{
-                                    margin: 0,
-                                    lineHeight: 1.3,
-                                    fontSize: window.innerWidth < 768 ? 18 : 22,
-                                    wordWrap: "break-word",
-                                    wordBreak: "break-word",
-                                    whiteSpace: "normal",
-                                    fontFamily: bookFont[language].fontFamily,
-                                    fontWeight: language === "ja" ? 400 : 700,
-                                }}
-                            >
-                                {displayTitle}
-                            </Title>
-                        </Space>
-                    </div>
-                </div>
+                                <CalendarOutlined style={{ marginRight: 8 }} />
+                                <span style={{ fontFamily: bookFont[language].fontFamily }}>
+                                    {blog.date}
+                                </span>
+                            </div>
 
-                {/* Animated ink divider */}
-                <div style={{
-                    margin: "19px 0 29px",
-                    height: 1,
-                    background: isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.15)",
-                    transformOrigin: "left center",
-                    animation: "line-draw 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s both",
-                }} />
+                            {/* Blog Title */}
+                            <div style={{ textAlign: "right", maxWidth: "70%" }}>
+                                <Space direction="vertical" size={2}>
+                                    <Text
+                                        type="secondary"
+                                        style={{
+                                            letterSpacing: 2,
+                                            fontSize: 13,
+                                            textTransform: "uppercase",
+                                            fontFamily: bookFont[language].fontFamily,
+                                        }}
+                                    >
+                                        {t.blogArticle[language]}
+                                    </Text>
+                                    <Title
+                                        level={3}
+                                        style={{
+                                            margin: 0,
+                                            lineHeight: 1.3,
+                                            fontSize: window.innerWidth < 768 ? 18 : 22,
+                                            wordWrap: "break-word",
+                                            wordBreak: "break-word",
+                                            whiteSpace: "normal",
+                                            fontFamily: bookFont[language].fontFamily,
+                                            fontWeight: language === "ja" ? 400 : 700,
+                                        }}
+                                    >
+                                        {displayTitle}
+                                    </Title>
+                                </Space>
+                            </div>
+                        </div>
 
-                {/* Content Body */}
-                <BlogBody
-                    contentRef={contentRef}
-                    displayContent={displayContent}
-                    sz={sz}
-                    language={language}
-                    isDark={isDark}
-                    onClick={handleContentClick}
-                    onDoubleClick={handleContentDblClick}
-                    tategaki={tategaki}
-                />
+                        {/* Animated ink divider */}
+                        <div style={{
+                            margin: "19px 0 29px",
+                            height: 1,
+                            background: isDark ? "rgba(207,191,166,0.2)" : "rgba(139, 69, 19, 0.15)",
+                            transformOrigin: "left center",
+                            animation: "line-draw 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s both",
+                        }} />
+
+                        <BlogBody
+                            contentRef={contentRef}
+                            displayContent={displayContent}
+                            sz={sz}
+                            language={language}
+                            isDark={isDark}
+                            onClick={handleContentClick}
+                            onDoubleClick={handleContentDblClick}
+                            tategaki={tategaki}
+                        />
+                    </>
+                )}
 
                 {/* Footer + vocab button */}
                 <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between", alignItems: "center" }}>

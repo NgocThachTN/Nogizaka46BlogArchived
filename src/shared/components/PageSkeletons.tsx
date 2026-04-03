@@ -1,4 +1,5 @@
 import { Avatar, Skeleton } from "antd";
+import type { CSSProperties } from "react";
 
 const getSurfaceStyle = (themeMode, extra = {}) => ({
   background:
@@ -47,6 +48,18 @@ const SkeletonShimmerStyles = () => (
 
 const MediaSkeletonBlock = ({ themeMode, style }) => (
   <div aria-hidden="true" style={getSkeletonBlockStyle(themeMode, style)} />
+);
+
+const SkeletonLine = ({ themeMode, width = "100%", height = 18, style = {} }: { themeMode: string; width?: string | number; height?: number; style?: CSSProperties }) => (
+  <div
+    aria-hidden="true"
+    style={getSkeletonBlockStyle(themeMode, {
+      width,
+      height,
+      borderRadius: height >= 28 ? 8 : 999,
+      ...style,
+    })}
+  />
 );
 
 const StickySkeleton = ({ themeMode, children, style }) => (
@@ -559,6 +572,228 @@ export function BlogDetailMobileSkeleton({ themeMode }) {
           <MediaSkeletonBlock themeMode={themeMode} style={{ width: "100%", height: 220, display: "block" }} />
         </div>
         <Skeleton active title={false} paragraph={{ rows: 10, width: ["100%", "100%", "100%", "96%", "94%", "92%", "88%", "84%", "80%", "58%"] }} />
+      </div>
+    </div>
+  );
+}
+
+export function BlogDetailTranslationSkeleton({
+  themeMode,
+  translationProgress = 0,
+  showHeader = false,
+}) {
+  const progressText = Math.max(0, Math.min(100, Math.round(translationProgress || 0)));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <SkeletonShimmerStyles />
+      {showHeader && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 24,
+              width: "100%",
+              padding: "0 4px",
+              marginBottom: 24,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flexShrink: 0,
+                minWidth: 260,
+              }}
+            >
+              <MediaSkeletonBlock
+                themeMode={themeMode}
+                style={{ width: 22, height: 22, borderRadius: 6 }}
+              />
+              <SkeletonLine themeMode={themeMode} width={180} height={24} />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 8,
+                flex: 1,
+                maxWidth: "70%",
+              }}
+            >
+              <SkeletonLine themeMode={themeMode} width={116} height={14} />
+              <SkeletonLine themeMode={themeMode} width="62%" height={24} />
+            </div>
+          </div>
+          <div
+            style={{
+              height: 1,
+              background:
+                themeMode === "dark"
+                  ? "rgba(207,191,166,0.2)"
+                  : "rgba(139,69,19,0.15)",
+              marginBottom: 29,
+            }}
+          />
+        </div>
+      )}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <SkeletonLine themeMode={themeMode} width={132} height={18} />
+          <SkeletonLine themeMode={themeMode} width={88} height={18} />
+        </div>
+        <div
+          style={{
+            minWidth: 180,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginLeft: "auto",
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              height: 8,
+              borderRadius: 999,
+              overflow: "hidden",
+              background:
+                themeMode === "dark"
+                  ? "rgba(255,255,255,0.08)"
+                  : "rgba(139,69,19,0.12)",
+            }}
+          >
+            <div
+              style={{
+                width: `${progressText}%`,
+                height: "100%",
+                borderRadius: 999,
+                background:
+                  themeMode === "dark"
+                    ? "linear-gradient(90deg, #d2a86a 0%, #f0d8a5 100%)"
+                    : "linear-gradient(90deg, #8b4513 0%, #c27a3f 100%)",
+                transition: "width 0.25s ease",
+              }}
+            />
+          </div>
+          <span
+            style={{
+              minWidth: 42,
+              textAlign: "right",
+              fontSize: 12,
+              fontWeight: 600,
+              color: themeMode === "dark" ? "#d8c4a7" : "#8b4513",
+            }}
+          >
+            {progressText}%
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <SkeletonLine themeMode={themeMode} width="100%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="96%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="92%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="82%" height={18} />
+        <MediaSkeletonBlock
+          themeMode={themeMode}
+          style={{ width: "100%", height: 300, borderRadius: 12, margin: "8px 0" }}
+        />
+        <SkeletonLine themeMode={themeMode} width="100%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="98%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="95%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="88%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="76%" height={18} />
+      </div>
+    </div>
+  );
+}
+
+export function BlogDetailMobileTranslationSkeleton({
+  themeMode,
+  translationProgress = 0,
+}) {
+  const progressText = Math.max(0, Math.min(100, Math.round(translationProgress || 0)));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <SkeletonShimmerStyles />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ width: "min(220px, 100%)", display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              flex: 1,
+              height: 7,
+              borderRadius: 999,
+              overflow: "hidden",
+              background:
+                themeMode === "dark"
+                  ? "rgba(255,255,255,0.08)"
+                  : "rgba(139,69,19,0.12)",
+            }}
+          >
+            <div
+              style={{
+                width: `${progressText}%`,
+                height: "100%",
+                borderRadius: 999,
+                background:
+                  themeMode === "dark"
+                    ? "linear-gradient(90deg, #d2a86a 0%, #f0d8a5 100%)"
+                    : "linear-gradient(90deg, #8b4513 0%, #c27a3f 100%)",
+                transition: "width 0.25s ease",
+              }}
+            />
+          </div>
+          <span
+            style={{
+              minWidth: 36,
+              textAlign: "right",
+              fontSize: 11,
+              fontWeight: 600,
+              color: themeMode === "dark" ? "#d8c4a7" : "#8b4513",
+            }}
+          >
+            {progressText}%
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <SkeletonLine themeMode={themeMode} width="100%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="96%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="92%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="78%" height={18} />
+        <MediaSkeletonBlock
+          themeMode={themeMode}
+          style={{ width: "100%", height: 220, borderRadius: 10, margin: "6px 0" }}
+        />
+        <SkeletonLine themeMode={themeMode} width="100%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="98%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="94%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="88%" height={18} />
+        <SkeletonLine themeMode={themeMode} width="74%" height={18} />
       </div>
     </div>
   );
