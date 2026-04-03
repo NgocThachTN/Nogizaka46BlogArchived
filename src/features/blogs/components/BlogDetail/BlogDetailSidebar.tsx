@@ -17,7 +17,7 @@ export default function BlogDetailSidebar({
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {/* Reading Time Estimate - Sticky Note */}
-            <div className="sticky-note" style={{ transform: "rotate(1deg)", zIndex: 4 }}>
+            <div className="sticky-note blog-detail-panel" style={{ zIndex: 4 }}>
                 <ReadingTimeCard
                     readMinutes={readMinutes}
                     language={language}
@@ -28,13 +28,13 @@ export default function BlogDetailSidebar({
 
             {/* Table of Contents - Sticky Note */}
             {toc && toc.length > 0 && (
-                <div className="sticky-note" style={{ transform: "rotate(-1deg)", zIndex: 3 }}>
+                <div className="sticky-note blog-detail-panel" style={{ zIndex: 3 }}>
                     <TableOfContents toc={toc} language={language} themeMode={themeMode} />
                 </div>
             )}
 
             {/* Blog Calendar - Sticky Note / Notepad */}
-            <div className="sticky-note" style={{ transform: "rotate(0.5deg)", zIndex: 2 }}>
+            <div className="sticky-note blog-detail-panel" style={{ zIndex: 2 }}>
                 <BlogCalendar
                     blogs={memberBlogs}
                     memberInfo={memberInfo}
@@ -47,7 +47,7 @@ export default function BlogDetailSidebar({
           </div>
 
             {/* Recent Blogs - Sticky Note / Notepad */}
-            <div className="sticky-note" style={{ transform: "rotate(-0.5deg)", zIndex: 1 }}>
+            <div className="sticky-note blog-detail-panel" style={{ zIndex: 1 }}>
                 <RecentBlogs
                     blogs={memberBlogs}
                     onBlogClick={onBlogClick}

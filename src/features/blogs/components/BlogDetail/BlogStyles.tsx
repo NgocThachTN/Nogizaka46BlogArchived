@@ -6,6 +6,31 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz, readi
     <>
       {/* prose base */}
       <style>{`
+        .blog-detail-layout .blog-detail-panel,
+        .blog-detail-layout .blog-detail-profile-panel,
+        .blog-detail-layout .blog-detail-sidebar-column .sticky-note {
+          transform: none !important;
+        }
+        .blog-detail-layout .blog-detail-panel {
+          border-radius: 4px !important;
+          box-shadow: ${themeMode === "dark" ? "0 4px 14px rgba(0,0,0,0.35)" : "0 4px 14px rgba(139,69,19,0.08)"} !important;
+        }
+        .blog-detail-layout .blog-detail-panel::after {
+          display: none !important;
+        }
+        .blog-detail-layout .blog-detail-profile-panel {
+          animation-name: notes-slide-in !important;
+        }
+        .blog-detail-layout .blog-detail-profile-panel > * {
+          transform: none !important;
+        }
+        .blog-detail-layout .blog-detail-sidebar-column {
+          animation-name: notes-slide-in !important;
+        }
+        .blog-detail-layout .sticky-note:hover {
+          transform: none !important;
+        }
+
         /* Furigana (Ruby) Styling */
         .jp-prose ruby {
           ruby-position: over;

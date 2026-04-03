@@ -10,7 +10,7 @@ export default function TableOfContents({ toc, language, themeMode }) {
                 <span style={{ fontSize: 17 }}>{t.toc[language]}</span>
             }
             style={{
-                borderRadius: 12,
+                borderRadius: 4,
                 background:
                     themeMode === "dark"
                         ? "rgba(36, 33, 29, 0.85)"

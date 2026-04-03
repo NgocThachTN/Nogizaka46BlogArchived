@@ -8,7 +8,7 @@ export default function ReadingTimeCard({ readMinutes, language, themeMode, isMo
     return (
         <div
             style={{
-                borderRadius: 2,
+                borderRadius: 4,
                 background: isDark
                     ? "rgba(36, 33, 29, 0.95)"
                     : "rgba(255, 255, 255, 0.9)",

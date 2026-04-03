@@ -377,7 +377,7 @@ export default function BlogDetailContent({
             <div
                 className={`diary-sheet${tategaki ? " tategaki-mode" : ""}`}
                 style={{
-                    borderRadius: tategaki ? 20 : 24,
+                    borderRadius: tategaki ? 6 : 4,
                     background: isDark
                         ? "linear-gradient(180deg, rgba(40,35,31,0.98) 0%, rgba(29,26,24,0.98) 100%)"
                         : "linear-gradient(180deg, rgba(255,252,245,0.98) 0%, rgba(252,247,238,0.98) 100%)",
