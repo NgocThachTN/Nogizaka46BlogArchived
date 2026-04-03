@@ -37,6 +37,87 @@ export const bookFont = {
     },
 };
 
+export const READING_FONT_PRESETS = {
+    diary: {
+        label: { ja: "Diary Script", en: "Diary Script", vi: "Diary Script" },
+        description: { ja: "Current blog default", en: "Current blog default", vi: "Giu nguyen font hien tai" },
+        fonts: {
+            ja: "'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', 'Source Han Serif JP', 'Yu Mincho', serif",
+            en: "'Mali', 'Caveat', 'Yomogi', 'Georgia', serif",
+            vi: "'Mali', 'Patrick Hand SC', 'Caveat', 'Times New Roman', 'Georgia', serif",
+        },
+    },
+    classicMincho: {
+        label: { ja: "Classic Mincho", en: "Classic Mincho", vi: "Classic Mincho" },
+        description: { ja: "Novel-style Japanese serif", en: "Novel-style Japanese serif", vi: "Kieu sach va tieu thuyet Nhat" },
+        fonts: {
+            ja: "'Noto Serif JP', 'Source Han Serif JP', 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif",
+            en: "'Georgia', 'Cambria', 'Times New Roman', serif",
+            vi: "'Georgia', 'Cambria', 'Times New Roman', serif",
+        },
+    },
+    shippori: {
+        label: { ja: "Shippori Mincho", en: "Shippori Mincho", vi: "Shippori Mincho" },
+        description: { ja: "Soft literary serif", en: "Soft literary serif", vi: "Serif mem de doc lau" },
+        fonts: {
+            ja: "'Shippori Mincho', 'Noto Serif JP', 'Source Han Serif JP', 'Yu Mincho', serif",
+            en: "'Georgia', 'Cambria', 'Times New Roman', serif",
+            vi: "'Georgia', 'Cambria', 'Times New Roman', serif",
+        },
+    },
+    zenOld: {
+        label: { ja: "Zen Old Mincho", en: "Zen Old Mincho", vi: "Zen Old Mincho" },
+        description: { ja: "Elegant book serif", en: "Elegant book serif", vi: "Thanh lich kieu sach in" },
+        fonts: {
+            ja: "'Zen Old Mincho', 'Noto Serif JP', 'Source Han Serif JP', 'Yu Mincho', serif",
+            en: "'Georgia', 'Cambria', serif",
+            vi: "'Georgia', 'Cambria', serif",
+        },
+    },
+    sawarabi: {
+        label: { ja: "Sawarabi Mincho", en: "Sawarabi Mincho", vi: "Sawarabi Mincho" },
+        description: { ja: "Light and clean serif", en: "Light and clean serif", vi: "Mincho nhe thoang" },
+        fonts: {
+            ja: "'Sawarabi Mincho', 'Noto Serif JP', 'Yu Mincho', serif",
+            en: "'Georgia', 'Times New Roman', serif",
+            vi: "'Georgia', 'Times New Roman', serif",
+        },
+    },
+    gothicReading: {
+        label: { ja: "Reading Gothic", en: "Reading Gothic", vi: "Reading Gothic" },
+        description: { ja: "Screen-optimized sans", en: "Screen-optimized sans", vi: "Sans toi uu doc man hinh" },
+        fonts: {
+            ja: "'Zen Kaku Gothic New', 'M PLUS 1p', 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif",
+            en: "'Source Sans 3', 'Inter', 'Segoe UI', sans-serif",
+            vi: "'Source Sans 3', 'Inter', 'Segoe UI', sans-serif",
+        },
+    },
+    roundedReading: {
+        label: { ja: "Rounded Reading", en: "Rounded Reading", vi: "Rounded Reading" },
+        description: { ja: "Gentle rounded sans", en: "Gentle rounded sans", vi: "Mem mat khi doc lau" },
+        fonts: {
+            ja: "'M PLUS Rounded 1c', 'M PLUS 1p', 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif",
+            en: "'Source Sans 3', 'Inter', sans-serif",
+            vi: "'Source Sans 3', 'Inter', sans-serif",
+        },
+    },
+};
+
+export const DEFAULT_READING_FONT_PRESET = "gothicReading";
+
+export const getReadingFontFamily = (presetKey, language) => {
+    const preset =
+        READING_FONT_PRESETS[presetKey] ||
+        READING_FONT_PRESETS[DEFAULT_READING_FONT_PRESET];
+
+    return (
+        preset?.fonts?.[language] ||
+        preset?.fonts?.ja ||
+        bookFont[language]?.fontFamily ||
+        bookFont.ja.fontFamily
+    );
+};
+
 // Diary paper line height in pixels - text will align to these lines
 export const DIARY_LINE_HEIGHT = 32;
 
@@ -89,6 +170,7 @@ export const t = {
 
 // LocalStorage keys
 export const LS_KEY_SIZE = "blog:jpFontSize";
+export const LS_KEY_READING_FONT = "blog:readingFontPreset";
 export const LS_KEY_TR_EN = "blog:tr:en";
 export const LS_KEY_TR_VI = "blog:tr:vi";
 export const LS_KEY_TTL_EN = "blog:trttl:en";

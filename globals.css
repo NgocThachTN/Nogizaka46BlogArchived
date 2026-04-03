@@ -134,7 +134,7 @@
 .jp-prose div[style],
 .jp-prose *[style*="font-family"],
 .jp-prose *[style*="font:"] {
-  font-family: 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', serif !important;
+  font-family: var(--blog-detail-font-family, 'Yomogi', 'Patrick Hand SC', 'Zen Kurenaido', 'Noto Serif JP', serif) !important;
 }
 
 .jp-prose br {

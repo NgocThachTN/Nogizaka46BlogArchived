@@ -15,6 +15,7 @@ import {
   Avatar,
   Divider,
   Skeleton,
+  Select,
 } from "antd";
 import {
   LoadingOutlined,
@@ -53,6 +54,12 @@ import {
 } from "../services/blogService";
 import { isIOS, isIOS18Plus, isIPhoneXS } from "../../../lib/utils/deviceDetection";
 import { initKuroshiro, addFuriganaToHtml } from "../lib/furiganaHelper";
+import {
+  DEFAULT_READING_FONT_PRESET,
+  getReadingFontFamily,
+  LS_KEY_READING_FONT,
+  READING_FONT_PRESETS,
+} from "./BlogDetail/constants";
 import ImageLightbox from "./BlogDetail/ImageLightbox";
 import {
   BlogDetailMobileSkeleton,
@@ -256,6 +263,9 @@ export default function BlogDetailMobile({
   const [fontSize, setFontSize] = useState(
     () => Number(localStorage.getItem(LS_FONT)) || 18
   );
+  const [readingFontPreset, setReadingFontPreset] = useState(
+    () => localStorage.getItem(LS_KEY_READING_FONT) || DEFAULT_READING_FONT_PRESET
+  );
 
   // Furigana states
   const [showFurigana, setShowFurigana] = useState(false);
@@ -287,6 +297,10 @@ export default function BlogDetailMobile({
   useEffect(() => {
     localStorage.setItem(LS_FONT, String(fontSize));
   }, [fontSize]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_READING_FONT, readingFontPreset);
+  }, [readingFontPreset]);
 
   // ---- Clear old content immediately when blog changes ----
   useLayoutEffect(() => {
@@ -541,6 +555,11 @@ export default function BlogDetailMobile({
     showFurigana,
     furiganaContent,
   ]);
+
+  const readingFontFamily = useMemo(
+    () => getReadingFontFamily(readingFontPreset, cachedLanguage || language),
+    [readingFontPreset, cachedLanguage, language]
+  );
 
   // Setup scroll handlers and hide browser address bar on mount
   useEffect(() => {
@@ -929,7 +948,7 @@ export default function BlogDetailMobile({
                   margin: "12px 0 8px 0",
                   fontSize: 20,
                   color: themeMode === "dark" ? "#f5ede0" : "#3c2415",
-                  fontFamily: bookFont[language].fontFamily,
+                  fontFamily: readingFontFamily,
                   fontWeight: language === "ja" ? 600 : 700,
                   lineHeight: 1.3
                 }}>
@@ -939,7 +958,7 @@ export default function BlogDetailMobile({
 
               <div style={{ display: "flex", alignItems: "center", color: themeMode === "dark" ? "#8b7e66" : "#8b5a2b", fontSize: 13 }}>
                 <CalendarOutlined style={{ marginRight: 6 }} />
-                <span style={{ fontFamily: bookFont[language].fontFamily }}>{blog?.date}</span>
+                <span style={{ fontFamily: readingFontFamily }}>{blog?.date}</span>
               </div>
             </div>
           </div>
@@ -975,7 +994,8 @@ export default function BlogDetailMobile({
                 fontSize: fontSize,
                 lineHeight: 1.9,
                 color: themeMode === "dark" ? "#f5ede0" : "#2c2c2c",
-                fontFamily: `${bookFont[language].fontFamily}, serialized`,
+                fontFamily: readingFontFamily,
+                "--blog-detail-font-family": readingFontFamily,
                 overflowWrap: "anywhere",
                 wordBreak: "break-word",
                 // Align text to the background grid
@@ -1052,6 +1072,18 @@ export default function BlogDetailMobile({
               value={fontSize}
               onChange={setFontSize}
               options={[14, 16, 18, 20, 24]}
+            />
+          </Card>
+
+          <Card title="Font Ä‘á»c" size="small" bordered>
+            <Select
+              value={readingFontPreset}
+              onChange={setReadingFontPreset}
+              style={{ width: "100%" }}
+              options={Object.entries(READING_FONT_PRESETS).map(([value, preset]) => ({
+                value,
+                label: preset.label?.[cachedLanguage] || preset.label?.ja,
+              }))}
             />
           </Card>
 

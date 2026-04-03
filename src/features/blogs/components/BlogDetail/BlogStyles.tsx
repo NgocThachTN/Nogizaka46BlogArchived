@@ -1,6 +1,7 @@
-import { SIZE_PRESETS, bookFont } from "./constants";
+import { SIZE_PRESETS, getReadingFontFamily } from "./constants";
 
-export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
+export default function BlogStyles({ themeMode, fontSizeKey, language, sz, readingFontPreset }) {
+  const readingFontFamily = getReadingFontFamily(readingFontPreset, language);
   return (
     <>
       {/* prose base */}
@@ -50,7 +51,7 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
           word-break: break-word !important;
           overflow-wrap: break-word !important;
           font-stretch: normal !important;
-          font-family: ${bookFont[language].fontFamily} !important;
+          font-family: ${readingFontFamily} !important;
         }
         /* Extra spacing between paragraphs - removed to preserve original HTML spacing */
         .jp-prose div[dir="auto"],
@@ -66,12 +67,12 @@ export default function BlogStyles({ themeMode, fontSizeKey, language, sz }) {
         .jp-prose span[style*="UICTFontTextStyleBody"] {
           font-size: ${sz.px}px !important;
           line-height: ${Math.round(sz.px * sz.lh)}px !important;
-          font-family: ${bookFont[language].fontFamily} !important;
+          font-family: ${readingFontFamily} !important;
           color: ${themeMode === "dark" ? "#f5ede0" : "#374151"} !important;
         }
         /* Override UICTFontTextStyleBody specifically */
         .jp-prose *[style*="UICTFontTextStyleBody"] {
-          font-family: ${bookFont[language].fontFamily} !important;
+          font-family: ${readingFontFamily} !important;
           font-size: ${sz.px}px !important;
           line-height: ${Math.round(sz.px * sz.lh)}px !important;
         }

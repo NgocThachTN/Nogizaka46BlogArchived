@@ -31,7 +31,9 @@ import BlogStyles from "./BlogDetail/BlogStyles";
 import { useBlogNavigation } from "./BlogDetail/useBlogNavigation";
 import {
   SIZE_PRESETS,
+  DEFAULT_READING_FONT_PRESET,
   LS_KEY_SIZE,
+  LS_KEY_READING_FONT,
   LS_KEY_TR_EN,
   LS_KEY_TR_VI,
   LS_KEY_TTL_EN,
@@ -84,6 +86,10 @@ export default function BlogDetail({
   const [fontSizeKey, setFontSizeKey] = useStoredState(
     LS_KEY_SIZE,
     () => "sm"
+  );
+  const [readingFontPreset, setReadingFontPreset] = useStoredState(
+    LS_KEY_READING_FONT,
+    () => DEFAULT_READING_FONT_PRESET
   );
   const {
     displayTitle: translatedTitle,
@@ -716,6 +722,8 @@ export default function BlogDetail({
               setThemeMode={setThemeMode}
               fontSizeKey={fontSizeKey}
               setFontSizeKey={setFontSizeKey}
+              readingFontPreset={readingFontPreset}
+              setReadingFontPreset={setReadingFontPreset}
               translating={translating}
               onHoverPrefetch={onHoverPrefetch}
               // Pass reading mode toggle to header if needed, or keeping it separate
@@ -769,6 +777,7 @@ export default function BlogDetail({
               themeMode={themeMode}
               fontSizeKey={fontSizeKey}
               sz={sz}
+              readingFontPreset={readingFontPreset}
               readingMode={readingMode}
               contentRef={contentRef}
               translating={translating}
@@ -823,6 +832,7 @@ export default function BlogDetail({
         fontSizeKey={fontSizeKey}
         language={language}
         sz={sz}
+        readingFontPreset={readingFontPreset}
       />
     </div>
   );

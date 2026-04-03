@@ -10,9 +10,14 @@ import {
     FullscreenOutlined,
     FullscreenExitOutlined,
     ColumnWidthOutlined,
+    FontSizeOutlined,
 } from "@ant-design/icons";
 import { getCachedBlogDetail } from "../../services/blogService";
-import { t } from "./constants";
+import {
+    DEFAULT_READING_FONT_PRESET,
+    READING_FONT_PRESETS,
+    t,
+} from "./constants";
 
 export default function BlogDetailHeader({
     language,
@@ -34,6 +39,8 @@ export default function BlogDetailHeader({
     setThemeMode,
     fontSizeKey,
     setFontSizeKey,
+    readingFontPreset,
+    setReadingFontPreset,
     translating,
     onHoverPrefetch,
     readingMode,
@@ -236,6 +243,25 @@ export default function BlogDetailHeader({
                 ]}
                 value={fontSizeKey}
                 onChange={(v) => setFontSizeKey(v)}
+            />
+
+            <Select
+                key="reading-font"
+                value={readingFontPreset || DEFAULT_READING_FONT_PRESET}
+                onChange={setReadingFontPreset}
+                style={{ width: 220, minWidth: 180 }}
+                optionLabelProp="label"
+                popupMatchSelectWidth={260}
+                options={Object.entries(READING_FONT_PRESETS).map(([value, preset]) => ({
+                    value,
+                    label: (
+                        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <FontSizeOutlined style={{ color: "#666", fontSize: "14px" }} />
+                            {preset.label?.[language] || preset.label?.ja}
+                        </span>
+                    ),
+                    title: preset.description?.[language] || preset.description?.ja,
+                }))}
             />
 
             {setReadingMode && (

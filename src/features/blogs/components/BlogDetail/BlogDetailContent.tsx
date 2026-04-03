@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, memo, useRef, useMemo } from "react";
 import { Typography, Space, Button } from "antd";
 import { CalendarOutlined, LinkOutlined, BookOutlined } from "@ant-design/icons";
-import { bookFont, t } from "./constants";
+import { getReadingFontFamily, t } from "./constants";
 import ImageLightbox from "./ImageLightbox";
 import VocabPopup from "./VocabPopup";
 import VocabPanel from "./VocabPanel";
@@ -12,13 +12,7 @@ import { BlogDetailTranslationSkeleton } from "../../../../shared/components/Pag
 
 const { Title, Text } = Typography;
 
-const readingFontFamily = {
-    ja: "'Noto Serif JP', 'Source Han Serif JP', 'Yu Mincho', serif",
-    en: "'Georgia', 'Cambria', 'Times New Roman', serif",
-    vi: "'Georgia', 'Times New Roman', 'Cambria', serif",
-};
-
-const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, language, isDark, onClick, onDoubleClick, tategaki }) {
+const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, language, isDark, onClick, onDoubleClick, tategaki, readingFontFamily }) {
     const wrapperRef = useRef(null);
     const innerRef = useRef(null);
     const grandParentRef = useRef(null);
@@ -208,8 +202,9 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                                 lineHeight: `${lineH}px`,
                                 letterSpacing: 0.5,
                                 color: isDark ? "#f5ede0" : "#2c2c2c",
-                                fontFamily: `${bookFont[language].fontFamily}, "Noto Serif JP", serif`,
+                                fontFamily: readingFontFamily,
                                 textAlign: "left",
+                                "--blog-detail-font-family": readingFontFamily,
                             }}
                             onClick={onClick}
                             onDoubleClick={onDoubleClick}
@@ -288,12 +283,13 @@ const BlogBody = memo(function BlogBody({ contentRef, displayContent, sz, langua
                 lineHeight: `${lineH}px`,
                 letterSpacing: language === "ja" ? 0.5 : 0.3,
                 color: isDark ? "#f5ede0" : "#2c2c2c",
-                fontFamily: readingFontFamily[language],
+                fontFamily: readingFontFamily,
                 overflowWrap: "anywhere",
                 wordBreak: "normal",
                 lineBreak: "strict",
                 whiteSpace: "normal",
                 textAlign: "left",
+                "--blog-detail-font-family": readingFontFamily,
             }}
             onClick={onClick}
             onDoubleClick={onDoubleClick}
@@ -310,6 +306,7 @@ export default function BlogDetailContent({
     themeMode,
     fontSizeKey,
     sz,
+    readingFontPreset,
     readingMode,
     contentRef,
     translating,
@@ -317,6 +314,7 @@ export default function BlogDetailContent({
     tategaki,
 }) {
     const isDark = themeMode === "dark";
+    const readingFontFamily = getReadingFontFamily(readingFontPreset, language);
 
     // --- Lightbox state ---
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -430,7 +428,7 @@ export default function BlogDetailContent({
                                 style={{
                                     color: isDark ? "#c6b28f" : "#7f6a53",
                                     fontSize: window.innerWidth < 768 ? 13 : 14,
-                                    fontFamily: readingFontFamily[language],
+                                    fontFamily: readingFontFamily,
                                     display: "flex",
                                     alignItems: "center",
                                     gap: 8,
@@ -441,7 +439,7 @@ export default function BlogDetailContent({
                                 }}
                             >
                                 <CalendarOutlined />
-                                <span style={{ fontFamily: readingFontFamily[language] }}>
+                                <span style={{ fontFamily: readingFontFamily }}>
                                     {blog.date}
                                 </span>
                             </div>
@@ -471,7 +469,7 @@ export default function BlogDetailContent({
                                             wordBreak: "break-word",
                                             whiteSpace: "normal",
                                             color: isDark ? "#f7f0e4" : "#2f2418",
-                                            fontFamily: readingFontFamily[language],
+                                            fontFamily: readingFontFamily,
                                             fontWeight: language === "ja" ? 600 : 700,
                                             maxWidth: "100%",
                                         }}
@@ -502,6 +500,7 @@ export default function BlogDetailContent({
                             onClick={handleContentClick}
                             onDoubleClick={handleContentDblClick}
                             tategaki={tategaki}
+                            readingFontFamily={readingFontFamily}
                         />
                     </>
                 )}
