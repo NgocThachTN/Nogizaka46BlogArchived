@@ -1,6 +1,6 @@
 # Nogizaka46 Blog Archived
 
-> Fetch Nogizaka46 members’ blogs from the official site, with automatic multilingual translation via **Gemini API**.
+> A simple website that translates Nogizaka46 members’ blog posts into English and Vietnamese using Gemini API for translation.
 
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/53fd14ef-ebfd-4cf8-80b8-654c231c0ae5" />
 
